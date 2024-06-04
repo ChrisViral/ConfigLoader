@@ -7,6 +7,6 @@
 namespace ConfigLoader;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-internal class ConfigObjectAttribute : Attribute
+public class ConfigObjectAttribute : Attribute
 {
 }
