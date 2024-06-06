@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -13,16 +16,30 @@ public static class SyntaxExtensions
 {
     #region Attribute extensions
     /// <summary>
-    /// Checks if the <paramref name="attribute"/> has the specified <paramref name="name"/><br/>
-    /// This check passes if <c>"Attribute"</c> is added to <paramref name="name"/>
+    /// Suffix for attribute classes
     /// </summary>
+    private const string ATTRIBUTE_SUFFIX = "Attribute";
+
+    /// <summary>
+    /// Checks if the <paramref name="attribute"/> matches the name of <typeparamref name="T"/><br/>
+    /// This check passes if <c>"Attribute"</c> is added to the name of <paramref name="attribute"/>
+    /// </summary>
+    /// <typeparam name="T">Type of attribute to find</typeparam>
     /// <param name="attribute">Attribute to check</param>
-    /// <param name="name">Name of the attribute</param>
     /// <returns><see langword="true"/> if the <paramref name="attribute"/> has the given <paramref name="name"/>, otherwise <see langword="false"/></returns>
-    public static bool IsNamedAttribute(this AttributeSyntax attribute, string name)
+    public static bool IsAttribute<T>(this AttributeSyntax attribute) where T : Attribute
     {
-        string attributeName = attribute.Name.ToString();
-        return attributeName == name || attributeName == name + "Attribute";
+        string syntaxName = attribute.Name.ToString();
+        string attributeName = typeof(T).Name;
+
+        // Normalize for "Attribute" end
+        if (!syntaxName.EndsWith(ATTRIBUTE_SUFFIX) && attributeName.EndsWith(ATTRIBUTE_SUFFIX))
+        {
+            // Removes chunk the same length as the suffix from the end
+            attributeName = attributeName.Substring(0, attributeName.Length - ATTRIBUTE_SUFFIX.Length);
+        }
+
+        return syntaxName == attributeName;
     }
 
     /// <summary>
@@ -30,39 +47,82 @@ public static class SyntaxExtensions
     /// </summary>
     /// <param name="member">Member to get the attributes for</param>
     /// <returns>An <see cref="IEnumerable"/> listing all the attributes of <paramref name="member"/></returns>
-    public static IEnumerable<AttributeSyntax> GetAttributes(this MemberDeclarationSyntax member) => member.AttributeLists
-                                                                                                           .SelectMany(al => al.Attributes);
-
-    /// <summary>
-    /// Checks if a <paramref name="member"/> has an attribute with the given <paramref name="name"/>
-    /// </summary>
-    /// <param name="member">Member to check</param>
-    /// <param name="name">Name of the attribute to find</param>
-    /// <returns><see langword="true"/> if the <paramref name="member"/> has an attribute with the given <paramref name="name"/>, otherwise <see langword="false"/></returns>
-    public static bool HasAttributeOfName(this MemberDeclarationSyntax member, string name) => member.GetAttributes()
-                                                                                               .Any(a => a.IsNamedAttribute(name));
-
-    /// <summary>
-    /// Gets the first attribute with the given <paramref name="name"/> on the <paramref name="member"/>
-    /// </summary>
-    /// <param name="member">Member to get the attribute for</param>
-    /// <param name="name">Name of the attribute to get</param>
-    /// <returns>The first found attribute of the given <paramref name="name"/></returns>
-    public static AttributeSyntax GetAttributeOfName(this MemberDeclarationSyntax member, string name) => member.GetAttributes()
-                                                                                                          .First(a => a.IsNamedAttribute(name));
-
-    /// <summary>
-    /// Tries to get the first attribute with the given <paramref name="name"/> on the <paramref name="member"/>, and stores it in <paramref name="foundAttribute"/>
-    /// </summary>
-    /// <param name="member">Member to try and get the attribute from</param>
-    /// <param name="name">Name of the attribute to get</param>
-    /// <param name="foundAttribute">Out variable for the found attribute</param>
-    /// <returns><see langword="true"/> if the attribute with the given <paramref name="name"/> was found, otherwise <see langword="false"/></returns>
-    public static bool TryGetAttributeWithName(this MemberDeclarationSyntax member, string name, out AttributeSyntax? foundAttribute)
+    public static IEnumerable<AttributeSyntax> GetAttributes(this MemberDeclarationSyntax member)
     {
-        foundAttribute = member.GetAttributes()
-                               .FirstOrDefault(a => a.IsNamedAttribute(name));
+        return member.AttributeLists.SelectMany(al => al.Attributes);
+    }
+
+    /// <summary>
+    /// Checks if a <paramref name="member"/> has an attribute matching <typeparamref name="T"/>
+    /// </summary>
+    /// <typeparam name="T">Type of attribute to find</typeparam>
+    /// <param name="member">Member to check</param>
+    /// <returns><see langword="true"/> if the <paramref name="member"/> has an attribute matching <typeparamref name="T"/>, otherwise <see langword="false"/></returns>
+    public static bool HasAttribute<T>(this MemberDeclarationSyntax member) where T : Attribute
+    {
+        return member.GetAttributes().Any(a => a.IsAttribute<T>());
+    }
+
+    /// <summary>
+    /// Gets the first attribute matching the name of <typeparamref name="T"/> on the <paramref name="member"/>
+    /// </summary>
+    /// <typeparam name="T">Type of attribute to find</typeparam>
+    /// <param name="member">Member to get the attribute for</param>
+    /// <returns>The first found attribute of the given <paramref name="name"/></returns>
+    public static AttributeSyntax GetAttribute<T>(this MemberDeclarationSyntax member) where T : Attribute
+    {
+        return member.GetAttributes().First(a => a.IsAttribute<T>());
+    }
+
+    /// <summary>
+    /// Tries to get the first attribute matching the name of <typeparamref name="T"/> on the <paramref name="member"/>, and stores it in <paramref name="foundAttribute"/>
+    /// </summary>
+    /// <typeparam name="T">Type of attribute to find</typeparam>
+    /// <param name="member">Member to try and get the attribute from</param>
+    /// <param name="foundAttribute">Out variable for the found attribute</param>
+    /// <returns><see langword="true"/> if an attribute matching the name of <typeparamref name="T"/> was found, otherwise <see langword="false"/></returns>
+    public static bool TryGetAttribute<T>(this MemberDeclarationSyntax member, out AttributeSyntax? foundAttribute) where T : Attribute
+    {
+        foundAttribute = member.GetAttributes().FirstOrDefault(a => a.IsAttribute<T>());
         return foundAttribute is not null;
+    }
+    #endregion
+
+    #region Type extensions
+    /// <summary>
+    /// Gets the full namespace in which this <paramref name="node"/> is contained
+    /// </summary>
+    /// <param name="node">Node to get the namespace of</param>
+    /// <returns>The full namespace of the <paramref name="node"/>, period separated</returns>
+    public static string GetNamespace(this SyntaxNode node)
+    {
+        // Move up through hierarchy and through all parents
+        string fullNamespace = string.Empty;
+        for (SyntaxNode? parent = node.Parent; parent is not null; parent = parent.Parent)
+        {
+            // Check if we are at a namespace node
+            if (parent.Kind() is not (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration)) continue;
+
+            BaseNamespaceDeclarationSyntax namespaceSyntax = (BaseNamespaceDeclarationSyntax)parent;
+            string name = namespaceSyntax.Name.ToString();
+
+            // If empty, put current name, else, append in front
+            fullNamespace = string.IsNullOrEmpty(fullNamespace) ? name : $"{name}.{fullNamespace}";
+        }
+
+        return fullNamespace;
+    }
+
+    /// <summary>
+    /// Gets the full type declaration for the given node
+    /// </summary>
+    /// <param name="typeSyntax">Node to get the declaration</param>
+    /// <returns>Full type declaration of the given type node</returns>
+    public static string GetFullTypeDeclaration(this TypeDeclarationSyntax typeSyntax)
+    {
+        return typeSyntax is RecordDeclarationSyntax recordSyntax
+                   ? $"{recordSyntax.Modifiers.ToString()} {recordSyntax.Keyword.ValueText} {recordSyntax.ClassOrStructKeyword.ValueText} {recordSyntax.Identifier.Value}"
+                   : $"{typeSyntax.Modifiers.ToString()} {typeSyntax.Keyword.ValueText} {typeSyntax.Identifier.Value}";
     }
     #endregion
 }
