@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Linq;
+using System.Text;
+using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -13,9 +15,15 @@ public class ConfigTemplate
 {
     private TypeDeclarationSyntax TypeSyntax { get; }
 
+    private INamedTypeSymbol Type { get; }
+
+    private AttributeData Attribute { get; }
+
     public ConfigTemplate(GeneratorSyntaxContext context)
     {
         this.TypeSyntax = (TypeDeclarationSyntax)context.Node;
+        this.Type = (INamedTypeSymbol)context.SemanticModel.GetDeclaredSymbol(this.TypeSyntax)!;
+        this.Attribute = this.Type.GetAttributes().Single(a => a.AttributeClass?.Name == nameof(ConfigObjectAttribute));
     }
 
     public (string fileName, string source) GenerateSource()
@@ -27,7 +35,7 @@ public class ConfigTemplate
         sourceBuilder.AppendLine("using UnityEngine;");
 
         // Namespace declaration if needed
-        string @namespace = this.TypeSyntax.GetNamespace();
+        string? @namespace = this.Type.ContainingNamespace?.ToDisplayString();
         if (!string.IsNullOrEmpty(@namespace))
         {
             sourceBuilder.AppendLine($"namespace {@namespace}");
@@ -49,7 +57,7 @@ public class ConfigTemplate
         }
 
         // Output
-        string fileName = $"{this.TypeSyntax.Identifier.ValueText}.generated.cs";
+        string fileName = $"{this.Type.Name}.generated.cs";
         return (fileName, sourceBuilder.ToString());
     }
 }

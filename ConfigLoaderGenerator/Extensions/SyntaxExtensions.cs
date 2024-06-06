@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -62,57 +60,9 @@ public static class SyntaxExtensions
     {
         return member.GetAttributes().Any(a => a.IsAttribute<T>());
     }
-
-    /// <summary>
-    /// Gets the first attribute matching the name of <typeparamref name="T"/> on the <paramref name="member"/>
-    /// </summary>
-    /// <typeparam name="T">Type of attribute to find</typeparam>
-    /// <param name="member">Member to get the attribute for</param>
-    /// <returns>The first found attribute of the given <paramref name="name"/></returns>
-    public static AttributeSyntax GetAttribute<T>(this MemberDeclarationSyntax member) where T : Attribute
-    {
-        return member.GetAttributes().First(a => a.IsAttribute<T>());
-    }
-
-    /// <summary>
-    /// Tries to get the first attribute matching the name of <typeparamref name="T"/> on the <paramref name="member"/>, and stores it in <paramref name="foundAttribute"/>
-    /// </summary>
-    /// <typeparam name="T">Type of attribute to find</typeparam>
-    /// <param name="member">Member to try and get the attribute from</param>
-    /// <param name="foundAttribute">Out variable for the found attribute</param>
-    /// <returns><see langword="true"/> if an attribute matching the name of <typeparamref name="T"/> was found, otherwise <see langword="false"/></returns>
-    public static bool TryGetAttribute<T>(this MemberDeclarationSyntax member, out AttributeSyntax? foundAttribute) where T : Attribute
-    {
-        foundAttribute = member.GetAttributes().FirstOrDefault(a => a.IsAttribute<T>());
-        return foundAttribute is not null;
-    }
     #endregion
 
     #region Type extensions
-    /// <summary>
-    /// Gets the full namespace in which this <paramref name="node"/> is contained
-    /// </summary>
-    /// <param name="node">Node to get the namespace of</param>
-    /// <returns>The full namespace of the <paramref name="node"/>, period separated</returns>
-    public static string GetNamespace(this SyntaxNode node)
-    {
-        // Move up through hierarchy and through all parents
-        string fullNamespace = string.Empty;
-        for (SyntaxNode? parent = node.Parent; parent is not null; parent = parent.Parent)
-        {
-            // Check if we are at a namespace node
-            if (parent.Kind() is not (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration)) continue;
-
-            BaseNamespaceDeclarationSyntax namespaceSyntax = (BaseNamespaceDeclarationSyntax)parent;
-            string name = namespaceSyntax.Name.ToString();
-
-            // If empty, put current name, else, append in front
-            fullNamespace = string.IsNullOrEmpty(fullNamespace) ? name : $"{name}.{fullNamespace}";
-        }
-
-        return fullNamespace;
-    }
-
     /// <summary>
     /// Gets the full type declaration for the given node
     /// </summary>
