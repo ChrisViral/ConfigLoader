@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
@@ -62,8 +62,17 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
         return new ConfigTemplate(context);
     }
 
+    /// <summary>
+    /// Generates the source file for the given template
+    /// </summary>
+    /// <param name="context">Current source context</param>
+    /// <param name="template">Config template to generate the source for</param>
+    /// <exception cref="OperationCanceledException">If the operation is cancelled through the <paramref name="context"/></exception>
     private static void GenerateConfigMethods(SourceProductionContext context, ConfigTemplate template)
     {
+        context.CancellationToken.ThrowIfCancellationRequested();
+        (string fileName, string source) = template.GenerateSource();
+        context.AddSource(fileName, source.NormalizeIndentation());
     }
     #endregion
 }

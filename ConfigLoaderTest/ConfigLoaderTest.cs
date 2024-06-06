@@ -1,5 +1,4 @@
-using ConfigLoader;
-using GeneratedCode;
+﻿using ConfigLoader.Attributes;
 using UnityEngine;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -9,13 +8,13 @@ using UnityEngine;
 namespace ConfigLoaderTest;
 
 [KSPAddon(KSPAddon.Startup.Instantly, true), ConfigObject]
-public class ConfigLoaderTest : MonoBehaviour
+public partial class ConfigLoaderTest : MonoBehaviour
 {
     [ConfigField]
     public string test;
 
     private void Start()
     {
-        Test.Foo();
+        Foo("Bar");
     }
 }
