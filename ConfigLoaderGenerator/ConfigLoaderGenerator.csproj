@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -13,7 +13,7 @@
 
     <Title>ConfigLoader Generator</Title>
     <Description>Source Generator to handle automatic loading of ConfigNodes for KSP</Description>
-    <PackageVersion>0.1.0</PackageVersion>
+    <Version>0.1.1</Version>
     <Product>ConfigLoaderGenerator</Product>
     <Authors>Christophe Savard (stupid_chris)</Authors>
     <Copyright>Copyright © Christophe Savard (stupid_chris) 2024</Copyright>
@@ -31,7 +31,10 @@
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="..\LICENSE.md" Pack="true" PackagePath="$(PackageLicenseFile)" />
     <None Include="..\README.md" Pack="true" PackagePath="$(PackageReadmeFile)" />
+
+    <!-- These are dummy files required for the package to install on .NET Framework 4.7 and 4.8 -->
     <None Include="_._" Pack="true" PackagePath="lib/net48" />
+    <None Include="_._" Pack="true" PackagePath="lib/net47" />
   </ItemGroup>
 
 </Project>
