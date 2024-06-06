@@ -43,6 +43,7 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
             _                                    => null
         };
 
+        // TODO: check nested types
         return typeSyntax is not null                                // Valid kind of type
             && typeSyntax.Modifiers.Any(SyntaxKind.PartialKeyword)   // Is declared as partial
             && !typeSyntax.Modifiers.Any(SyntaxKind.AbstractKeyword) // Is not declared abstract
@@ -71,8 +72,22 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
     private static void GenerateConfigMethods(SourceProductionContext context, ConfigTemplate template)
     {
         context.CancellationToken.ThrowIfCancellationRequested();
+
         (string fileName, string source) = template.GenerateSource();
-        context.AddSource(fileName, source.NormalizeIndentation());
+        context.AddSource(fileName, source);
     }
     #endregion
+}
+
+public class Test
+{
+    public partial class Foo
+    {
+
+    }
+}
+
+public partial class Foo
+{
+
 }
