@@ -1,8 +1,15 @@
 ﻿using System;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+/* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
+ * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
+\* and explicitly credited, that you do not use this material to a commercial use, and that you distribute it under the same license.     */
+
 namespace ConfigLoaderGenerator.SourceBuilding.Scopes;
 
+/// <summary>
+/// Type definition scope
+/// </summary>
 public class TypeScope : BaseScope
 {
     /// <inheritdoc />
@@ -19,6 +26,8 @@ public class TypeScope : BaseScope
     public TypeScope(TypeDeclarationSyntax typeDeclaration)
     {
         this.Declaration = typeDeclaration.Identifier.ValueText;
+
+        // Keywords are picked based on object type
         this.Keywords = typeDeclaration switch
         {
             ClassDeclarationSyntax _             => $"{typeDeclaration.Modifiers} {typeDeclaration.Keyword}",
@@ -30,7 +39,15 @@ public class TypeScope : BaseScope
         };
     }
 
-    public MethodScope AddMethodScope(string modifiers, string returnType, string name, params MethodScope.MethodParameter[] parameters)
+    /// <summary>
+    /// Add a method to the given type scope
+    /// </summary>
+    /// <param name="modifiers">Method access modifiers</param>
+    /// <param name="returnType">Method return type</param>
+    /// <param name="name">Method name</param>
+    /// <param name="parameters">Method parameters</param>
+    /// <returns>The created <see cref="MethodScope"/></returns>
+    public MethodScope AddMethodScope(string modifiers, string returnType, string name, params MethodParameter[] parameters)
     {
         MethodScope method = new(modifiers, returnType, name, parameters);
         this.Scopes.Add(method);

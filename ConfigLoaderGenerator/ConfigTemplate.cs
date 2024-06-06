@@ -12,24 +12,45 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ConfigLoaderGenerator;
 
+/// <summary>
+/// ConfigNode template source
+/// </summary>
 public class ConfigTemplate
 {
+    /// <summary>
+    /// Type to generate the source for
+    /// </summary>
     private TypeDeclarationSyntax TypeSyntax { get; }
 
+    /// <summary>
+    /// Type symbol
+    /// </summary>
     private INamedTypeSymbol Type { get; }
 
+    /// <summary>
+    /// <see cref="ConfigObjectAttribute"/> data
+    /// </summary>
     private AttributeData Attribute { get; }
 
+    /// <summary>
+    /// Creates a new config generator template from the given context
+    /// </summary>
+    /// <param name="context">Context to create the template from</param>
     public ConfigTemplate(GeneratorSyntaxContext context)
     {
         this.TypeSyntax = (TypeDeclarationSyntax)context.Node;
         this.Type = (INamedTypeSymbol)context.SemanticModel.GetDeclaredSymbol(this.TypeSyntax)!;
         this.Attribute = this.Type.GetAttributes().Single(a => a.AttributeClass?.Name == nameof(ConfigObjectAttribute));
+        // TODO: fetch fields
     }
 
+    /// <summary>
+    /// Generate the source file for the given template
+    /// </summary>
+    /// <returns>A tuple containing the generated file name and full file source</returns>
     public (string fileName, string source) GenerateSource()
     {
-
+        // Create the source builder
         SourceBuilder sourceBuilder = new(this.Type);
 
         // Usings
@@ -47,8 +68,8 @@ public class ConfigTemplate
             typeScope = sourceBuilder.AddTypeScope(this.TypeSyntax);
         }
 
-        MethodScope testMethod = typeScope.AddMethodScope(AccessModifiers.Private, BuiltinTypes.Void, "Foo", new MethodScope.MethodParameter(BuiltinTypes.String, "message"));
-
+        // Add test method
+        MethodScope testMethod = typeScope.AddMethodScope(AccessModifiers.Private, BuiltinTypes.Void, "Foo", new MethodParameter(BuiltinTypes.String, "message"));
         testMethod.AddCodeStatement("""Debug.Log($"Generator says: {message}")""");
 
         // Output

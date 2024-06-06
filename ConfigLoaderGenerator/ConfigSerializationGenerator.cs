@@ -12,6 +12,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ConfigLoaderGenerator;
 
+/// <summary>
+/// ConfigNode serializer load/save generator
+/// </summary>
 [Generator]
 public class ConfigSerializationGenerator : IIncrementalGenerator
 {
@@ -60,6 +63,8 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
     private static ConfigTemplate CreateConfigTemplate(GeneratorSyntaxContext context, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
+
+        // Create config template source generation
         return new ConfigTemplate(context);
     }
 
@@ -73,21 +78,9 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
     {
         context.CancellationToken.ThrowIfCancellationRequested();
 
+        // Generate source file and add to compilation
         (string fileName, string source) = template.GenerateSource();
         context.AddSource(fileName, source);
     }
     #endregion
-}
-
-public class Test
-{
-    public partial class Foo
-    {
-
-    }
-}
-
-public partial class Foo
-{
-
 }

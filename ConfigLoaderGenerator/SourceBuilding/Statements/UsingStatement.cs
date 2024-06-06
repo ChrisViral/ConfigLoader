@@ -1,16 +1,40 @@
 ﻿using System;
 
+/* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
+ * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
+\* and explicitly credited, that you do not use this material to a commercial use, and that you distribute it under the same license.     */
+
 namespace ConfigLoaderGenerator.SourceBuilding.Statements;
 
+/// <summary>
+/// Using statement
+/// </summary>
+/// <param name="usingNamespace">Namespace to use</param>
 public class UsingStatement(string usingNamespace) : DeclarationStatement, IEquatable<UsingStatement>, IComparable<UsingStatement>
 {
-    private const string SYSTEM = "System.";
+    /// <summary>
+    /// System namespace
+    /// </summary>
+    private const string SYSTEM_NAMESPACE = nameof(System);
+
+    /// <summary>
+    /// System namespace prefix
+    /// </summary>
+    private const string SYSTEM_PREFIX = SYSTEM_NAMESPACE + ".";
 
     /// <inheritdoc />
     protected override string Keywords => "using";
 
     /// <inheritdoc />
     protected override string Declaration { get; } = usingNamespace;
+
+    /// <summary>
+    /// Checks if <paramref name="namespace"/> is a <see cref="System"/> namespace
+    /// </summary>
+    /// <param name="namespace">Namespace to check</param>
+    /// <returns><see langword="true"/> if <paramref name="namespace"/> is a <see cref="System"/> namespace, otherwise <see langword="false"/></returns>
+    private static bool IsSystem(string @namespace) => @namespace == SYSTEM_NAMESPACE
+                                                    || @namespace.StartsWith(SYSTEM_PREFIX);
 
     #region Relational members
     /// <inheritdoc />
@@ -19,9 +43,9 @@ public class UsingStatement(string usingNamespace) : DeclarationStatement, IEqua
         if (other is null) return 1;
         if (ReferenceEquals(this, other)) return 0;
 
-        if (this.Declaration.StartsWith(SYSTEM))
+        if (IsSystem(this.Declaration))
         {
-            if (other.Declaration.StartsWith(SYSTEM))
+            if (IsSystem(other.Declaration))
             {
                 // If both are a system namespace, sort normally
                 return string.Compare(this.Declaration, other.Declaration, StringComparison.Ordinal);
@@ -32,7 +56,7 @@ public class UsingStatement(string usingNamespace) : DeclarationStatement, IEqua
         }
 
         // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (other.Declaration.StartsWith(SYSTEM))
+        if (IsSystem(other.Declaration))
         {
             // Other is system, this is not, sort after
             return 1;
