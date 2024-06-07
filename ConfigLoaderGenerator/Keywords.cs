@@ -2,9 +2,23 @@
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
 \* and explicitly credited, that you do not use this material to a commercial use, and that you distribute it under the same license.     */
 
-namespace ConfigLoaderGenerator.Keywords;
+namespace ConfigLoaderGenerator;
 
-public class AccessModifiers
+/// <summary>
+/// String keyword constants
+/// </summary>
+public static class Keywords
 {
+    /// <summary>
+    /// Private access modifier keyword
+    /// </summary>
     public const string Private = "private";
+    /// <summary>
+    /// Void return type keyword
+    /// </summary>
+    public const string Void = "void";
+    /// <summary>
+    /// String builtin type keyword
+    /// </summary>
+    public const string String = "string";
 }

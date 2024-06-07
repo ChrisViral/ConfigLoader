@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using ConfigLoader.Attributes;
-using ConfigLoaderGenerator.Keywords;
 using ConfigLoaderGenerator.SourceBuilding;
 using ConfigLoaderGenerator.SourceBuilding.Scopes;
 using Microsoft.CodeAnalysis;
@@ -69,7 +68,7 @@ public class ConfigTemplate
         }
 
         // Add test method
-        MethodScope testMethod = typeScope.AddMethodScope(AccessModifiers.Private, BuiltinTypes.Void, "Foo", new MethodParameter(BuiltinTypes.String, "message"));
+        MethodScope testMethod = typeScope.AddMethodScope(Keywords.Private, Keywords.Void, "Foo", new MethodParameter(Keywords.String, "message"));
         testMethod.AddCodeStatement("""Debug.Log($"Generator says: {message}")""");
 
         // Output

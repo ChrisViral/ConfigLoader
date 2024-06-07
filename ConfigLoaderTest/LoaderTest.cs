@@ -8,7 +8,7 @@ using UnityEngine;
 namespace ConfigLoaderTest;
 
 [KSPAddon(KSPAddon.Startup.Instantly, true), ConfigObject]
-public partial class ConfigLoaderTest : MonoBehaviour
+public partial class LoaderTest : MonoBehaviour
 {
     [ConfigField]
     public string test;

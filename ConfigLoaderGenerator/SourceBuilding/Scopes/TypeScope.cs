@@ -42,14 +42,14 @@ public class TypeScope : BaseScope
     /// <summary>
     /// Add a method to the given type scope
     /// </summary>
-    /// <param name="modifiers">Method access modifiers</param>
+    /// <param name="modifier">Method access modifier</param>
     /// <param name="returnType">Method return type</param>
     /// <param name="name">Method name</param>
     /// <param name="parameters">Method parameters</param>
     /// <returns>The created <see cref="MethodScope"/></returns>
-    public MethodScope AddMethodScope(string modifiers, string returnType, string name, params MethodParameter[] parameters)
+    public MethodScope AddMethodScope(string modifier, string returnType, string name, params MethodParameter[] parameters)
     {
-        MethodScope method = new(modifiers, returnType, name, parameters);
+        MethodScope method = new(modifier, returnType, name, parameters);
         this.Scopes.Add(method);
         return method;
     }
