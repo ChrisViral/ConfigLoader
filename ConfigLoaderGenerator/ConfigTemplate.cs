@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.SourceBuilding;
@@ -69,8 +69,8 @@ public class ConfigTemplate
         }
 
         // Add save and load methods
-        typeScope.AddMethodScope(this.Attribute.LoadAccessModifier, Keywords.Void, this.Attribute.LoadMethodName, new MethodParameter("ConfigNode", "node"));
-        typeScope.AddMethodScope(this.Attribute.SaveAccessModifier, Keywords.Void, this.Attribute.SaveMethodName, new MethodParameter("ConfigNode", "node"));
+        var temp = typeScope.AddMethodScope(this.Attribute.LoadAccessModifier, Keyword.Void, this.Attribute.LoadMethodName, new MethodParameter("ConfigNode", "node"));
+        typeScope.AddMethodScope(this.Attribute.SaveAccessModifier, Keyword.Void, this.Attribute.SaveMethodName, new MethodParameter("ConfigNode", "node"));
 
         // Output
         return (sourceBuilder.FileName, sourceBuilder.BuildSource());

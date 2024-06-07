@@ -12,14 +12,8 @@ namespace ConfigLoaderGenerator.SourceBuilding.Scopes;
 /// </summary>
 /// <param name="symbol">Namespace symbol</param>
 /// ReSharper disable once SuggestBaseTypeForParameterInConstructor
-public class NamespaceScope(INamespaceSymbol symbol) : BaseScope
+public sealed class NamespaceScope(INamespaceSymbol symbol) : BaseScope(Keyword.Namespace, symbol.ToDisplayString())
 {
-    /// <inheritdoc />
-    protected override string Keywords => "namespace";
-
-    /// <inheritdoc />
-    protected override string Declaration { get; } = symbol.ToDisplayString();
-
     /// <summary>
     /// Adds a type scope to the given namespace
     /// </summary>

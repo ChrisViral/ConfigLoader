@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using ConfigLoaderGenerator.SourceBuilding.Statements;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -10,17 +11,17 @@ namespace ConfigLoaderGenerator.SourceBuilding;
 /// <summary>
 /// Base scope class
 /// </summary>
-public abstract class BaseScope
+public abstract class BaseScope(string keywords, string declaration)
 {
     /// <summary>
     /// Scope keywords
     /// </summary>
-    protected abstract string Keywords { get; }
+    protected virtual string Keywords { get; } = keywords;
 
     /// <summary>
     /// Scope declaration
     /// </summary>
-    protected abstract string Declaration { get; }
+    protected virtual string Declaration { get; } = declaration;
 
     /// <summary>
     /// Scope statements
@@ -31,6 +32,18 @@ public abstract class BaseScope
     /// Nested scopes
     /// </summary>
     protected List<BaseScope> Scopes { get; } = [];
+
+    /// <summary>
+    /// Add a comment to this scope
+    /// </summary>
+    /// <param name="text">Comment text</param>
+    /// <returns>The created comment</returns>
+    public Comment AddComment(string text)
+    {
+        Comment comment = new(text);
+        this.Statements.Add(comment);
+        return comment;
+    }
 
     /// <summary>
     /// Builds the source for this current scope

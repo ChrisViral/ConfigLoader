@@ -7,17 +7,19 @@
 /// <summary>
 /// Declaration statement
 /// </summary>
-public abstract class DeclarationStatement : BaseStatement
+/// <param name="keywords">Declaration keywords</param>
+/// <param name="declaration">Declaration body</param>
+public abstract class DeclarationStatement(string keywords, string declaration) : BaseStatement(string.Empty)
 {
     /// <summary>
     /// Statement keywords
     /// </summary>
-    protected abstract string Keywords { get; }
+    protected virtual string Keywords { get; } = keywords;
 
     /// <summary>
     /// Statement declaration
     /// </summary>
-    protected abstract string Declaration { get; }
+    protected virtual string Declaration { get; } = declaration;
 
     /// <inheritdoc />
     protected override string Statement => $"{this.Keywords} {this.Declaration}";

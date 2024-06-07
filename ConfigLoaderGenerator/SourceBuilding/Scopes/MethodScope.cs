@@ -19,14 +19,8 @@ public readonly record struct MethodParameter(string Type, string Name)
 /// <summary>
 /// Method scope
 /// </summary>
-public class MethodScope : BaseScope
+public sealed class MethodScope : BaseScope
 {
-    /// <inheritdoc />
-    protected override string Keywords { get; } = string.Empty;
-
-    /// <inheritdoc />
-    protected override string Declaration { get; } = string.Empty;
-
     /// <summary>
     /// Creates a new method scope
     /// </summary>
@@ -35,11 +29,7 @@ public class MethodScope : BaseScope
     /// <param name="name">Method name</param>
     /// <param name="parameters">Method parameters</param>
     public MethodScope(string modifier, string returnType, string name, params MethodParameter[] parameters)
-    {
-        this.Keywords = $"{modifier} {returnType}";
-        string parameterList = string.Join(", ", parameters);
-        this.Declaration = $"{name}({parameterList})";
-    }
+        : base($"{modifier} {returnType}", $"{name}({string.Join(", ", parameters)})") { }
 
     /// <summary>
     /// Add a code statement to the method

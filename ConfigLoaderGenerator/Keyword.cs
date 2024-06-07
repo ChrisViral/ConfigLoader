@@ -7,18 +7,18 @@ namespace ConfigLoaderGenerator;
 /// <summary>
 /// String keyword constants
 /// </summary>
-public static class Keywords
+public static class Keyword
 {
     /// <summary>
-    /// Private access modifier keyword
+    /// Using keyword
     /// </summary>
-    public const string Private = "private";
+    public const string Using = "using";
+    /// <summary>
+    /// Namespace keyword
+    /// </summary>
+    public const string Namespace = "namespace";
     /// <summary>
     /// Void return type keyword
     /// </summary>
     public const string Void = "void";
-    /// <summary>
-    /// String builtin type keyword
-    /// </summary>
-    public const string String = "string";
 }

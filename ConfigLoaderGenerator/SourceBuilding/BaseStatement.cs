@@ -9,12 +9,13 @@ namespace ConfigLoaderGenerator.SourceBuilding;
 /// <summary>
 /// Base statement class
 /// </summary>
-public abstract class BaseStatement
+/// <param name="statement">Statement body</param>
+public abstract class BaseStatement(string statement)
 {
     /// <summary>
     /// Statement body
     /// </summary>
-    protected abstract string Statement { get; }
+    protected virtual string Statement { get; } = statement;
 
     /// <summary>
     /// Builds the statement into the source

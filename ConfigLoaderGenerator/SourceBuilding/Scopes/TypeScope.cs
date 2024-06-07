@@ -10,23 +10,18 @@ namespace ConfigLoaderGenerator.SourceBuilding.Scopes;
 /// <summary>
 /// Type definition scope
 /// </summary>
-public class TypeScope : BaseScope
+public sealed class TypeScope : BaseScope
 {
     /// <inheritdoc />
     protected override string Keywords { get; }
-
-    /// <inheritdoc />
-    protected override string Declaration { get; }
 
     /// <summary>
     /// Creates a new type scope
     /// </summary>
     /// <param name="typeDeclaration">Type declaration to create the scope for</param>
     /// <exception cref="NotSupportedException">If the <paramref name="typeDeclaration"/> is an unsupported kind of type</exception>
-    public TypeScope(TypeDeclarationSyntax typeDeclaration)
+    public TypeScope(TypeDeclarationSyntax typeDeclaration) : base(string.Empty, typeDeclaration.Identifier.ValueText)
     {
-        this.Declaration = typeDeclaration.Identifier.ValueText;
-
         // Keywords are picked based on object type
         this.Keywords = typeDeclaration switch
         {

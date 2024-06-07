@@ -10,23 +10,16 @@ namespace ConfigLoaderGenerator.SourceBuilding.Statements;
 /// Using statement
 /// </summary>
 /// <param name="usingNamespace">Namespace to use</param>
-public class UsingStatement(string usingNamespace) : DeclarationStatement, IEquatable<UsingStatement>, IComparable<UsingStatement>
+public sealed class UsingStatement(string usingNamespace) : DeclarationStatement(Keyword.Using, usingNamespace), IEquatable<UsingStatement>, IComparable<UsingStatement>
 {
     /// <summary>
     /// System namespace
     /// </summary>
     private const string SYSTEM_NAMESPACE = nameof(System);
-
     /// <summary>
     /// System namespace prefix
     /// </summary>
     private const string SYSTEM_PREFIX = SYSTEM_NAMESPACE + ".";
-
-    /// <inheritdoc />
-    protected override string Keywords => "using";
-
-    /// <inheritdoc />
-    protected override string Declaration { get; } = usingNamespace;
 
     /// <summary>
     /// Checks if <paramref name="namespace"/> is a <see cref="System"/> namespace
