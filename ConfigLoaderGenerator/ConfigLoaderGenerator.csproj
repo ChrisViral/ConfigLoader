@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -31,6 +31,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Including these files this way avoids requiring a hard reference to the runtime .dll in the generator -->
+    <Compile Include="..\ConfigLoader\Attributes\ConfigFieldAttribute.cs" Link="Imported\ConfigFieldAttribute.cs" />
+    <Compile Include="..\ConfigLoader\Attributes\ConfigObjectAttribute.cs" Link="Imported\ConfigObjectAttribute.cs" />
+    <Compile Include="..\ConfigLoader\Exceptions\MissingRequiredConfigFieldException.cs" Link="Imported\MissingRequiredConfigFieldException.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Metadata\" />
+    <Folder Include="SourceBuilding\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
   </ItemGroup>
