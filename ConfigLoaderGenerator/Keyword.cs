@@ -21,4 +21,8 @@ public static class Keyword
     /// Void return type keyword
     /// </summary>
     public const string Void = "void";
+    /// <summary>
+    /// ConfigNode type keyword
+    /// </summary>
+    public const string ConfigNode = "ConfigNode";
 }

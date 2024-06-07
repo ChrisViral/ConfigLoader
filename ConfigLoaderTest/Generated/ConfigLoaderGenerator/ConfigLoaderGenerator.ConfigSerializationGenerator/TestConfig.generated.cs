@@ -5,9 +5,6 @@ namespace ConfigLoaderTest
     {
         public void LoadFromConfig(ConfigNode node)
         {
-        // Int32 intValue
-        // Single floatValue
-        // String stringValue
         }
 
         public void SaveToConfig(ConfigNode node)

@@ -76,13 +76,8 @@ public class ConfigTemplate
         }
 
         // Add save and load methods
-        var temp = typeScope.AddMethodScope(this.Attribute.LoadAccessModifier, Keyword.Void, this.Attribute.LoadMethodName, new MethodParameter("ConfigNode", "node"));
-        typeScope.AddMethodScope(this.Attribute.SaveAccessModifier, Keyword.Void, this.Attribute.SaveMethodName, new MethodParameter("ConfigNode", "node"));
-
-        foreach (ConfigFieldMetadata field in this.Fields)
-        {
-            temp.AddComment($"{field.Type.Name} {field.Name}");
-        }
+        typeScope.AddMethodScope(this.Attribute.LoadAccessModifier, Keyword.Void, this.Attribute.LoadMethodName, new MethodParameter(Keyword.ConfigNode, "node"));
+        typeScope.AddMethodScope(this.Attribute.SaveAccessModifier, Keyword.Void, this.Attribute.SaveMethodName, new MethodParameter(Keyword.ConfigNode, "node"));
 
         // Output
         return (sourceBuilder.FileName, sourceBuilder.BuildSource());
