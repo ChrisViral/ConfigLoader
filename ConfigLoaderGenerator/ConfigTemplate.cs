@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using ConfigLoader.Attributes;
+using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.SourceBuilding;
 using ConfigLoaderGenerator.SourceBuilding.Scopes;
 using Microsoft.CodeAnalysis;
@@ -29,7 +30,7 @@ public class ConfigTemplate
     /// <summary>
     /// <see cref="ConfigObjectAttribute"/> data
     /// </summary>
-    private AttributeData Attribute { get; }
+    private ConfigObjectMetadata Attribute { get; }
 
     /// <summary>
     /// Creates a new config generator template from the given context
@@ -39,7 +40,7 @@ public class ConfigTemplate
     {
         this.TypeSyntax = (TypeDeclarationSyntax)context.Node;
         this.Type = (INamedTypeSymbol)context.SemanticModel.GetDeclaredSymbol(this.TypeSyntax)!;
-        this.Attribute = this.Type.GetAttributes().Single(a => a.AttributeClass?.Name == nameof(ConfigObjectAttribute));
+        this.Attribute = new ConfigObjectMetadata(this.Type.GetAttributes().First(a => a.AttributeClass?.Name == nameof(ConfigObjectAttribute)));
         // TODO: fetch fields
     }
 
@@ -67,9 +68,9 @@ public class ConfigTemplate
             typeScope = sourceBuilder.AddTypeScope(this.TypeSyntax);
         }
 
-        // Add test method
-        MethodScope testMethod = typeScope.AddMethodScope(Keywords.Private, Keywords.Void, "Foo", new MethodParameter(Keywords.String, "message"));
-        testMethod.AddCodeStatement("""Debug.Log($"Generator says: {message}")""");
+        // Add save and load methods
+        typeScope.AddMethodScope(this.Attribute.LoadAccessModifier, Keywords.Void, this.Attribute.LoadMethodName, new MethodParameter("ConfigNode", "node"));
+        typeScope.AddMethodScope(this.Attribute.SaveAccessModifier, Keywords.Void, this.Attribute.SaveMethodName, new MethodParameter("ConfigNode", "node"));
 
         // Output
         return (sourceBuilder.FileName, sourceBuilder.BuildSource());

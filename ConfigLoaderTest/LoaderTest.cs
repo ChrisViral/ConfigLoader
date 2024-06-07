@@ -7,7 +7,8 @@ using UnityEngine;
 
 namespace ConfigLoaderTest;
 
-[KSPAddon(KSPAddon.Startup.Instantly, true), ConfigObject]
+[KSPAddon(KSPAddon.Startup.Instantly, true)]
+[ConfigObject(LoadMethodAccess = AccessModifier.Protected, SaveMethodAccess = AccessModifier.Internal, LoadMethodName = "Load", SaveMethodName = "Save")]
 public partial class LoaderTest : MonoBehaviour
 {
     [ConfigField]
@@ -15,6 +16,5 @@ public partial class LoaderTest : MonoBehaviour
 
     private void Start()
     {
-        Foo("Bar");
     }
 }
