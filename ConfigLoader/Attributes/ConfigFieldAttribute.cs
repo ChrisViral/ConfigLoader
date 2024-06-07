@@ -1,4 +1,6 @@
 ﻿using System;
+using ConfigLoader.Exceptions;
+using JetBrains.Annotations;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -6,7 +8,52 @@
 
 namespace ConfigLoader.Attributes;
 
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+/// <summary>
+/// Enum serialization handling
+/// </summary>
+[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+public enum EnumHandling
+{
+    String,
+    CaseInsensitiveString,
+    Integer
+}
+
+/// <summary>
+/// Config generation target field attribute
+/// </summary>
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field), UsedImplicitly(ImplicitUseTargetFlags.Members)]
 public class ConfigFieldAttribute : Attribute
 {
+    #region Defaults
+    /// <summary>
+    /// Required default value
+    /// </summary>
+    public const bool DefaultIsRequired = false;
+    /// <summary>
+    /// Enum handling default value
+    /// </summary>
+    public const EnumHandling DefaultEnumHandling = EnumHandling.String;
+    #endregion
+
+    #region Properties
+    /// <summary>
+    /// If this field is required <br/>
+    /// A <see cref="MissingRequiredConfigFieldException"/> will be thrown if it is missing or unavailable at serialization
+    /// </summary>
+    public bool IsRequired { get; init; } = DefaultIsRequired;
+    /// <summary>
+    /// Name under which to serialize this value<br/>
+    /// Leaving this empty will use the name of the field it is attached to
+    /// </summary>
+    public string? Name { get; init; }
+    /// <summary>
+    /// Name value of the node to use to load this field
+    /// </summary>
+    public string? NodeNameValue { get; init; }
+    /// <summary>
+    /// Enum serialization method
+    /// </summary>
+    public EnumHandling EnumHandling { get; init; } = DefaultEnumHandling;
+    #endregion
 }

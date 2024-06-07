@@ -37,7 +37,7 @@ public class ConfigObjectAttribute : Attribute
     /// <summary>
     /// Default save method name
     /// </summary>
-    public const string DefaultSaveName = "SaveFromConfig";
+    public const string DefaultSaveName = "SaveToConfig";
     #endregion
 
     #region Properties

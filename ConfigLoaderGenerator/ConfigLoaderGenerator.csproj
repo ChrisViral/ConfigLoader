@@ -31,9 +31,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- We don't actually need those, but having them means we can use nameof() on the members -->
-    <Compile Include="..\ConfigLoader\Attributes\ConfigFieldAttribute.cs" Link="Attributes\ConfigFieldAttribute.cs" />
-    <Compile Include="..\ConfigLoader\Attributes\ConfigObjectAttribute.cs" Link="Attributes\ConfigObjectAttribute.cs" />
+    <!-- Including these files this way avoids requiring a hard reference to the runtime .dll in the generator -->
+    <Compile Include="..\ConfigLoader\Attributes\ConfigFieldAttribute.cs" Link="Imported\ConfigFieldAttribute.cs" />
+    <Compile Include="..\ConfigLoader\Attributes\ConfigObjectAttribute.cs" Link="Imported\ConfigObjectAttribute.cs" />
+    <Compile Include="..\ConfigLoader\Exceptions\MissingRequiredConfigFieldException.cs" Link="Imported\MissingRequiredConfigFieldException.cs" />
   </ItemGroup>
 
   <ItemGroup>
