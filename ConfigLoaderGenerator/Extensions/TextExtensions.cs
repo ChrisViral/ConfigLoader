@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace ConfigLoaderGenerator.Extensions;
 
-public static class TextExtensions
+internal static class TextExtensions
 {
     #region Source extensions
     /// <summary>
