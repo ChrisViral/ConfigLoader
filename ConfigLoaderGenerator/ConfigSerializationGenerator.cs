@@ -22,7 +22,7 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        IncrementalValuesProvider<ConfigTemplate> configDataProvider = context.SyntaxProvider.CreateSyntaxProvider(FilterConfigClasses, CreateConfigTemplate);
+        IncrementalValuesProvider<ConfigBuilder> configDataProvider = context.SyntaxProvider.CreateSyntaxProvider(FilterConfigClasses, CreateConfigTemplate);
         context.RegisterSourceOutput(configDataProvider, GenerateConfigMethods);
     }
 
@@ -54,32 +54,32 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// Creates the <see cref="ConfigTemplate"/> associated with the current syntax context
+    /// Creates the <see cref="ConfigBuilder"/> associated with the current syntax context
     /// </summary>
     /// <param name="context">Current generator context</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns>The created <see cref="ConfigTemplate"/></returns>
+    /// <returns>The created <see cref="ConfigBuilder"/></returns>
     /// <exception cref="OperationCanceledException">If the operation is cancelled through the <paramref name="token"/></exception>
-    private static ConfigTemplate CreateConfigTemplate(GeneratorSyntaxContext context, CancellationToken token)
+    private static ConfigBuilder CreateConfigTemplate(GeneratorSyntaxContext context, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
 
         // Create config template source generation
-        return new ConfigTemplate(context);
+        return new ConfigBuilder(context);
     }
 
     /// <summary>
     /// Generates the source file for the given template
     /// </summary>
     /// <param name="context">Current source context</param>
-    /// <param name="template">Config template to generate the source for</param>
+    /// <param name="builder">Config template to generate the source for</param>
     /// <exception cref="OperationCanceledException">If the operation is cancelled through the <paramref name="context"/></exception>
-    private static void GenerateConfigMethods(SourceProductionContext context, ConfigTemplate template)
+    private static void GenerateConfigMethods(SourceProductionContext context, ConfigBuilder builder)
     {
         context.CancellationToken.ThrowIfCancellationRequested();
 
         // Generate source file and add to compilation
-        (string fileName, string source) = template.GenerateSource();
+        (string fileName, string source) = builder.GenerateSource();
         context.AddSource(fileName, source);
     }
     #endregion

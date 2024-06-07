@@ -1,4 +1,6 @@
 ﻿using System;
+using ConfigLoaderGenerator.Constants;
+using Microsoft.CodeAnalysis;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -10,7 +12,8 @@ namespace ConfigLoaderGenerator.SourceBuilding.Statements;
 /// Using statement
 /// </summary>
 /// <param name="usingNamespace">Namespace to use</param>
-public sealed class UsingStatement(string usingNamespace) : DeclarationStatement(Keyword.Using, usingNamespace), IEquatable<UsingStatement>, IComparable<UsingStatement>
+/// ReSharper disable once SuggestBaseTypeForParameterInConstructor
+public sealed class UsingStatement(INamespaceSymbol usingNamespace) : DeclarationStatement(Keyword.Using, usingNamespace.Name), IEquatable<UsingStatement>, IComparable<UsingStatement>
 {
     /// <summary>
     /// System namespace

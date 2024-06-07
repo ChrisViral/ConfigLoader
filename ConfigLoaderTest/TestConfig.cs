@@ -1,4 +1,5 @@
 ﻿using ConfigLoader.Attributes;
+using UnityEngine;
 
 namespace ConfigLoaderTest;
 
@@ -11,4 +12,11 @@ public partial class TestConfig
     public float floatValue = 0f;
     [ConfigField]
     public string stringValue = string.Empty;
+
+    [ConfigField]
+    public string StringProperty { get; set; }
+
+    public void Test(ConfigNode node)
+    {
+    }
 }

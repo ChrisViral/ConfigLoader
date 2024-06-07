@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using ConfigLoaderGenerator.Constants;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\

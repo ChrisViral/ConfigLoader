@@ -38,7 +38,7 @@ public class SourceBuilder(INamedTypeSymbol type)
     /// </summary>
     /// <param name="usingNamespace">Namespace to add as using statement for</param>
     /// <returns><see langword="true"/> if the using statement was successfully added, <see langword="false"/> otherwise</returns>
-    public bool AddUsingStatement(string usingNamespace) => this.usings.Add(new UsingStatement(usingNamespace));
+    public bool AddUsingStatement(INamespaceSymbol usingNamespace) => this.usings.Add(new UsingStatement(usingNamespace));
 
     /// <summary>
     /// Adds a namespace scope to the source and returns it

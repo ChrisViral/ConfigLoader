@@ -23,6 +23,10 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public ITypeSymbol Type { get; }
     /// <summary>
+    /// If this field targets a property
+    /// </summary>
+    public bool IsProperty { get; }
+    /// <summary>
     /// If this field is required
     /// </summary>
     public bool IsRequired { get; } = ConfigFieldAttribute.DefaultIsRequired;
@@ -46,14 +50,22 @@ public readonly struct ConfigFieldMetadata
     /// <param name="data">Attribute data to parse the metadata from</param>
     public ConfigFieldMetadata(ISymbol symbol, AttributeData data)
     {
-
         this.Symbol = symbol;
-        this.Type = symbol switch
+        switch (symbol)
         {
-            IFieldSymbol field       => field.Type,
-            IPropertySymbol property => property.Type,
-            _                        => throw new InvalidOperationException("Invalid symbol type to create ConfigFieldMetadata")
-        };
+            case IFieldSymbol field:
+                this.Type       = field.Type;
+                this.IsProperty = false;
+                break;
+
+            case IPropertySymbol property:
+                this.Type       = property.Type;
+                this.IsProperty = true;
+                break;
+
+            default:
+                throw new InvalidOperationException($"Cannot parse field for {symbol.GetType().Name} symbol");
+        }
 
         foreach ((string name, TypedConstant value) in data.NamedArguments)
         {
