@@ -12,18 +12,6 @@ internal static class SymbolExtensions
 {
     #region Attribute extensions
     /// <summary>
-    /// Gets the first attribute of type <typeparamref name="T"/> attached to the <paramref name="symbol"/>
-    /// </summary>
-    /// <typeparam name="T">Attribute type to get</typeparam>
-    /// <param name="symbol">Symbol to get the attribute on</param>
-    /// <returns>The found attribute</returns>
-    /// <exception cref="InvalidOperationException">If no attribute <typeparamref name="T" /> was found</exception>
-    public static AttributeData GetAttribute<T>(this ISymbol symbol) where T : Attribute
-    {
-        return symbol.GetAttributes().First(data => data.AttributeClass?.Name == typeof(T).Name);
-    }
-
-    /// <summary>
     /// Tries to get the first attribute of type <typeparamref name="T"/> attached to the <paramref name="symbol"/>
     /// </summary>
     /// <typeparam name="T">Attribute type to get</typeparam>

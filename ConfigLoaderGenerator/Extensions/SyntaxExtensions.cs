@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using ConfigLoader.Attributes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -18,56 +15,6 @@ namespace ConfigLoaderGenerator.Extensions;
 
 internal static class SyntaxExtensions
 {
-    #region Attribute extensions
-    /// <summary>
-    /// Suffix for attribute classes
-    /// </summary>
-    private const string ATTRIBUTE_SUFFIX = "Attribute";
-
-    /// <summary>
-    /// Checks if the <paramref name="attribute"/> matches the name of <typeparamref name="T"/><br/>
-    /// This check passes if <c>"Attribute"</c> is added to the name of <paramref name="attribute"/>
-    /// </summary>
-    /// <typeparam name="T">Type of attribute to find</typeparam>
-    /// <param name="attribute">Attribute to check</param>
-    /// <returns><see langword="true"/> if the <paramref name="attribute"/> is of type <typeparamref name="T"/>, otherwise <see langword="false"/></returns>
-    public static bool IsAttribute<T>(this AttributeSyntax attribute) where T : Attribute
-    {
-        string syntaxName = attribute.Name.ToString();
-        string attributeName = typeof(T).Name;
-
-        // Normalize for "Attribute" end
-        if (!syntaxName.EndsWith(ATTRIBUTE_SUFFIX) && attributeName.EndsWith(ATTRIBUTE_SUFFIX))
-        {
-            // Removes chunk the same length as the suffix from the end
-            attributeName = attributeName.Substring(0, attributeName.Length - ATTRIBUTE_SUFFIX.Length);
-        }
-
-        return syntaxName == attributeName;
-    }
-
-    /// <summary>
-    /// Gets an enumerable of all the attributes of the given <paramref name="member"/>
-    /// </summary>
-    /// <param name="member">Member to get the attributes for</param>
-    /// <returns>An <see cref="IEnumerable"/> listing all the attributes of <paramref name="member"/></returns>
-    public static IEnumerable<AttributeSyntax> GetAttributes(this MemberDeclarationSyntax member)
-    {
-        return member.AttributeLists.SelectMany(al => al.Attributes);
-    }
-
-    /// <summary>
-    /// Checks if a <paramref name="member"/> has an attribute matching <typeparamref name="T"/>
-    /// </summary>
-    /// <typeparam name="T">Type of attribute to find</typeparam>
-    /// <param name="member">Member to check</param>
-    /// <returns><see langword="true"/> if the <paramref name="member"/> has an attribute matching <typeparamref name="T"/>, otherwise <see langword="false"/></returns>
-    public static bool HasAttribute<T>(this MemberDeclarationSyntax member) where T : Attribute
-    {
-        return member.GetAttributes().Any(a => a.IsAttribute<T>());
-    }
-    #endregion
-
     #region Syntax building extensions
     /// <summary>
     /// Gets the keyword associated to the given access modifier
@@ -77,10 +24,10 @@ internal static class SyntaxExtensions
     /// <exception cref="InvalidEnumArgumentException"></exception>
     public static SyntaxToken GetKeyword(this AccessModifier modifier) => modifier switch
     {
-        AccessModifier.Private   => Token(SyntaxKind.PrivateKeyword),
-        AccessModifier.Protected => Token(SyntaxKind.ProtectedKeyword),
-        AccessModifier.Internal  => Token(SyntaxKind.InternalKeyword),
-        AccessModifier.Public    => Token(SyntaxKind.PublicKeyword),
+        AccessModifier.Private   => SyntaxKind.PrivateKeyword.Tokenize(),
+        AccessModifier.Protected => SyntaxKind.ProtectedKeyword.Tokenize(),
+        AccessModifier.Internal  => SyntaxKind.InternalKeyword.Tokenize(),
+        AccessModifier.Public    => SyntaxKind.PublicKeyword.Tokenize(),
         _                        => throw new InvalidEnumArgumentException(nameof(modifier), (int)modifier, typeof(AccessModifier))
     };
 
