@@ -35,6 +35,14 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public string Name { get; } = string.Empty;
     /// <summary>
+    /// Name of the field associated to this metadata
+    /// </summary>
+    public string FieldName { get; }
+    /// <summary>
+    /// Name of the type of the field
+    /// </summary>
+    public string TypeName { get; }
+    /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
     public string? NodeNameValue { get; }
@@ -50,7 +58,8 @@ public readonly struct ConfigFieldMetadata
     /// <param name="data">Attribute data to parse the metadata from</param>
     public ConfigFieldMetadata(ISymbol symbol, AttributeData data)
     {
-        this.Symbol = symbol;
+        this.Symbol    = symbol;
+        this.FieldName = symbol.Name;
         switch (symbol)
         {
             case IFieldSymbol field:
@@ -67,6 +76,7 @@ public readonly struct ConfigFieldMetadata
                 throw new InvalidOperationException($"Cannot parse field for {symbol.GetType().Name} symbol");
         }
 
+        this.TypeName = this.Type.Name;
         foreach ((string name, TypedConstant value) in data.NamedArguments)
         {
             if (value.Value is null) continue;
@@ -94,7 +104,7 @@ public readonly struct ConfigFieldMetadata
         // Ensure a serialization name is set
         if (string.IsNullOrWhiteSpace(this.Name))
         {
-            this.Name = symbol.Name;
+            this.Name = this.FieldName;
         }
     }
 }

@@ -24,10 +24,10 @@ internal static class SyntaxExtensions
     /// <exception cref="InvalidEnumArgumentException"></exception>
     public static SyntaxToken GetKeyword(this AccessModifier modifier) => modifier switch
     {
-        AccessModifier.Private   => SyntaxKind.PrivateKeyword.Tokenize(),
-        AccessModifier.Protected => SyntaxKind.ProtectedKeyword.Tokenize(),
-        AccessModifier.Internal  => SyntaxKind.InternalKeyword.Tokenize(),
-        AccessModifier.Public    => SyntaxKind.PublicKeyword.Tokenize(),
+        AccessModifier.Private   => Token(SyntaxKind.PrivateKeyword),
+        AccessModifier.Protected => Token(SyntaxKind.ProtectedKeyword),
+        AccessModifier.Internal  => Token(SyntaxKind.InternalKeyword),
+        AccessModifier.Public    => Token(SyntaxKind.PublicKeyword),
         _                        => throw new InvalidEnumArgumentException(nameof(modifier), (int)modifier, typeof(AccessModifier))
     };
 
@@ -44,14 +44,14 @@ internal static class SyntaxExtensions
     /// </summary>
     /// <param name="keyword">Keyword to tokenize</param>
     /// <returns>The token associated to <paramref name="keyword"/></returns>
-    public static SyntaxToken Tokenize(this SyntaxKind keyword) => Token(keyword);
+    public static SyntaxToken AsToken(this SyntaxKind keyword) => Token(keyword);
 
     /// <summary>
     /// Creates a <see cref="SyntaxToken"/> from the given <see cref="string"/> value
     /// </summary>
     /// <param name="name">Value to tokenize</param>
     /// <returns>The token associated to <paramref name="name"/></returns>
-    public static SyntaxToken Tokenize(this string name) => Identifier(name);
+    public static SyntaxToken AsToken(this string name) => Identifier(name);
 
     /// <summary>
     /// Create an <see cref="IdentifierNameSyntax"/> from the given <see cref="string"/> value
@@ -59,5 +59,19 @@ internal static class SyntaxExtensions
     /// <param name="name">Value to create an identifier for</param>
     /// <returns>The value as an <see cref="IdentifierNameSyntax"/></returns>
     public static IdentifierNameSyntax AsIdentifier(this string name) => IdentifierName(name);
+
+    /// <summary>
+    /// Creates a literal expression from the given value
+    /// </summary>
+    /// <param name="value">Value to get the literal for</param>
+    /// <returns>A literal expression of the given value</returns>
+    public static LiteralExpressionSyntax ToLiteral(this int value) => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(value));
+
+    /// <summary>
+    /// Creates a literal expression from the given value
+    /// </summary>
+    /// <param name="value">Value to get the literal for</param>
+    /// <returns>A literal expression of the given value</returns>
+    public static LiteralExpressionSyntax ToLiteral(this string value) => LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(value));
     #endregion
 }

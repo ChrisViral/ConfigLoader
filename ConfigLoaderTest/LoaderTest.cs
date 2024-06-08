@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using ConfigLoaderTest.Test;
+using UnityEngine;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
