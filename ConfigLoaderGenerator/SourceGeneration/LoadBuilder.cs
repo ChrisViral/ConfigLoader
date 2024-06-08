@@ -28,6 +28,7 @@ public static class LoadBuilder
     /// IsNullOrEmpty method identifier
     /// </summary>
     private static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsIdentifier();
+
     /// <summary>
     /// Types that have a static Parse method implementation
     /// </summary>
@@ -68,17 +69,18 @@ public static class LoadBuilder
     /// <exception cref="InvalidOperationException">If the generator does not know how to load the given field type</exception>
     public static BlockSyntax GenerateFieldLoad(BlockSyntax body, ExpressionSyntax value, ConfigFieldMetadata field, ISet<INamespaceSymbol> usedNamespaces)
     {
+        // Find best save option
         string typeName = field.Type.FullName();
         if (ParseableTypes.Contains(typeName))
         {
             return GenerateParseFieldLoad(body, value, field, usedNamespaces);
         }
-
         if (AssignableTypes.Contains(typeName))
         {
             return GenerateAssignFieldLoad(body, value, field);
         }
 
+        // Unknown type
         throw new InvalidOperationException($"Unknown type to parse {typeName}");
     }
 
@@ -104,7 +106,7 @@ public static class LoadBuilder
         ExpressionSyntax tryParse = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, type, TryParse);
         ExpressionSyntax tryParseInvocation = InvocationExpression(tryParse).AddArgumentListArguments(Argument(value), outVar);
 
-        // this.value = _value
+        // this.value = _value;
         ExpressionSyntax fieldAccess = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ThisExpression(), field.FieldName.AsIdentifier());
         ExpressionSyntax fieldAssign = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, fieldAccess, tempVar.Identifier);
 
@@ -131,11 +133,11 @@ public static class LoadBuilder
         ExpressionSyntax isNotNullOrEmptyInvocation = PrefixUnaryExpression(SyntaxKind.LogicalNotExpression,
                                                                             InvocationExpression(isNullOrEmpty).AddArgumentListArguments(Argument(value)));
 
-        // this.value = value.value
+        // this.value = value.value;
         ExpressionSyntax fieldAccess = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ThisExpression(), field.FieldName.AsIdentifier());
         ExpressionSyntax fieldAssign = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, fieldAccess, value);
 
-        // if(!string.IsNullOrEmpty(value.value)
+        // if(!string.IsNullOrEmpty(value.value))
         BlockSyntax ifBlock = Block(SingletonList(ExpressionStatement(fieldAssign)));
         IfStatementSyntax ifStatement = IfStatement(isNotNullOrEmptyInvocation, ifBlock);
 

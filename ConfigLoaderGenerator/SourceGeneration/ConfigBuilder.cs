@@ -29,7 +29,7 @@ public static class ConfigBuilder
     /// <summary>
     /// ConfigNode parameter
     /// </summary>
-    private static readonly ValueIdentifier Node = new("node");
+    public static readonly ValueIdentifier Node = new("node");
     /// <summary>
     /// For index variable
     /// </summary>
@@ -139,10 +139,10 @@ public static class ConfigBuilder
     /// <summary>
     /// Generates a load method for the given type
     /// </summary>
-    /// <param name="method">Method declaration</param>
+    /// <param name="method">Load method declaration</param>
     /// <param name="fields">List of fields to generate load code for</param>
     /// <param name="usedNamespaces">Used namespaces</param>
-    /// <returns>The edited method declaration with the code generated</returns>
+    /// <returns>The edited load method declaration with the load code generated</returns>
     private static MethodDeclarationSyntax GenerateLoadMethod(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, ISet<INamespaceSymbol> usedNamespaces)
     {
         // node.ValueCount
@@ -182,10 +182,10 @@ public static class ConfigBuilder
     /// <returns>The generated for loop</returns>
     private static ForStatementSyntax GenerateForLoop(ValueIdentifier index, ExpressionSyntax count)
     {
-        // int i
+        // int
         VariableDeclarationSyntax indexDeclaration = VariableDeclaration(SyntaxKind.IntKeyword.Type());
         // i = 0
-        ExpressionSyntax indexVariable = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, Index.Identifier, 0.ToLiteral());
+        ExpressionSyntax indexVariable = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, Index.Identifier, 0.AsLiteral());
         // i < count
         ExpressionSyntax condition  = BinaryExpression(SyntaxKind.LessThanExpression, index.Identifier, count);
         // i++
@@ -203,7 +203,7 @@ public static class ConfigBuilder
     private static SwitchSectionSyntax GenerateFieldSwitchSection(ConfigFieldMetadata field, ISet<INamespaceSymbol> usedNamespaces)
     {
         // case "name":
-        SwitchLabelSyntax label = CaseSwitchLabel(field.Name.ToLiteral());
+        SwitchLabelSyntax label = CaseSwitchLabel(field.Name.AsLiteral());
         BlockSyntax body = Block();
 
         // value.value
@@ -218,30 +218,40 @@ public static class ConfigBuilder
     #endregion
 
     #region Save
+    /// <summary>
+    /// Generates a save method for the given type
+    /// </summary>
+    /// <param name="method">Save method declaration</param>
+    /// <param name="fields">List of fields to generate save code for</param>
+    /// <param name="usedNamespaces">Used namespaces</param>
+    /// <returns>The edited save method declaration with the save code generated</returns>
     private static MethodDeclarationSyntax GenerateSaveMethod(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, ISet<INamespaceSymbol> usedNamespaces)
     {
         // ReSharper disable once LoopCanBeConvertedToQuery
         foreach (ConfigFieldMetadata field in fields)
         {
+            // Add save for every field
             method = GenerateFieldSave(method, field, usedNamespaces);
         }
 
         return method;
     }
 
+    /// <summary>
+    /// Generates the save code for the given field
+    /// </summary>
+    /// <param name="method">Save method declaration</param>
+    /// <param name="field">Field to generate the save code for</param>
+    /// <param name="usedNamespaces">Used namespaces</param>
+    /// <returns>The edited save method declaration with the field save code generated</returns>
     private static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax method, ConfigFieldMetadata field, ISet<INamespaceSymbol> usedNamespaces)
     {
         // Variables
-        ArgumentSyntax nameArgument = Argument(field.Name.ToLiteral());
-        ArgumentSyntax member       = Argument(MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ThisExpression(), field.FieldName.AsIdentifier()));
-        ExpressionSyntax addValue   = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, Node.Identifier, "AddValue".AsIdentifier());
+        ExpressionSyntax name = field.Name.AsLiteral();
+        ExpressionSyntax value = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ThisExpression(), field.FieldName.AsIdentifier());
 
-        // node.AddValue("value", this.value);
-        ExpressionSyntax addValueInvocation = InvocationExpression(addValue).AddArgumentListArguments(nameArgument, member);
-
-        // Add statements to method body
-        method = method.AddBodyStatements(ExpressionStatement(addValueInvocation));
-        return method;
+        // Value saving implementation
+        return SaveBuilder.GenerateFieldSave(method, name, value, field, usedNamespaces);
     }
     #endregion
 }

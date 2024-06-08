@@ -65,13 +65,13 @@ internal static class SyntaxExtensions
     /// </summary>
     /// <param name="value">Value to get the literal for</param>
     /// <returns>A literal expression of the given value</returns>
-    public static LiteralExpressionSyntax ToLiteral(this int value) => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(value));
+    public static LiteralExpressionSyntax AsLiteral(this int value) => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(value));
 
     /// <summary>
     /// Creates a literal expression from the given value
     /// </summary>
     /// <param name="value">Value to get the literal for</param>
     /// <returns>A literal expression of the given value</returns>
-    public static LiteralExpressionSyntax ToLiteral(this string value) => LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(value));
+    public static LiteralExpressionSyntax AsLiteral(this string value) => LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(value));
     #endregion
 }
