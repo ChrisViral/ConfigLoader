@@ -6,6 +6,7 @@ using System.Threading;
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
+using ConfigLoaderGenerator.SourceGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

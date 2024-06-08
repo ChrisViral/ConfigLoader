@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using ConfigLoaderGenerator.Extensions;
+using ConfigLoaderGenerator.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -13,7 +14,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
 \* and explicitly credited, that you do not use this material to a commercial use, and that you distribute it under the same license.     */
 
-namespace ConfigLoaderGenerator;
+namespace ConfigLoaderGenerator.SourceGeneration;
 
 /// <summary>
 /// ConfigNode Load/Save source builder
@@ -44,10 +45,10 @@ public static class ConfigBuilder
         // Declare the type we edit
         TypeDeclarationSyntax type = data.Syntax switch
         {
-            ClassDeclarationSyntax         => ClassDeclaration(data.Syntax.Identifier),
-            StructDeclarationSyntax        => StructDeclaration(data.Syntax.Identifier),
+            ClassDeclarationSyntax => ClassDeclaration(data.Syntax.Identifier),
+            StructDeclarationSyntax => StructDeclaration(data.Syntax.Identifier),
             RecordDeclarationSyntax record => RecordDeclaration(record.ClassOrStructKeyword, record.Identifier),
-            _                              => throw new InvalidOperationException($"Invalid generation type kind ({data.Syntax.GetType().Name})")
+            _ => throw new InvalidOperationException($"Invalid generation type kind ({data.Syntax.GetType().Name})")
         };
         type = type.WithModifiers(data.Syntax.Modifiers);
 
@@ -83,7 +84,7 @@ public static class ConfigBuilder
 
             // Add header comment
             usingDirectives[0] = usingDirectives[0].WithLeadingTrivia(GeneratedComment);
-            root               = root.AddUsings(usingDirectives);
+            root = root.AddUsings(usingDirectives);
         }
         else
         {

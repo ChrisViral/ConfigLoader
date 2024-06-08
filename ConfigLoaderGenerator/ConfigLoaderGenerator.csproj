@@ -13,7 +13,7 @@
 
     <Title>ConfigLoader Generator</Title>
     <Description>Source Generator to handle automatic loading of ConfigNodes for KSP</Description>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Product>ConfigLoaderGenerator</Product>
     <Authors>Christophe Savard (stupid_chris)</Authors>
     <Copyright>Copyright © Christophe Savard (stupid_chris) 2024</Copyright>
@@ -41,6 +41,8 @@
     <Folder Include="Properties\" />
     <Folder Include="Extensions\" />
     <Folder Include="Metadata\" />
+    <Folder Include="SourceGeneration\" />
+    <Folder Include="Utils\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,8 +57,8 @@
     <None Include="..\README.md" Pack="true" PackagePath="$(PackageReadmeFile)" />
 
     <!-- These are dummy files required for the package to install on .NET Framework 4.7 and 4.8 -->
-    <None Include="_._" Pack="true" PackagePath="lib/net48" />
     <None Include="_._" Pack="true" PackagePath="lib/net47" />
+    <None Include="_._" Pack="true" PackagePath="lib/net48" />
   </ItemGroup>
 
 </Project>
