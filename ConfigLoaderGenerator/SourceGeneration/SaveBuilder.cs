@@ -1,10 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Numerics;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -67,15 +64,15 @@ public static class SaveBuilder
     /// <param name="name">Name expression</param>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
-    /// <param name="usedNamespaces">Used namespaces</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field save code generated</returns>
     /// <exception cref="InvalidOperationException">If the generator does not know how to save the given field type</exception>
-    public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, ConfigFieldMetadata field, ISet<INamespaceSymbol> usedNamespaces)
+    public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         string typeName = field.Type.FullName();
         if (AddValueTypes.Contains(typeName))
         {
-            return GenerateAddValueSave(body, name, value, field);
+            return GenerateAddValueSave(body, name, value, field, context);
         }
 
         throw new InvalidOperationException($"Unknown type to save {typeName}");
@@ -88,8 +85,9 @@ public static class SaveBuilder
     /// <param name="name">Name expression</param>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field save code generated</returns>
-    public static MethodDeclarationSyntax GenerateAddValueSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, ConfigFieldMetadata field)
+    public static MethodDeclarationSyntax GenerateAddValueSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // node.AddValue("value", this.value);
         ExpressionSyntax addValue = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ConfigBuilder.Node.Identifier, AddValue);

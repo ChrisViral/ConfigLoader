@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Utils;
@@ -7,7 +8,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using Microsoft.CodeAnalysis;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -64,20 +64,20 @@ public static class LoadBuilder
     /// <param name="body">Statement body</param>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
-    /// <param name="usedNamespaces">Used namespaces</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
     /// <exception cref="InvalidOperationException">If the generator does not know how to load the given field type</exception>
-    public static BlockSyntax GenerateFieldLoad(BlockSyntax body, ExpressionSyntax value, ConfigFieldMetadata field, ISet<INamespaceSymbol> usedNamespaces)
+    public static BlockSyntax GenerateFieldLoad(BlockSyntax body, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save option
         string typeName = field.Type.FullName();
         if (ParseableTypes.Contains(typeName))
         {
-            return GenerateParseFieldLoad(body, value, field, usedNamespaces);
+            return GenerateParseFieldLoad(body, value, field, context);
         }
         if (AssignableTypes.Contains(typeName))
         {
-            return GenerateAssignFieldLoad(body, value, field);
+            return GenerateAssignFieldLoad(body, value, field, context);
         }
 
         // Unknown type
@@ -90,9 +90,9 @@ public static class LoadBuilder
     /// <param name="body">Statement body</param>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
-    /// <param name="usedNamespaces">Used namespaces</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateParseFieldLoad(BlockSyntax body, ExpressionSyntax value, ConfigFieldMetadata field, ISet<INamespaceSymbol> usedNamespaces)
+    private static BlockSyntax GenerateParseFieldLoad(BlockSyntax body, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Variables
         ValueIdentifier tempVar   = new($"_{field.FieldName}");
@@ -115,7 +115,7 @@ public static class LoadBuilder
         IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
 
         // Add namespace and statement, then return
-        usedNamespaces.Add(field.Type.ContainingNamespace);
+        context.UsedNamespaces.AddNamespace(field.Type.ContainingNamespace);
         return body.AddStatements(ifStatement);
     }
 
@@ -125,8 +125,9 @@ public static class LoadBuilder
     /// <param name="body">Statement body</param>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateAssignFieldLoad(BlockSyntax body, ExpressionSyntax value, ConfigFieldMetadata field)
+    private static BlockSyntax GenerateAssignFieldLoad(BlockSyntax body, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // !string.IsNullOrEmpty(value.value)
         ExpressionSyntax isNullOrEmpty = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, SyntaxKind.StringKeyword.Type(), IsNullOrEmpty);

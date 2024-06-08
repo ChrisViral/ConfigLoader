@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,6 +16,13 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 \* and explicitly credited, that you do not use this material to a commercial use, and that you distribute it under the same license.     */
 
 namespace ConfigLoaderGenerator.SourceGeneration;
+
+/// <summary>
+/// <see cref="ConfigBuilder"/> source generation context
+/// </summary>
+/// <param name="UsedNamespaces">Set of used namespaces</param>
+/// <param name="Token">Source generation cancellation token</param>
+public readonly record struct ConfigBuilderContext(NamespaceSet UsedNamespaces, CancellationToken Token);
 
 /// <summary>
 /// ConfigNode Load/Save source builder
@@ -69,7 +76,7 @@ public static class ConfigBuilder
 
         // Compilation root
         CompilationUnitSyntax root = CompilationUnit();
-        HashSet<INamespaceSymbol> usedNamespaces = [];
+        ConfigBuilderContext context = new([], token);
 
         // Declare the type we edit
         TypeDeclarationSyntax type = data.Syntax switch
@@ -93,43 +100,38 @@ public static class ConfigBuilder
                                             .WithBody(Block());
 
         // Generate load and save method code
-        loadMethod = GenerateLoadMethod(loadMethod, data.Fields, usedNamespaces);
-        saveMethod = GenerateSaveMethod(saveMethod, data.Fields, usedNamespaces);
+        loadMethod = GenerateLoadMethod(loadMethod, data.Fields, context);
+        saveMethod = GenerateSaveMethod(saveMethod, data.Fields, context);
 
         // Add methods to type
         type = type.AddMembers(loadMethod, saveMethod);
 
         // Add namespace if needed
-        MemberDeclarationSyntax parentDeclaration = type;
+        MemberDeclarationSyntax rootDeclaration = type;
         if (data.Type.ContainingNamespace is not null)
         {
-            parentDeclaration = NamespaceDeclaration(data.Type.Namespace().AsIdentifier()).AddMembers(type);
+            rootDeclaration = NamespaceDeclaration(data.Type.Namespace().AsIdentifier()).AddMembers(type);
         }
 
         // Add usings
-        if (usedNamespaces.Count > 0)
+        if (context.UsedNamespaces.Count > 0)
         {
-            UsingDirectiveSyntax[] usingDirectives = usedNamespaces.OrderBy(u => u, UsingComparer.Comparer)
-                                                                    .Select(u => UsingDirective(u.ToDisplayString().AsIdentifier()))
-                                                                    .ToArray();
+            UsingDirectiveSyntax[] usingDirectives = context.UsedNamespaces.GetUsings().ToArray();
 
             // Add header comment
             usingDirectives[0] = usingDirectives[0].WithLeadingTrivia(GeneratedComment);
             root = root.AddUsings(usingDirectives);
-
-            // Clear out, no longer needed
-            usedNamespaces.Clear();
         }
         else
         {
             // Add header comment
-            parentDeclaration = parentDeclaration.WithLeadingTrivia(GeneratedComment);
+            rootDeclaration = rootDeclaration.WithLeadingTrivia(GeneratedComment);
         }
 
         // Add topmost member to root
-        root = root.AddMembers(parentDeclaration);
+        root = root.AddMembers(rootDeclaration);
 
-        // Output
+        // This should get the EOL string from the user settings
         string lineFeed = CarriageReturnLineFeed.ToFullString();
         root = root.NormalizeWhitespace(eol: lineFeed);
         return ($"{data.Type.FullName()}.generated.cs", root.ToFullString() + lineFeed);
@@ -141,9 +143,9 @@ public static class ConfigBuilder
     /// </summary>
     /// <param name="method">Load method declaration</param>
     /// <param name="fields">List of fields to generate load code for</param>
-    /// <param name="usedNamespaces">Used namespaces</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The edited load method declaration with the load code generated</returns>
-    private static MethodDeclarationSyntax GenerateLoadMethod(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, ISet<INamespaceSymbol> usedNamespaces)
+    private static MethodDeclarationSyntax GenerateLoadMethod(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
     {
         // node.ValueCount
         ExpressionSyntax valueCount     = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, Node.Identifier, Count.Identifier);
@@ -165,7 +167,7 @@ public static class ConfigBuilder
         foreach (ConfigFieldMetadata field in fields)
         {
             // Add sections for every field
-            nameSwitchStatement = nameSwitchStatement.AddSections(GenerateFieldSwitchSection(field, usedNamespaces));
+            nameSwitchStatement = nameSwitchStatement.AddSections(GenerateFieldSwitchSection(field, context));
         }
 
         // Add statements and return
@@ -179,8 +181,9 @@ public static class ConfigBuilder
     /// </summary>
     /// <param name="index">Index variable identifier</param>
     /// <param name="count">Count expression</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The generated for loop</returns>
-    private static ForStatementSyntax GenerateForLoop(ValueIdentifier index, ExpressionSyntax count)
+    private static ForStatementSyntax GenerateForLoop(ValueIdentifier index, ExpressionSyntax count, in ConfigBuilderContext context)
     {
         // int
         VariableDeclarationSyntax indexDeclaration = VariableDeclaration(SyntaxKind.IntKeyword.Type());
@@ -198,9 +201,9 @@ public static class ConfigBuilder
     /// Generates a switch section for the given field
     /// </summary>
     /// <param name="field">Field to generate the switch section for</param>
-    /// <param name="usedNamespaces">Used namespaces set</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The generated switch section</returns>
-    private static SwitchSectionSyntax GenerateFieldSwitchSection(ConfigFieldMetadata field, ISet<INamespaceSymbol> usedNamespaces)
+    private static SwitchSectionSyntax GenerateFieldSwitchSection(ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // case "name":
         SwitchLabelSyntax label = CaseSwitchLabel(field.Name.AsLiteral());
@@ -209,7 +212,7 @@ public static class ConfigBuilder
         // value.value
         ExpressionSyntax value = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, Value.Identifier, Value.Identifier);
         // Value parsing implementation
-        body = LoadBuilder.GenerateFieldLoad(body, value, field, usedNamespaces);
+        body = LoadBuilder.GenerateFieldLoad(body, value, field, context);
 
         // Add break statement, then Create section with label and body
         body = body.AddStatements(BreakStatement());
@@ -223,15 +226,15 @@ public static class ConfigBuilder
     /// </summary>
     /// <param name="method">Save method declaration</param>
     /// <param name="fields">List of fields to generate save code for</param>
-    /// <param name="usedNamespaces">Used namespaces</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the save code generated</returns>
-    private static MethodDeclarationSyntax GenerateSaveMethod(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, ISet<INamespaceSymbol> usedNamespaces)
+    private static MethodDeclarationSyntax GenerateSaveMethod(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
     {
         // ReSharper disable once LoopCanBeConvertedToQuery
         foreach (ConfigFieldMetadata field in fields)
         {
             // Add save for every field
-            method = GenerateFieldSave(method, field, usedNamespaces);
+            method = GenerateFieldSave(method, field, context);
         }
 
         return method;
@@ -242,16 +245,16 @@ public static class ConfigBuilder
     /// </summary>
     /// <param name="method">Save method declaration</param>
     /// <param name="field">Field to generate the save code for</param>
-    /// <param name="usedNamespaces">Used namespaces</param>
+    /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field save code generated</returns>
-    private static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax method, ConfigFieldMetadata field, ISet<INamespaceSymbol> usedNamespaces)
+    private static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax method, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Variables
         ExpressionSyntax name = field.Name.AsLiteral();
         ExpressionSyntax value = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ThisExpression(), field.FieldName.AsIdentifier());
 
         // Value saving implementation
-        return SaveBuilder.GenerateFieldSave(method, name, value, field, usedNamespaces);
+        return SaveBuilder.GenerateFieldSave(method, name, value, field, context);
     }
     #endregion
 }
