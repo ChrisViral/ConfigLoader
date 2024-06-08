@@ -41,7 +41,6 @@
     <Folder Include="Properties\" />
     <Folder Include="Extensions\" />
     <Folder Include="Metadata\" />
-    <Folder Include="SourceBuilding\" />
   </ItemGroup>
 
   <ItemGroup>

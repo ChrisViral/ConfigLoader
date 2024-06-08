@@ -16,16 +16,16 @@ public readonly struct ConfigObjectMetadata
     /// <summary>
     /// String value for the default access modifier
     /// </summary>
-    private static readonly string DefaultAccessModifier = ConfigObjectAttribute.DefaultAccessModifier.GetKeyword();
+    private static readonly SyntaxToken DefaultAccessModifier = ConfigObjectAttribute.DefaultAccessModifier.GetKeyword();
 
     /// <summary>
     /// Access modifier of the load method
     /// </summary>
-    public string LoadAccessModifier { get; } = DefaultAccessModifier;
+    public SyntaxToken LoadAccessModifier { get; } = DefaultAccessModifier;
     /// <summary>
     /// Access modifier of the Save method
     /// </summary>
-    public string SaveAccessModifier { get; } = DefaultAccessModifier;
+    public SyntaxToken SaveAccessModifier { get; } = DefaultAccessModifier;
     /// <summary>
     /// Name of the load method
     /// </summary>

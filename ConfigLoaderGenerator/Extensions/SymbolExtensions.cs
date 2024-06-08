@@ -10,6 +10,7 @@ namespace ConfigLoaderGenerator.Extensions;
 
 internal static class SymbolExtensions
 {
+    #region Attribute extensions
     /// <summary>
     /// Gets the first attribute of type <typeparamref name="T"/> attached to the <paramref name="symbol"/>
     /// </summary>
@@ -34,4 +35,5 @@ internal static class SymbolExtensions
         attribute = symbol.GetAttributes().FirstOrDefault(data => data.AttributeClass?.Name == typeof(T).Name);
         return attribute is not null;
     }
+    #endregion
 }

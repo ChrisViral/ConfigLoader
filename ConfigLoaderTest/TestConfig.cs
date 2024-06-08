@@ -1,5 +1,4 @@
 ﻿using ConfigLoader.Attributes;
-using UnityEngine;
 
 namespace ConfigLoaderTest;
 
@@ -18,5 +17,25 @@ public partial class TestConfig
 
     public void Test(ConfigNode node)
     {
+        for (int i = 0; i < node.CountValues; i++)
+        {
+            ConfigNode.Value value = node.values[i];
+            switch (value.name)
+            {
+                case nameof(this.intValue):
+                    if (int.TryParse(value.value, out int _intValue))
+                    {
+                        this.intValue = _intValue;
+                    }
+                    break;
+
+                case nameof(this.floatValue):
+                    if (float.TryParse(value.value, out float _floatValue))
+                    {
+                        this.floatValue = _floatValue;
+                    }
+                    break;
+            }
+        }
     }
 }
