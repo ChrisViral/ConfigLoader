@@ -1,5 +1,4 @@
 ﻿using ConfigLoader.Attributes;
-using UnityEngine;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -19,8 +18,4 @@ public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = E
     /// Default parse options
     /// </summary>
     public static ParseOptions DefaultOptions { get; } = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultSeparators);
-    /// <summary>
-    /// Default <see cref="Matrix4x4"/> parse options
-    /// </summary>
-    public static ParseOptions DefaultMatrixOptions { get; } = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultMatrixSeparators);
 }

@@ -69,9 +69,7 @@ public static class LoadBuilder
         "QuaternionD",
         $"{UnityEngine}.Rect",
         $"{UnityEngine}.Color",
-        $"{UnityEngine}.Color32",
-        $"{UnityEngine}.Matrix4x4",
-        "Matrix4x4D",
+        $"{UnityEngine}.Color32"
     ];
     /// <summary>
     /// Types that can be directly assigned to the field

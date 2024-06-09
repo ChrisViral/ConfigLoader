@@ -1,5 +1,4 @@
-﻿using System;
-using ConfigLoader.Attributes;
+﻿using ConfigLoader.Attributes;
 using ConfigLoader.Extensions;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -22,10 +21,6 @@ public static partial class ParseUtils
     /// Default separators
     /// </summary>
     internal static readonly string[] DefaultSeparators = [","];
-    /// <summary>
-    /// Default <see cref="Matrix4x4"/> separators
-    /// </summary>
-    internal static readonly string[] DefaultMatrixSeparators = [",", " ", "\t"];
 
     /// <summary>
     /// Split the values in a string with the provided options
@@ -402,130 +397,6 @@ public static partial class ParseUtils
         }
 
         result = new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
-        return false;
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="Matrix4x4"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Matrix4x4 result, in ParseOptions? options = null)
-    {
-        // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            result = Matrix4x4.identity;
-            return false;
-        }
-
-        // We use different default separators for matrices, so unless custom separators have been passed, we replace them with the matrix separators
-        string[] splits;
-        if (options?.Separators is { Length: > 0 })
-        {
-            // If the options are not null, and the separators are not null or empty, we keep the custom separators
-            splits = SplitValues(value, options);
-        }
-        else
-        {
-            // Ensure options are not null
-            ParseOptions matrixOptions = options ?? ParseOptions.DefaultMatrixOptions;
-            if (matrixOptions.Separators is not { Length: > 0})
-            {
-                // And ensure separators are not null or empty
-                matrixOptions = matrixOptions with { Separators = DefaultMatrixSeparators };
-            }
-            splits = SplitValues(value, matrixOptions);
-        }
-
-        // Split values and try parsing
-        result = Matrix4x4.identity;
-        if (splits.Length is 16
-         && float.TryParse(splits[00], out result.m00)
-         && float.TryParse(splits[01], out result.m01)
-         && float.TryParse(splits[02], out result.m02)
-         && float.TryParse(splits[03], out result.m03)
-         && float.TryParse(splits[04], out result.m10)
-         && float.TryParse(splits[05], out result.m11)
-         && float.TryParse(splits[06], out result.m12)
-         && float.TryParse(splits[07], out result.m13)
-         && float.TryParse(splits[08], out result.m20)
-         && float.TryParse(splits[09], out result.m21)
-         && float.TryParse(splits[10], out result.m22)
-         && float.TryParse(splits[11], out result.m23)
-         && float.TryParse(splits[12], out result.m30)
-         && float.TryParse(splits[13], out result.m31)
-         && float.TryParse(splits[14], out result.m32)
-         && float.TryParse(splits[15], out result.m33))
-        {
-            return true;
-        }
-
-        result = Matrix4x4.identity;
-        return false;
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="Matrix4x4D"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Matrix4x4D result, in ParseOptions? options = null)
-    {
-        // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            result = Matrix4x4D.Identity();
-            return false;
-        }
-
-        // We use different default separators for matrices, so unless custom separators have been passed, we replace them with the matrix separators
-        string[] splits;
-        if (options?.Separators is { Length: > 0 })
-        {
-            // If the options are not null, and the separators are not null or empty, we keep the custom separators
-            splits = SplitValues(value, options);
-        }
-        else
-        {
-            // Ensure options are not null
-            ParseOptions matrixOptions = options ?? ParseOptions.DefaultMatrixOptions;
-            if (matrixOptions.Separators is not { Length: > 0})
-            {
-                // And ensure separators are not null or empty
-                matrixOptions = matrixOptions with { Separators = DefaultMatrixSeparators };
-            }
-            splits = SplitValues(value, matrixOptions);
-        }
-
-        // Split values and try parsing
-        result = Matrix4x4D.Identity();
-        if (splits.Length is 16
-         && double.TryParse(splits[00], out result.m00)
-         && double.TryParse(splits[01], out result.m01)
-         && double.TryParse(splits[02], out result.m02)
-         && double.TryParse(splits[03], out result.m03)
-         && double.TryParse(splits[04], out result.m10)
-         && double.TryParse(splits[05], out result.m11)
-         && double.TryParse(splits[06], out result.m12)
-         && double.TryParse(splits[07], out result.m13)
-         && double.TryParse(splits[08], out result.m20)
-         && double.TryParse(splits[09], out result.m21)
-         && double.TryParse(splits[10], out result.m22)
-         && double.TryParse(splits[11], out result.m23)
-         && double.TryParse(splits[12], out result.m30)
-         && double.TryParse(splits[13], out result.m31)
-         && double.TryParse(splits[14], out result.m32)
-         && double.TryParse(splits[15], out result.m33))
-        {
-            return true;
-        }
-
-        result = Matrix4x4D.Identity();
         return false;
     }
 }
