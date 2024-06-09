@@ -150,6 +150,8 @@ public static class ConfigBuilder
     /// <returns>The edited load method declaration with the load code generated</returns>
     private static MethodDeclarationSyntax GenerateLoadMethodBody(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
     {
+        context.Token.ThrowIfCancellationRequested();
+
         // for (int i = 0; i < node.ValueCount; i++)
         ForStatementSyntax forStatement = IncrementingForLoop(Index, 0.AsLiteral(), Node.Access(Count));
 
@@ -183,6 +185,8 @@ public static class ConfigBuilder
     /// <returns>The generated switch section</returns>
     private static SwitchSectionSyntax GenerateFieldSwitchSection(ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
+        context.Token.ThrowIfCancellationRequested();
+
         // case "name":
         SwitchLabelSyntax label = field.Name.AsLiteral().AsSwitchLabel();
         // Value parsing implementation
@@ -204,6 +208,8 @@ public static class ConfigBuilder
     /// <returns>The edited save method declaration with the save code generated</returns>
     private static MethodDeclarationSyntax GenerateSaveMethodBody(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
     {
+        context.Token.ThrowIfCancellationRequested();
+
         // ReSharper disable once LoopCanBeConvertedToQuery
         foreach (ConfigFieldMetadata field in fields)
         {
@@ -223,6 +229,8 @@ public static class ConfigBuilder
     /// <returns>The edited save method declaration with the field save code generated</returns>
     private static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax method, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
+        context.Token.ThrowIfCancellationRequested();
+
         // Variables
         ExpressionSyntax name = field.Name.AsLiteral();
         ExpressionSyntax value = ThisExpression().Access(field.FieldName);

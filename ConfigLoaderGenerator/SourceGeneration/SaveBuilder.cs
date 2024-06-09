@@ -86,6 +86,8 @@ public static class SaveBuilder
     /// <returns>The edited save method declaration with the field save code generated</returns>
     public static MethodDeclarationSyntax GenerateAddValueSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
+        context.Token.ThrowIfCancellationRequested();
+
         // node.AddValue("value", this.value);
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), value.AsArgument());
         return body.AddBodyStatements(addValueInvocation.AsStatement());

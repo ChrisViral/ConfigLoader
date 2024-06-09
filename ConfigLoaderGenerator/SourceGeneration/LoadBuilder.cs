@@ -116,6 +116,8 @@ public static class LoadBuilder
     /// <returns>The modified statement body</returns>
     private static BlockSyntax GenerateParseFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
+        context.Token.ThrowIfCancellationRequested();
+
         // Temporary variable
         IdentifierNameSyntax tempVar = field.FieldName.Prefix("_");
 
@@ -149,6 +151,8 @@ public static class LoadBuilder
     /// <returns>The modified statement body</returns>
     private static BlockSyntax GenerateAssignFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
+        context.Token.ThrowIfCancellationRequested();
+
         // !string.IsNullOrEmpty(value.value)
         ExpressionSyntax isNullOrEmpty = SyntaxKind.StringKeyword.AsType().Access(IsNullOrEmpty);
         ExpressionSyntax isNotNullOrEmptyInvocation = Not(isNullOrEmpty.Invoke(value.AsArgument()));
