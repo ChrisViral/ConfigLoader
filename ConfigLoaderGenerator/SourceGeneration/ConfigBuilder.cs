@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static ConfigLoaderGenerator.Extensions.SyntaxOperationExtensions;
+using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -153,7 +154,7 @@ public static class ConfigBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // for (int i = 0; i < node.ValueCount; i++)
-        ForStatementSyntax forStatement = IncrementingForLoop(Index, 0.AsLiteral(), Node.Access(Count));
+        ForStatementSyntax forStatement = IncrementingForLoop(Index, MakeLiteral(0), Node.Access(Count));
 
         // node.values[i]
         ExpressionSyntax currentValue = Node.Access(Values).ElementAccess(Index.AsArgument());

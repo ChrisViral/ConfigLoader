@@ -81,62 +81,6 @@ internal static class SyntaxConversionExtensions
     public static ParameterSyntax AsParameter(this IdentifierNameSyntax name, TypeSyntax type) => Parameter(name.Identifier).WithType(type);
 
     /// <summary>
-    /// Creates a literal expression from the given boolean value
-    /// </summary>
-    /// <param name="value">Value to get the literal for</param>
-    /// <returns>A literal boolean expression of the given value</returns>
-    public static LiteralExpressionSyntax AsLiteral(this bool value) => LiteralExpression(value ? SyntaxKind.TrueLiteralExpression : SyntaxKind.FalseLiteralExpression);
-
-    /// <summary>
-    /// Creates a literal expression from the given integer value
-    /// </summary>
-    /// <param name="value">Value to get the literal for</param>
-    /// <returns>A literal integer expression of the given value</returns>
-    public static LiteralExpressionSyntax AsLiteral(this int value) => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(value));
-
-    /// <summary>
-    /// Creates a literal expression from the given long value
-    /// </summary>
-    /// <param name="value">Value to get the literal for</param>
-    /// <returns>A literal long expression of the given value</returns>
-    public static LiteralExpressionSyntax AsLiteral(this long value) => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(value));
-
-    /// <summary>
-    /// Creates a literal expression from the given float value
-    /// </summary>
-    /// <param name="value">Value to get the literal for</param>
-    /// <returns>A literal float expression of the given value</returns>
-    public static LiteralExpressionSyntax AsLiteral(this float value) => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(value));
-
-    /// <summary>
-    /// Creates a literal expression from the given double value
-    /// </summary>
-    /// <param name="value">Value to get the literal for</param>
-    /// <returns>A literal double expression of the given value</returns>
-    public static LiteralExpressionSyntax AsLiteral(this double value) => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(value));
-
-    /// <summary>
-    /// Creates a literal expression from the given char value
-    /// </summary>
-    /// <param name="value">Value to get the literal for</param>
-    /// <returns>A literal char expression of the given value</returns>
-    public static LiteralExpressionSyntax AsLiteral(this char value) => LiteralExpression(SyntaxKind.NumericLiteralExpression, Literal(value));
-
-    /// <summary>
-    /// Creates a literal expression from the given string value
-    /// </summary>
-    /// <param name="value">Value to get the literal for</param>
-    /// <returns>A literal string expression of the given value</returns>
-    public static LiteralExpressionSyntax AsLiteral(this string value) => LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(value));
-
-    /// <summary>
-    /// Creates a literal expression of the name of the specified identifier
-    /// </summary>
-    /// <param name="value">Identifier to get the literal for</param>
-    /// <returns>A literal string expression of the name of the identifier</returns>
-    public static LiteralExpressionSyntax AsLiteral(this IdentifierNameSyntax value) => LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(value.Identifier.ValueText));
-
-    /// <summary>
     /// Creates a <see cref="NamespaceDeclarationSyntax"/> from the given <see cref="string"/> value
     /// </summary>
     /// <param name="name">Value to create the namespace for</param>
