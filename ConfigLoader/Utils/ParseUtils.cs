@@ -12,6 +12,20 @@ using static UnityEngine.Mathf;
 namespace ConfigLoader.Utils;
 
 /// <summary>
+/// Value parse options
+/// </summary>
+/// <param name="SplitOptions">String splitting options</param>
+/// <param name="Separators">String splitting strings</param>
+public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ExtendedSplitOptions.RemoveEmptyEntries,
+                                           string[]? Separators = null)
+{
+    /// <summary>
+    /// Default parse options
+    /// </summary>
+    public static ParseOptions DefaultOptions { get; } = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultSeparators);
+}
+
+/// <summary>
 /// Extra parsing utilities
 /// </summary>
 [PublicAPI]
