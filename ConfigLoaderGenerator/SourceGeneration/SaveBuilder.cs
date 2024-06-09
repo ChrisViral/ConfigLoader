@@ -87,9 +87,7 @@ public static class SaveBuilder
     public static MethodDeclarationSyntax GenerateAddValueSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // node.AddValue("value", this.value);
-        ExpressionSyntax addValue = Node.Access(AddValue);
-        ExpressionSyntax addValueInvocation = addValue.Invoke(name.AsArgument(), value.AsArgument());
-
+        ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), value.AsArgument());
         return body.AddBodyStatements(addValueInvocation.AsStatement());
     }
 }

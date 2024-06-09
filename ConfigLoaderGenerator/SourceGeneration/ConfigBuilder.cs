@@ -149,13 +149,16 @@ public static class ConfigBuilder
     /// <returns>The edited load method declaration with the load code generated</returns>
     private static MethodDeclarationSyntax GenerateLoadMethodBody(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
     {
+        // for (int i = 0; i < node.ValueCount; i++)
+        ForStatementSyntax forStatement = GenerateForLoop(Index, Node.Access(Count), context);
+
         // node.values[i]
         ExpressionSyntax currentValue = Node.Access(Values).ElementAccess(Index.AsArgument());
         // ConfigNode.Value value = nodes.value[i];
         VariableDeclarationSyntax valueDeclaration = Value.DeclareVariable(ConfigNodeValue, currentValue);
+
         // switch (value.name)
         SwitchStatementSyntax nameSwitchStatement = Value.Access(Name).AsSwitchStatement();
-
         // ReSharper disable once LoopCanBeConvertedToQuery
         foreach (ConfigFieldMetadata field in fields)
         {
@@ -165,14 +168,9 @@ public static class ConfigBuilder
 
         // Add statements to loop body
         BlockSyntax forBody = Block().AddStatements(valueDeclaration.AsLocalDeclaration(), nameSwitchStatement);
-
-        // node.ValueCount
-        ExpressionSyntax valueCount = Node.Access(Count);
-        // for (int i = 0; i < node.ValueCount; i++)
-        ForStatementSyntax forStatement = GenerateForLoop(Index, valueCount, forBody, context);
-
-        // Add statements and return
         forStatement = forStatement.WithStatement(forBody);
+
+        // Add loop to method and return
         return method.AddBodyStatements(forStatement);
     }
 
@@ -181,11 +179,10 @@ public static class ConfigBuilder
     /// </summary>
     /// <param name="index">Index variable identifier</param>
     /// <param name="count">Count expression</param>
-    /// <param name="body">For loop body</param>
     /// <param name="context">Generation context</param>
     /// <returns>The generated for loop</returns>
     /// ReSharper disable once SuggestBaseTypeForParameter
-    private static ForStatementSyntax GenerateForLoop(IdentifierNameSyntax index, ExpressionSyntax count, BlockSyntax body, in ConfigBuilderContext context)
+    private static ForStatementSyntax GenerateForLoop(IdentifierNameSyntax index, ExpressionSyntax count, in ConfigBuilderContext context)
     {
         // int i = 0
         VariableDeclarationSyntax indexDeclaration = Index.DeclareVariable(0);
@@ -194,7 +191,7 @@ public static class ConfigBuilder
         // i++
         ExpressionSyntax increment = index.Increment();
         // for (int i = 0; i < count; i++)
-        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), body);
+        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), Block());
     }
 
     /// <summary>
@@ -207,11 +204,8 @@ public static class ConfigBuilder
     {
         // case "name":
         SwitchLabelSyntax label = field.Name.AsLiteral().AsSwitchLabel();
-        // value.value
-        ExpressionSyntax value = Value.Access(Value);
-
         // Value parsing implementation
-        BlockSyntax body = LoadBuilder.GenerateFieldLoad(value, field, context);
+        BlockSyntax body = LoadBuilder.GenerateFieldLoad(Value.Access(Value), field, context);
 
         // Add break statement, then Create section with label and body
         body = body.AddStatements(BreakStatement());

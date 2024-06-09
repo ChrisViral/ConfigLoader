@@ -94,7 +94,7 @@ public static class LoadBuilder
     private static BlockSyntax GenerateParseFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Temporary variable
-        IdentifierNameSyntax tempVar = $"_{field.FieldName.AsRaw()}".AsIdentifier();
+        IdentifierNameSyntax tempVar = IdentifierName($"_{field.FieldName.AsRaw()}");
 
         // out Type _value
         ArgumentSyntax outVar = tempVar.Declaration(field.TypeName)
@@ -106,10 +106,9 @@ public static class LoadBuilder
         ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar);
 
         // this.value = _value;
-        ExpressionSyntax fieldAccess = ThisExpression().Access(field.FieldName);
-        ExpressionSyntax fieldAssign = fieldAccess.Assign(tempVar);
+        ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(tempVar);
 
-        // if (Type.TryParse(value.value, out Type _value))
+        // if (Type.TryParse(value.value, out Type _value)) { }
         BlockSyntax ifBlock           = Block().AddStatements(fieldAssign.AsStatement());
         IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
 
