@@ -10,7 +10,7 @@ namespace ConfigLoader.Attributes;
 /// <summary>
 /// Method access modifiers
 /// </summary>
-[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+[PublicAPI]
 public enum AccessModifier
 {
     Private,
@@ -22,7 +22,7 @@ public enum AccessModifier
 /// <summary>
 /// Object config source generation attribute
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct), UsedImplicitly(ImplicitUseTargetFlags.Members)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct), PublicAPI]
 public class ConfigObjectAttribute : Attribute
 {
     #region Defaults

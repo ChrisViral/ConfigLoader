@@ -42,7 +42,8 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
         IncrementalValuesProvider<ConfigData> configDataProvider = context.SyntaxProvider
                                                                           .ForAttributeWithMetadataName(typeof(ConfigObjectAttribute).FullName!,
                                                                                                         FilterConfigClasses,
-                                                                                                        CreateConfigTemplate);
+                                                                                                        CreateConfigTemplate)
+                                                                          .Where(c => c.Fields.Count > 0);
         context.RegisterSourceOutput(configDataProvider, GenerateConfigMethods);
     }
 

@@ -11,7 +11,7 @@ namespace ConfigLoader.Attributes;
 /// <summary>
 /// Enum serialization handling
 /// </summary>
-[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+[PublicAPI]
 public enum EnumHandling
 {
     String,
@@ -20,9 +20,25 @@ public enum EnumHandling
 }
 
 /// <summary>
+/// Extended string split options<br/>
+/// </summary>
+/// <remarks>
+/// This extended enum exists because <see cref="TrimEntries"/> is missing on .NET Framework<br/>
+/// Extension methods using these options are available in <see cref="Extensions.StringSplitExtensions"/>
+/// </remarks>
+[Flags, PublicAPI]
+public enum ExtendedSplitOptions
+{
+    None                      = 0b00,
+    RemoveEmptyEntries        = 0b01,
+    TrimEntries               = 0b10,
+    TrimAndRemoveEmptyEntries = RemoveEmptyEntries | TrimEntries
+}
+
+/// <summary>
 /// Config generation target field attribute
 /// </summary>
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field), UsedImplicitly(ImplicitUseTargetFlags.Members)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field), PublicAPI]
 public class ConfigFieldAttribute : Attribute
 {
     #region Defaults

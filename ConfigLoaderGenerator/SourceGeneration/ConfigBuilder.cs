@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using ConfigLoaderGenerator.Extensions;
@@ -65,7 +66,7 @@ public static class ConfigBuilder
     /// <summary>
     /// ConfigNode type
     /// </summary>
-    public static readonly IdentifierNameSyntax ConfigNode     = IdentifierName("ConfigNode");
+    public static readonly IdentifierNameSyntax ConfigNode = IdentifierName("ConfigNode");
     /// <summary>
     /// ConfigNode.Value type
     /// </summary>
@@ -82,7 +83,6 @@ public static class ConfigBuilder
         // Compilation root
         CompilationUnitSyntax root = CompilationUnit();
         ConfigBuilderContext context = new([], token);
-
         // Reuse the old declaration and strip the things we don't need
         TypeDeclarationSyntax type = data.Syntax
                                          .WithAttributeLists([])    // Attributes

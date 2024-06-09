@@ -11,7 +11,7 @@ namespace ConfigLoader.Exceptions;
 /// <summary>
 /// Exceptions for when a field marked as required on config load is missing or unable to be loaded
 /// </summary>
-[UsedImplicitly]
+[PublicAPI]
 public partial class MissingRequiredConfigFieldException : ArgumentException
 {
     #region Constructors
