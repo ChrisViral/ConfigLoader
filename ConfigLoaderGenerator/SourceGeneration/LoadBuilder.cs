@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
@@ -26,6 +26,10 @@ public static class LoadBuilder
     /// </summary>
     private static readonly IdentifierNameSyntax TryParse = nameof(int.TryParse).AsIdentifier();
     /// <summary>
+    /// ParseUtils TryParse method accessor
+    /// </summary>
+    private static readonly MemberAccessExpressionSyntax ParseUtilsTryParse = nameof(ParseUtils).AsIdentifier().Access(TryParse);
+    /// <summary>
     /// IsNullOrEmpty method identifier
     /// </summary>
     private static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsIdentifier();
@@ -49,6 +53,25 @@ public static class LoadBuilder
         typeof(decimal).FullName,
         typeof(char).FullName,
         typeof(Guid).FullName
+    ];
+    /// <summary>
+    /// Types that have TryParse methods in the <see cref="ParseUtils"/> class
+    /// </summary>
+    private static readonly HashSet<string> ParseUtilsTypes =
+    [
+        $"{UnityEngine}.Vector2",
+        "Vector2d",
+        $"{UnityEngine}.Vector3",
+        "Vector3d",
+        $"{UnityEngine}.Vector4",
+        "Vector4d",
+        $"{UnityEngine}.Quaternion",
+        "QuaternionD",
+        $"{UnityEngine}.Matrix4x4",
+        "Matrix4x4D",
+        $"{UnityEngine}.Rect",
+        $"{UnityEngine}.Color",
+        $"{UnityEngine}.Color32"
     ];
     /// <summary>
     /// Types that can be directly assigned to the field
@@ -94,7 +117,7 @@ public static class LoadBuilder
     private static BlockSyntax GenerateParseFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Temporary variable
-        IdentifierNameSyntax tempVar = IdentifierName($"_{field.FieldName.AsRaw()}");
+        IdentifierNameSyntax tempVar = field.FieldName.Prefix("_");
 
         // out Type _value
         ArgumentSyntax outVar = tempVar.Declaration(field.TypeName)

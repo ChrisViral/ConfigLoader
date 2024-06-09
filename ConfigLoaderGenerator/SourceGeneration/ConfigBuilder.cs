@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using static ConfigLoaderGenerator.Extensions.SyntaxExtensions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -150,7 +151,7 @@ public static class ConfigBuilder
     private static MethodDeclarationSyntax GenerateLoadMethodBody(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
     {
         // for (int i = 0; i < node.ValueCount; i++)
-        ForStatementSyntax forStatement = GenerateForLoop(Index, Node.Access(Count), context);
+        ForStatementSyntax forStatement = IncrementingForLoop(Index, 0.AsLiteral(), Node.Access(Count));
 
         // node.values[i]
         ExpressionSyntax currentValue = Node.Access(Values).ElementAccess(Index.AsArgument());
@@ -172,26 +173,6 @@ public static class ConfigBuilder
 
         // Add loop to method and return
         return method.AddBodyStatements(forStatement);
-    }
-
-    /// <summary>
-    /// Generate an incrementing for loop from 0 to <paramref name="count"/>
-    /// </summary>
-    /// <param name="index">Index variable identifier</param>
-    /// <param name="count">Count expression</param>
-    /// <param name="context">Generation context</param>
-    /// <returns>The generated for loop</returns>
-    /// ReSharper disable once SuggestBaseTypeForParameter
-    private static ForStatementSyntax GenerateForLoop(IdentifierNameSyntax index, ExpressionSyntax count, in ConfigBuilderContext context)
-    {
-        // int i = 0
-        VariableDeclarationSyntax indexDeclaration = Index.DeclareVariable(0);
-        // i < count
-        ExpressionSyntax condition = index.IsLessThan(count);
-        // i++
-        ExpressionSyntax increment = index.Increment();
-        // for (int i = 0; i < count; i++)
-        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), Block());
     }
 
     /// <summary>

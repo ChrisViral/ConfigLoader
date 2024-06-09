@@ -45,6 +45,28 @@ internal static class SyntaxExtensions
     /// <param name="argument">Argument to add the keyword to</param>
     /// <returns>The argument with a <see langword="out"/> keyword</returns>
     public static ArgumentSyntax WithOut(this ArgumentSyntax argument) => argument.WithRefOrOutKeyword(Token(SyntaxKind.OutKeyword));
+
+    /// <summary>
+    /// Creates an<see cref="IdentifierNameSyntax"/> with <paramref name="prefix"/> added to the front of its name
+    /// </summary>
+    /// <param name="identifier">Identifier to prefix</param>
+    /// <param name="prefix">Prefix value</param>
+    /// <returns>A new <see cref="IdentifierNameSyntax"/> with the given <paramref name="prefix"/></returns>
+    public static IdentifierNameSyntax Prefix(this IdentifierNameSyntax identifier, string prefix)
+    {
+        return IdentifierName(prefix + identifier.Identifier.ValueText);
+    }
+
+    /// <summary>
+    /// Creates an<see cref="IdentifierNameSyntax"/> with <paramref name="postfix"/> added to the end of its name
+    /// </summary>
+    /// <param name="identifier">Identifier to postfix</param>
+    /// <param name="postfix">Postfix value</param>
+    /// <returns>A new <see cref="IdentifierNameSyntax"/> with the given <paramref name="postfix"/></returns>
+    public static IdentifierNameSyntax Postfix(this IdentifierNameSyntax identifier, string postfix)
+    {
+        return IdentifierName(identifier.Identifier.ValueText + postfix);
+    }
     #endregion
 
     #region Syntax conversion extensions
@@ -433,6 +455,46 @@ internal static class SyntaxExtensions
     public static InvocationExpressionSyntax Invoke<T>(this T expression, params ArgumentSyntax[] arguments) where T : ExpressionSyntax
     {
         return InvocationExpression(expression).AddArgumentListArguments(arguments);
+    }
+
+    /// <summary>
+    /// Generate an incrementing for loop from <paramref name="start"/> (inclusive) to <paramref name="end"/> (exclusive)
+    /// </summary>
+    /// <param name="index">Index variable</param>
+    /// <param name="start">Start value expression</param>
+    /// <param name="end">End value expression</param>
+    /// <param name="loopBody">Loop execution body, if not specified, the loop will be generated with an empty block</param>
+    /// <returns>The generated for loop</returns>
+    public static ForStatementSyntax IncrementingForLoop(IdentifierNameSyntax index, ExpressionSyntax start, ExpressionSyntax end, BlockSyntax? loopBody = null)
+    {
+        // int i = start
+        VariableDeclarationSyntax indexDeclaration = index.DeclareVariable(SyntaxKind.IntKeyword.AsType(), start);
+        // i < end
+        ExpressionSyntax condition = index.IsLessThan(end);
+        // i++
+        ExpressionSyntax increment = index.Increment();
+        // for (int i = start; i < end; i++) { }
+        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), loopBody ?? Block());
+    }
+
+    /// <summary>
+    /// Generate an incrementing for loop from <paramref name="start"/> (exclusive) to <paramref name="end"/> (inclusive)
+    /// </summary>
+    /// <param name="index">Index variable</param>
+    /// <param name="start">Start value expression</param>
+    /// <param name="end">End value expression</param>
+    /// <param name="loopBody">Loop execution body, if not specified, the loop will be generated with an empty block</param>
+    /// <returns>The generated for loop</returns>
+    public static ForStatementSyntax DecrementingForLoop(IdentifierNameSyntax index, ExpressionSyntax start, ExpressionSyntax end, BlockSyntax? loopBody = null)
+    {
+        // int i = start - 1
+        VariableDeclarationSyntax indexDeclaration = index.DeclareVariable(SyntaxKind.IntKeyword.AsType(), start.Subtract(1.AsLiteral()));
+        // i >= end
+        ExpressionSyntax condition = index.IsGreaterThanOrEqual(end);
+        // i--
+        ExpressionSyntax increment = index.Decrement();
+        // for (int i = start - 1; i >= end; i--) { }
+        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), loopBody ?? Block());
     }
     #endregion
 
