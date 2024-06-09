@@ -6,7 +6,7 @@ using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using static ConfigLoaderGenerator.Extensions.SyntaxExtensions;
+using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.ConfigBuilder;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 

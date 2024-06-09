@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using static ConfigLoaderGenerator.Extensions.SyntaxExtensions;
+using static ConfigLoaderGenerator.Extensions.SyntaxOperationExtensions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
