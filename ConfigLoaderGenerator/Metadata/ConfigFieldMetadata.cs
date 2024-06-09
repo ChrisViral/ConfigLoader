@@ -2,6 +2,9 @@
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -33,15 +36,15 @@ public readonly struct ConfigFieldMetadata
     /// <summary>
     /// Name under which to serialize this field
     /// </summary>
-    public string Name { get; } = string.Empty;
+    public IdentifierNameSyntax Name { get; } = IdentifierName(string.Empty);
     /// <summary>
     /// Name of the field associated to this metadata
     /// </summary>
-    public string FieldName { get; }
+    public IdentifierNameSyntax FieldName { get; }
     /// <summary>
     /// Name of the type of the field
     /// </summary>
-    public string TypeName { get; }
+    public IdentifierNameSyntax TypeName { get; }
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
@@ -59,7 +62,7 @@ public readonly struct ConfigFieldMetadata
     public ConfigFieldMetadata(ISymbol symbol, AttributeData data)
     {
         this.Symbol    = symbol;
-        this.FieldName = symbol.Name;
+        this.FieldName = IdentifierName(symbol.Name);
         switch (symbol)
         {
             case IFieldSymbol field:
@@ -76,7 +79,7 @@ public readonly struct ConfigFieldMetadata
                 throw new InvalidOperationException($"Cannot parse field for {symbol.GetType().Name} symbol");
         }
 
-        this.TypeName = this.Type.Name;
+        this.TypeName = IdentifierName(this.Type.Name);
         foreach ((string name, TypedConstant value) in data.NamedArguments)
         {
             if (value.Value is null) continue;
@@ -88,7 +91,7 @@ public readonly struct ConfigFieldMetadata
                     break;
 
                 case nameof(ConfigFieldAttribute.Name):
-                    this.Name = (string)value.Value;
+                    this.Name = IdentifierName((string)value.Value);
                     break;
 
                 case nameof(ConfigFieldAttribute.NodeNameValue):
@@ -102,7 +105,7 @@ public readonly struct ConfigFieldMetadata
         }
 
         // Ensure a serialization name is set
-        if (string.IsNullOrWhiteSpace(this.Name))
+        if (string.IsNullOrWhiteSpace(this.Name.Identifier.ValueText))
         {
             this.Name = this.FieldName;
         }

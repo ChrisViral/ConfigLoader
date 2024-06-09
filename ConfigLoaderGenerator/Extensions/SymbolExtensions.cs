@@ -8,6 +8,9 @@ using Microsoft.CodeAnalysis;
 
 namespace ConfigLoaderGenerator.Extensions;
 
+/// <summary>
+/// <see cref="ISymbol"/> extensions
+/// </summary>
 internal static class SymbolExtensions
 {
     #region Attribute extensions
@@ -25,31 +28,31 @@ internal static class SymbolExtensions
     }
 
     /// <summary>
-    /// Gets the full namespace of this type, including parent namespaces
+    /// The fully qualified name of this type
     /// </summary>
-    /// <param name="type">Type to get the namespace of</param>
-    /// <returns>The namespace of the type</returns>
-    public static string Namespace(this ITypeSymbol type) => type.ContainingNamespace.ToDisplayString();
+    /// <param name="type">Type to get the full name for</param>
+    /// <returns>The fully qualified name of the type</returns>
+    public static string FullName(this ITypeSymbol type) => $"{type.FullNamespace()}.{type.Name}";
 
     /// <summary>
     /// The fully qualified name of this type
     /// </summary>
     /// <param name="type">Type to get the full name for</param>
     /// <returns>The fully qualified name of the type</returns>
-    public static string FullName(this ITypeSymbol type) => $"{type.Namespace()}.{type.Name}";
+    public static string FullName(this INamedTypeSymbol type) => $"{type.FullNamespace()}.{type.Name}";
 
     /// <summary>
     /// Gets the full namespace of this type, including parent namespaces
     /// </summary>
     /// <param name="type">Type to get the namespace of</param>
     /// <returns>The namespace of the type</returns>
-    public static string Namespace(this INamedTypeSymbol type) => type.ContainingNamespace.ToDisplayString();
+    public static string FullNamespace(this ITypeSymbol type) => type.ContainingNamespace.ToDisplayString();
 
     /// <summary>
-    /// The fully qualified name of this type
+    /// Gets the full namespace of this type, including parent namespaces
     /// </summary>
-    /// <param name="type">Type to get the full name for</param>
-    /// <returns>The fully qualified name of the type</returns>
-    public static string FullName(this INamedTypeSymbol type) => $"{type.Namespace()}.{type.Name}";
+    /// <param name="type">Type to get the namespace of</param>
+    /// <returns>The namespace of the type</returns>
+    public static string FullNamespace(this INamedTypeSymbol type) => type.ContainingNamespace.ToDisplayString();
     #endregion
 }

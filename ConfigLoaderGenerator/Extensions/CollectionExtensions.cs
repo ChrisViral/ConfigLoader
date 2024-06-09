@@ -6,6 +6,9 @@
 
 namespace ConfigLoaderGenerator.Extensions;
 
+/// <summary>
+/// Collection extensions
+/// </summary>
 internal static class CollectionExtensions
 {
     #region Dictionary extensions

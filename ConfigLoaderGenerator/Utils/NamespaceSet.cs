@@ -17,6 +17,7 @@ namespace ConfigLoaderGenerator.Utils;
 /// <summary>
 /// Namespace hashset wrapper that accepts both symbols and strings and sorts namespaces on output
 /// </summary>
+/// ReSharper disable UnusedMember.Global
 public class NamespaceSet : ISet<string>
 {
     private readonly HashSet<string> namespaces = new(StringComparer.Ordinal);

@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
-using ConfigLoaderGenerator.Utils;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using static ConfigLoaderGenerator.Extensions.SyntaxExtensions;
+using static ConfigLoaderGenerator.SourceGeneration.ConfigBuilder;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -30,9 +31,9 @@ public static class LoadBuilder
     private static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsIdentifier();
 
     /// <summary>
-    /// Types that have a static Parse method implementation
+    /// Types that have a static TryParse method implementation
     /// </summary>
-    private static readonly HashSet<string> ParseableTypes =
+    private static readonly HashSet<string> TryParseTypes =
     [
         typeof(bool).FullName,
         typeof(byte).FullName,
@@ -61,23 +62,22 @@ public static class LoadBuilder
     /// <summary>
     /// Generate the field load code implementation
     /// </summary>
-    /// <param name="body">Statement body</param>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
     /// <exception cref="InvalidOperationException">If the generator does not know how to load the given field type</exception>
-    public static BlockSyntax GenerateFieldLoad(BlockSyntax body, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    public static BlockSyntax GenerateFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save option
         string typeName = field.Type.FullName();
-        if (ParseableTypes.Contains(typeName))
+        if (TryParseTypes.Contains(typeName))
         {
-            return GenerateParseFieldLoad(body, value, field, context);
+            return GenerateParseFieldLoad(value, field, context);
         }
         if (AssignableTypes.Contains(typeName))
         {
-            return GenerateAssignFieldLoad(body, value, field, context);
+            return GenerateAssignFieldLoad(value, field, context);
         }
 
         // Unknown type
@@ -87,62 +87,58 @@ public static class LoadBuilder
     /// <summary>
     /// Generate the field load code implementation using <c>TryParse</c>
     /// </summary>
-    /// <param name="body">Statement body</param>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateParseFieldLoad(BlockSyntax body, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateParseFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
-        // Variables
-        ValueIdentifier tempVar   = new($"_{field.FieldName}");
-        IdentifierNameSyntax type = field.TypeName.AsIdentifier();
+        // Temporary variable
+        IdentifierNameSyntax tempVar = $"_{field.FieldName.AsRaw()}".AsIdentifier();
 
         // out Type _value
-        ArgumentSyntax outVar = Argument(DeclarationExpression(type, SingleVariableDesignation(tempVar.Token)))
-                               .WithRefOrOutKeyword(SyntaxKind.OutKeyword.AsToken());
+        ArgumentSyntax outVar = tempVar.Declaration(field.TypeName)
+                                       .AsArgument()
+                                       .WithOut();
 
         // Type.TryParse(value.value, out Type _value)
-        ExpressionSyntax tryParse = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, type, TryParse);
-        ExpressionSyntax tryParseInvocation = InvocationExpression(tryParse).AddArgumentListArguments(Argument(value), outVar);
+        ExpressionSyntax tryParse = field.TypeName.Access(TryParse);
+        ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar);
 
         // this.value = _value;
-        ExpressionSyntax fieldAccess = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ThisExpression(), field.FieldName.AsIdentifier());
-        ExpressionSyntax fieldAssign = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, fieldAccess, tempVar.Identifier);
+        ExpressionSyntax fieldAccess = ThisExpression().Access(field.FieldName);
+        ExpressionSyntax fieldAssign = fieldAccess.Assign(tempVar);
 
         // if (Type.TryParse(value.value, out Type _value))
-        BlockSyntax ifBlock           = Block(SingletonList(ExpressionStatement(fieldAssign)));
+        BlockSyntax ifBlock           = Block().AddStatements(fieldAssign.AsStatement());
         IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
 
         // Add namespace and statement, then return
         context.UsedNamespaces.AddNamespace(field.Type.ContainingNamespace);
-        return body.AddStatements(ifStatement);
+        return Block().AddStatements(ifStatement);
     }
 
     /// <summary>
     /// Generate the field load code implementation using assignment
     /// </summary>
-    /// <param name="body">Statement body</param>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateAssignFieldLoad(BlockSyntax body, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateAssignFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // !string.IsNullOrEmpty(value.value)
-        ExpressionSyntax isNullOrEmpty = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, SyntaxKind.StringKeyword.Type(), IsNullOrEmpty);
-        ExpressionSyntax isNotNullOrEmptyInvocation = PrefixUnaryExpression(SyntaxKind.LogicalNotExpression,
-                                                                            InvocationExpression(isNullOrEmpty).AddArgumentListArguments(Argument(value)));
+        ExpressionSyntax isNullOrEmpty = SyntaxKind.StringKeyword.AsType().Access(IsNullOrEmpty);
+        ExpressionSyntax isNotNullOrEmptyInvocation = Not(isNullOrEmpty.Invoke(value.AsArgument()));
 
         // this.value = value.value;
-        ExpressionSyntax fieldAccess = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ThisExpression(), field.FieldName.AsIdentifier());
-        ExpressionSyntax fieldAssign = AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, fieldAccess, value);
+        ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(value);
 
         // if(!string.IsNullOrEmpty(value.value))
-        BlockSyntax ifBlock = Block(SingletonList(ExpressionStatement(fieldAssign)));
+        BlockSyntax ifBlock = Block().AddStatements(fieldAssign.AsStatement());
         IfStatementSyntax ifStatement = IfStatement(isNotNullOrEmptyInvocation, ifBlock);
 
         // Add if statement and return
-        return body.AddStatements(ifStatement);
+        return Block().AddStatements(ifStatement);
     }
 }

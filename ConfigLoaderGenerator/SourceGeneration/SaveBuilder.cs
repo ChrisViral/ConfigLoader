@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using static ConfigLoaderGenerator.SourceGeneration.ConfigBuilder;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -17,10 +18,6 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 /// </summary>
 public static class SaveBuilder
 {
-    /// <summary>
-    /// UnityEngine namespace
-    /// </summary>
-    private const string UNITY_ENGINE = "UnityEngine";
     /// <summary>
     /// AddValue method identifier
     /// </summary>
@@ -46,15 +43,15 @@ public static class SaveBuilder
         typeof(char).FullName,
         typeof(string).FullName,
         typeof(object).FullName,
-        $"{UNITY_ENGINE}.Vector2",
-        $"{UNITY_ENGINE}.Vector3",
+        $"{UnityEngine}.Vector2",
+        $"{UnityEngine}.Vector3",
         "Vector3d",
-        $"{UNITY_ENGINE}.Vector4",
-        $"{UNITY_ENGINE}.Quaternion",
+        $"{UnityEngine}.Vector4",
+        $"{UnityEngine}.Quaternion",
         "QuaternionD",
-        $"{UNITY_ENGINE}.Matrix4x4",
-        $"{UNITY_ENGINE}.Color",
-        $"{UNITY_ENGINE}.Color32",
+        $"{UnityEngine}.Matrix4x4",
+        $"{UnityEngine}.Color",
+        $"{UnityEngine}.Color32",
     ];
 
     /// <summary>
@@ -90,9 +87,9 @@ public static class SaveBuilder
     public static MethodDeclarationSyntax GenerateAddValueSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // node.AddValue("value", this.value);
-        ExpressionSyntax addValue = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, ConfigBuilder.Node.Identifier, AddValue);
-        ExpressionSyntax addValueInvocation = InvocationExpression(addValue).AddArgumentListArguments(Argument(name), Argument(value));
+        ExpressionSyntax addValue = Node.Access(AddValue);
+        ExpressionSyntax addValueInvocation = addValue.Invoke(name.AsArgument(), value.AsArgument());
 
-        return body.AddBodyStatements(ExpressionStatement(addValueInvocation));
+        return body.AddBodyStatements(addValueInvocation.AsStatement());
     }
 }

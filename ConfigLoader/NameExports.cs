@@ -9,14 +9,10 @@
 
 namespace ConfigLoader.Utils
 {
-    public static partial class ParseUtils
-    {
-    }
+    public static partial class ParseUtils;
 }
 
 namespace ConfigLoader.Exceptions
 {
-    public partial class MissingRequiredConfigFieldException
-    {
-    }
+    public partial class MissingRequiredConfigFieldException;
 }
