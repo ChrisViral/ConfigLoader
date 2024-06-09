@@ -1,4 +1,5 @@
 ﻿using ConfigLoader.Attributes;
+using UnityEngine;
 
 namespace ConfigLoaderTest.Test
 {
@@ -12,8 +13,8 @@ namespace ConfigLoaderTest.Test
         [ConfigField]
         public string stringValue = string.Empty;
 
-        [ConfigField]
-        public string StringProperty { get; set; }
+        [ConfigField(Name = "OtherName")]
+        public Vector3 VectorProperty { get; set; }
 
         public void Test(ConfigNode node)
         {

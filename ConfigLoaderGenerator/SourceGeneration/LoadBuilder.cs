@@ -22,13 +22,17 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 public static class LoadBuilder
 {
     /// <summary>
+    /// ParseUtils namespace
+    /// </summary>
+    private static readonly string ParseUtilsNamespace = typeof(ParseUtils).Namespace!;
+    /// <summary>
     /// TryParse method identifier
     /// </summary>
     private static readonly IdentifierNameSyntax TryParse = nameof(int.TryParse).AsIdentifier();
     /// <summary>
-    /// ParseUtils TryParse method accessor
+    /// ParseUtils class identifier
     /// </summary>
-    private static readonly MemberAccessExpressionSyntax ParseUtilsTryParse = nameof(ParseUtils).AsIdentifier().Access(TryParse);
+    private static readonly IdentifierNameSyntax ParseUtils = nameof(ConfigLoader.Utils.ParseUtils).AsIdentifier();
     /// <summary>
     /// IsNullOrEmpty method identifier
     /// </summary>
@@ -94,7 +98,12 @@ public static class LoadBuilder
         string typeName = field.Type.FullName();
         if (TryParseTypes.Contains(typeName))
         {
-            return GenerateParseFieldLoad(value, field, context);
+            return GenerateTryParseFieldLoad(value, field.TypeName, field, context);
+        }
+        if (ParseUtilsTypes.Contains(typeName))
+        {
+            context.UsedNamespaces.AddNamespaceName(ParseUtilsNamespace);
+            return GenerateTryParseFieldLoad(value, ParseUtils, field, context);
         }
         if (AssignableTypes.Contains(typeName))
         {
@@ -109,10 +118,11 @@ public static class LoadBuilder
     /// Generate the field load code implementation using <c>TryParse</c>
     /// </summary>
     /// <param name="value">Value expression</param>
+    /// <param name="type">TryParse parent type</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateParseFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateTryParseFieldLoad(ExpressionSyntax value, IdentifierNameSyntax type, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -125,7 +135,7 @@ public static class LoadBuilder
                                        .WithOut();
 
         // Type.TryParse(value.value, out Type _value)
-        ExpressionSyntax tryParse = field.TypeName.Access(TryParse);
+        ExpressionSyntax tryParse = type.Access(TryParse);
         ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar);
 
         // this.value = _value;
