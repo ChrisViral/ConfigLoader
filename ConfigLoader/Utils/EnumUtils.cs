@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using ConfigLoader.Attributes;
 using JetBrains.Annotations;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -92,12 +91,12 @@ public static class EnumUtils
     /// <param name="value">Value output parameter</param>
     /// <param name="ignoreCase">Whether the parse should be case-insensitive</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse<T>(string name, out T value, bool ignoreCase = false) where T : struct, Enum
+    public static bool TryParse<T>(string? name, out T value, bool ignoreCase = false) where T : struct, Enum
     {
         if (!string.IsNullOrWhiteSpace(name))
         {
-            return ignoreCase ? EnumData<T>.NameToValueIgnoreCase.TryGetValue(name, out value)
-                              : EnumData<T>.NameToValue.TryGetValue(name, out value);
+            return ignoreCase ? EnumData<T>.NameToValueIgnoreCase.TryGetValue(name!, out value)
+                              : EnumData<T>.NameToValue.TryGetValue(name!, out value);
         }
 
         value = default;

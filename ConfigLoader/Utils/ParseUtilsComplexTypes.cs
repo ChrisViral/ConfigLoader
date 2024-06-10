@@ -1,5 +1,4 @@
-﻿using ConfigLoader.Attributes;
-using ConfigLoader.Extensions;
+﻿using ConfigLoader.Extensions;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -31,17 +30,6 @@ public static partial class ParseUtils
     /// Default <see cref="Color32"/> return value (white)
     /// </summary>
     private static readonly Color32 DefaultColor32 = new(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
-    #endregion
-
-    #region Utility
-    /// <summary>
-    /// Checks if an array is null or empty
-    /// </summary>
-    /// <typeparam name="T">Array type</typeparam>
-    /// <param name="array">Array to check</param>
-    /// <returns><see langword="true"/> if the array is <see langword="null"/> or empty, otherwise <see langword="false"/></returns>
-    [ContractAnnotation("null => true")]
-    public static bool IsNullOrEmpty<T>(T[]? array) => array?.Length is null or 0;
     #endregion
 
     #region Split
@@ -80,17 +68,15 @@ public static partial class ParseUtils
     /// <returns>The array of split values</returns>
     private static string[] SplitValuesInternal(string value, in ParseOptions options, char[] defaultSeparators)
     {
-        // Extract options
-        (ExtendedSplitOptions splitOptions, char[]? separators) = options;
-
         // Assign default separators if needed
-        if (IsNullOrEmpty(separators))
+        char[]? separators = options.Separators;
+        if (separators is not { Length: > 0 })
         {
             separators = defaultSeparators;
         }
 
         // Return splits
-        return value.Split(separators!, splitOptions);
+        return value.Split(separators, options.SplitOptions);
     }
     #endregion
 
@@ -100,7 +86,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Vector2 result, in ParseOptions options)
     {
@@ -114,8 +100,8 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 2
-         && TryParse(splits[0], out float x)
-         && TryParse(splits[1], out float y))
+         && TryParse(splits[0], out float x, options)
+         && TryParse(splits[1], out float y, options))
         {
             result = new Vector2(x, y);
             return true;
@@ -130,7 +116,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Vector2d result, in ParseOptions options)
     {
@@ -144,8 +130,8 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 2
-         && TryParse(splits[0], out double x)
-         && TryParse(splits[1], out double y))
+         && TryParse(splits[0], out double x, options)
+         && TryParse(splits[1], out double y, options))
         {
             result = new Vector2d(x, y);
             return true;
@@ -160,7 +146,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Vector2Int result, in ParseOptions options)
     {
@@ -174,8 +160,8 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 2
-         && TryParse(splits[0], out int x)
-         && TryParse(splits[1], out int y))
+         && TryParse(splits[0], out int x, options)
+         && TryParse(splits[1], out int y, options))
         {
             result = new Vector2Int(x, y);
             return true;
@@ -190,7 +176,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Vector3 result, in ParseOptions options)
     {
@@ -204,9 +190,9 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 3
-         && TryParse(splits[0], out float x)
-         && TryParse(splits[1], out float y)
-         && TryParse(splits[2], out float z))
+         && TryParse(splits[0], out float x, options)
+         && TryParse(splits[1], out float y, options)
+         && TryParse(splits[2], out float z, options))
         {
             result = new Vector3(x, y, z);
             return true;
@@ -221,7 +207,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Vector3d result, in ParseOptions options)
     {
@@ -235,9 +221,9 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 3
-         && TryParse(splits[0], out double x)
-         && TryParse(splits[1], out double y)
-         && TryParse(splits[2], out double z))
+         && TryParse(splits[0], out double x, options)
+         && TryParse(splits[1], out double y, options)
+         && TryParse(splits[2], out double z, options))
         {
             result = new Vector3d(x, y, z);
             return true;
@@ -252,7 +238,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Vector3Int result, in ParseOptions options)
     {
@@ -266,9 +252,9 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 3
-         && TryParse(splits[0], out int x)
-         && TryParse(splits[1], out int y)
-         && TryParse(splits[2], out int z))
+         && TryParse(splits[0], out int x, options)
+         && TryParse(splits[1], out int y, options)
+         && TryParse(splits[2], out int z, options))
         {
             result = new Vector3Int(x, y, z);
             return true;
@@ -283,7 +269,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Vector4 result, in ParseOptions options)
     {
@@ -297,10 +283,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && TryParse(splits[0], out float x)
-         && TryParse(splits[1], out float y)
-         && TryParse(splits[2], out float z)
-         && TryParse(splits[3], out float w))
+         && TryParse(splits[0], out float x, options)
+         && TryParse(splits[1], out float y, options)
+         && TryParse(splits[2], out float z, options)
+         && TryParse(splits[3], out float w, options))
         {
             result = new Vector4(x, y, z, w);
             return true;
@@ -315,7 +301,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Vector4d result, in ParseOptions options)
     {
@@ -329,10 +315,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && TryParse(splits[0], out double x)
-         && TryParse(splits[1], out double y)
-         && TryParse(splits[2], out double z)
-         && TryParse(splits[3], out double w))
+         && TryParse(splits[0], out double x, options)
+         && TryParse(splits[1], out double y, options)
+         && TryParse(splits[2], out double z, options)
+         && TryParse(splits[3], out double w, options))
         {
             result = new Vector4d(x, y, z, w);
             return true;
@@ -349,7 +335,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Quaternion result, in ParseOptions options)
     {
@@ -363,10 +349,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && TryParse(splits[0], out float x)
-         && TryParse(splits[1], out float y)
-         && TryParse(splits[2], out float z)
-         && TryParse(splits[3], out float w))
+         && TryParse(splits[0], out float x, options)
+         && TryParse(splits[1], out float y, options)
+         && TryParse(splits[2], out float z, options)
+         && TryParse(splits[3], out float w, options))
         {
             result = new Quaternion(x, y, z, w);
             return true;
@@ -381,7 +367,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out QuaternionD result, in ParseOptions options)
     {
@@ -395,10 +381,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && TryParse(splits[0], out double x)
-         && TryParse(splits[1], out double y)
-         && TryParse(splits[2], out double z)
-         && TryParse(splits[3], out double w))
+         && TryParse(splits[0], out double x, options)
+         && TryParse(splits[1], out double y, options)
+         && TryParse(splits[2], out double z, options)
+         && TryParse(splits[3], out double w, options))
         {
             result = new QuaternionD(x, y, z, w);
             return true;
@@ -415,7 +401,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Rect result, in ParseOptions options)
     {
@@ -429,10 +415,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && TryParse(splits[0], out float x)
-         && TryParse(splits[1], out float y)
-         && TryParse(splits[2], out float w)
-         && TryParse(splits[3], out float h))
+         && TryParse(splits[0], out float x, options)
+         && TryParse(splits[1], out float y, options)
+         && TryParse(splits[2], out float w, options)
+         && TryParse(splits[3], out float h, options))
         {
             result = new Rect(x, y, w, h);
             return true;
@@ -449,7 +435,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Color result, in ParseOptions options)
     {
@@ -466,9 +452,9 @@ public static partial class ParseUtils
         {
             // RGB only
             case 3:
-                if (TryParse(splits[0], out float r)
-                 && TryParse(splits[1], out float g)
-                 && TryParse(splits[2], out float b))
+                if (TryParse(splits[0], out float r, options)
+                 && TryParse(splits[1], out float g, options)
+                 && TryParse(splits[2], out float b, options))
                 {
                     result = new Color(Clamp01(r), Clamp01(g), Clamp01(b));
                     return true;
@@ -479,10 +465,10 @@ public static partial class ParseUtils
 
             // RGBA
             case 4:
-                if (TryParse(splits[0], out r)
-                 && TryParse(splits[1], out g)
-                 && TryParse(splits[2], out b)
-                 && TryParse(splits[3], out float a))
+                if (TryParse(splits[0], out r, options)
+                 && TryParse(splits[1], out g, options)
+                 && TryParse(splits[2], out b, options)
+                 && TryParse(splits[3], out float a, options))
                 {
                     result = new Color(Clamp01(r), Clamp01(g), Clamp01(b), Clamp01(a));
                     return true;
@@ -502,7 +488,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Color32 result, in ParseOptions options)
     {
@@ -519,9 +505,9 @@ public static partial class ParseUtils
         {
             // RGB
             case 3:
-                if (TryParse(splits[0], out byte r)
-                 && TryParse(splits[1], out byte g)
-                 && TryParse(splits[2], out byte b))
+                if (TryParse(splits[0], out byte r, options)
+                 && TryParse(splits[1], out byte g, options)
+                 && TryParse(splits[2], out byte b, options))
                 {
                     result = new Color32(r, g, b, byte.MaxValue);
                     return true;
@@ -532,10 +518,10 @@ public static partial class ParseUtils
 
             // RGBA
             case 4:
-                if (TryParse(splits[0], out r)
-                 && TryParse(splits[1], out g)
-                 && TryParse(splits[2], out b)
-                 && TryParse(splits[3], out byte a))
+                if (TryParse(splits[0], out r, options)
+                 && TryParse(splits[1], out g, options)
+                 && TryParse(splits[2], out b, options)
+                 && TryParse(splits[3], out byte a, options))
                 {
                     result = new Color32(r, g, b, a);
                     return true;
@@ -564,7 +550,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Matrix4x4 result, in ParseOptions options)
     {
@@ -579,22 +565,22 @@ public static partial class ParseUtils
         string[] splits = SplitValuesInternal(value!, options, DefaultMatrixSeparators);
         result = Matrix4x4.identity;
         if (splits.Length is 16
-         && TryParse(splits[00], out result.m00)
-         && TryParse(splits[01], out result.m01)
-         && TryParse(splits[02], out result.m02)
-         && TryParse(splits[03], out result.m03)
-         && TryParse(splits[04], out result.m10)
-         && TryParse(splits[05], out result.m11)
-         && TryParse(splits[06], out result.m12)
-         && TryParse(splits[07], out result.m13)
-         && TryParse(splits[08], out result.m20)
-         && TryParse(splits[09], out result.m21)
-         && TryParse(splits[10], out result.m22)
-         && TryParse(splits[11], out result.m23)
-         && TryParse(splits[12], out result.m30)
-         && TryParse(splits[13], out result.m31)
-         && TryParse(splits[14], out result.m32)
-         && TryParse(splits[15], out result.m33))
+         && TryParse(splits[00], out result.m00, options)
+         && TryParse(splits[01], out result.m01, options)
+         && TryParse(splits[02], out result.m02, options)
+         && TryParse(splits[03], out result.m03, options)
+         && TryParse(splits[04], out result.m10, options)
+         && TryParse(splits[05], out result.m11, options)
+         && TryParse(splits[06], out result.m12, options)
+         && TryParse(splits[07], out result.m13, options)
+         && TryParse(splits[08], out result.m20, options)
+         && TryParse(splits[09], out result.m21, options)
+         && TryParse(splits[10], out result.m22, options)
+         && TryParse(splits[11], out result.m23, options)
+         && TryParse(splits[12], out result.m30, options)
+         && TryParse(splits[13], out result.m31, options)
+         && TryParse(splits[14], out result.m32, options)
+         && TryParse(splits[15], out result.m33, options))
         {
             return true;
         }
@@ -608,7 +594,7 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse(string? value, out Matrix4x4D result, in ParseOptions options)
     {
@@ -623,22 +609,22 @@ public static partial class ParseUtils
         string[] splits = SplitValuesInternal(value!, options, DefaultMatrixSeparators);
         result = Matrix4x4D.Identity();
         if (splits.Length is 16
-         && TryParse(splits[00], out result.m00)
-         && TryParse(splits[01], out result.m01)
-         && TryParse(splits[02], out result.m02)
-         && TryParse(splits[03], out result.m03)
-         && TryParse(splits[04], out result.m10)
-         && TryParse(splits[05], out result.m11)
-         && TryParse(splits[06], out result.m12)
-         && TryParse(splits[07], out result.m13)
-         && TryParse(splits[08], out result.m20)
-         && TryParse(splits[09], out result.m21)
-         && TryParse(splits[10], out result.m22)
-         && TryParse(splits[11], out result.m23)
-         && TryParse(splits[12], out result.m30)
-         && TryParse(splits[13], out result.m31)
-         && TryParse(splits[14], out result.m32)
-         && TryParse(splits[15], out result.m33))
+         && TryParse(splits[00], out result.m00, options)
+         && TryParse(splits[01], out result.m01, options)
+         && TryParse(splits[02], out result.m02, options)
+         && TryParse(splits[03], out result.m03, options)
+         && TryParse(splits[04], out result.m10, options)
+         && TryParse(splits[05], out result.m11, options)
+         && TryParse(splits[06], out result.m12, options)
+         && TryParse(splits[07], out result.m13, options)
+         && TryParse(splits[08], out result.m20, options)
+         && TryParse(splits[09], out result.m21, options)
+         && TryParse(splits[10], out result.m22, options)
+         && TryParse(splits[11], out result.m23, options)
+         && TryParse(splits[12], out result.m30, options)
+         && TryParse(splits[13], out result.m31, options)
+         && TryParse(splits[14], out result.m32, options)
+         && TryParse(splits[15], out result.m33, options))
         {
             return true;
         }

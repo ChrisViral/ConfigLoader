@@ -1,6 +1,5 @@
 ﻿using ConfigLoader.Attributes;
 using JetBrains.Annotations;
-using UnityEngine;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -20,11 +19,7 @@ public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = E
     /// <summary>
     /// Default parse options
     /// </summary>
-    internal static readonly ParseOptions DefaultOptions = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultSeparators);
-    /// <summary>
-    /// Default <see cref="Matrix4x4"/> parse options
-    /// </summary>
-    internal static readonly ParseOptions DefaultMatrixOptions = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultMatrixSeparators);
+    public static readonly ParseOptions Defaults = new();
 
     /// <summary>
     /// Creates new parse options with default parameters

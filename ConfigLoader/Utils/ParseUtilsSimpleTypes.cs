@@ -27,37 +27,13 @@ public static partial class ParseUtils
 
     #region Integers
     /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="bool"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out bool result, in ParseOptions options)
-    {
-        return bool.TryParse(value, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="char"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out char result, in ParseOptions? options = null)
-    {
-        return char.TryParse(value, out result);
-    }
-
-    /// <summary>
     /// Tries to parse the given <paramref name="value"/> as a <see cref="byte"/>
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out byte result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out byte result, in ParseOptions options)
     {
         return byte.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -67,9 +43,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out sbyte result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out sbyte result, in ParseOptions options)
     {
         return sbyte.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -79,9 +55,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out short result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out short result, in ParseOptions options)
     {
         return short.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -91,9 +67,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out ushort result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out ushort result, in ParseOptions options)
     {
         return ushort.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -103,9 +79,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out int result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out int result, in ParseOptions options)
     {
         return int.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -115,9 +91,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out uint result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out uint result, in ParseOptions options)
     {
         return uint.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -127,9 +103,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out long result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out long result, in ParseOptions options)
     {
         return long.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -139,9 +115,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out ulong result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out ulong result, in ParseOptions options)
     {
         return ulong.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -153,9 +129,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out float result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out float result, in ParseOptions options)
     {
         return float.TryParse(value, FLOAT_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -165,9 +141,9 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out double result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out double result, in ParseOptions options)
     {
         return double.TryParse(value, FLOAT_STYLES, CultureInfo.InvariantCulture, out result);
     }
@@ -177,25 +153,62 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out decimal result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out decimal result, in ParseOptions options)
     {
         return decimal.TryParse(value, DECIMAL_STYLES, CultureInfo.InvariantCulture, out result);
     }
     #endregion
 
-    #region Guid
+    #region Other
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="bool"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out bool result, in ParseOptions options)
+    {
+        return bool.TryParse(value, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="char"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out char result, in ParseOptions options)
+    {
+        return char.TryParse(value, out result);
+    }
+
     /// <summary>
     /// Tries to parse the given <paramref name="value"/> as a <see cref="Guid"/>
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Guid result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Guid result, in ParseOptions options)
     {
         return Guid.TryParse(value, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <typeparamref name="T"/>
+    /// </summary>
+    /// <typeparam name="T">Enum type</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<T>(string? value, out T result, in ParseOptions options) where T : struct, Enum
+    {
+        return EnumUtils.TryParse(value, out result);
     }
     #endregion
 }
