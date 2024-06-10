@@ -49,6 +49,7 @@ public static class SaveBuilder
         $"{UnityEngine}.Vector4",
         $"{UnityEngine}.Quaternion",
         "QuaternionD",
+        $"{UnityEngine}.Matrix4x4",
         $"{UnityEngine}.Color",
         $"{UnityEngine}.Color32",
     ];
