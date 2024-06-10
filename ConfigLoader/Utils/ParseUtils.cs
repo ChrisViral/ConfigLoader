@@ -14,19 +14,25 @@ namespace ConfigLoader.Utils;
 /// <summary>
 /// Value parse options
 /// </summary>
-/// <param name="SplitOptions">String splitting options</param>
-/// <param name="Separators">String splitting strings</param>
-public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ExtendedSplitOptions.RemoveEmptyEntries,
-                                           string[]? Separators = null)
+/// <param name="SplitOptions">String splitting options, defaults to <see cref="ExtendedSplitOptions.TrimAndRemoveEmptyEntries"/></param>
+/// <param name="Separators">String splitting separators, if left <see langword="null"/>, the default separators, a single comma, will be used</param>
+[PublicAPI]
+public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ExtendedSplitOptions.TrimAndRemoveEmptyEntries,
+                                           char[]? Separators = null)
 {
     /// <summary>
     /// Default parse options
     /// </summary>
-    internal static ParseOptions DefaultOptions { get; } = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultSeparators);
+    internal static readonly ParseOptions DefaultOptions = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultSeparators);
     /// <summary>
     /// Default <see cref="Matrix4x4"/> parse options
     /// </summary>
-    internal static ParseOptions DefaultMatrixOptions { get; } = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultMatrixSeparators);
+    internal static readonly ParseOptions DefaultMatrixOptions = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultMatrixSeparators);
+
+    /// <summary>
+    /// Creates new parse options with default parameters
+    /// </summary>
+    public ParseOptions() : this(ExtendedSplitOptions.TrimAndRemoveEmptyEntries) { }
 }
 
 /// <summary>
@@ -35,38 +41,73 @@ public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = E
 [PublicAPI]
 public static partial class ParseUtils
 {
+    #region Split
     /// <summary>
     /// Default separators
     /// </summary>
-    internal static readonly string[] DefaultSeparators = [","];
+    internal static readonly char[] DefaultSeparators = [','];
     /// <summary>
     /// Default <see cref="Matrix4x4"/> separators
     /// </summary>
-    internal static readonly string[] DefaultMatrixSeparators = [",", " ", "\t"];
+    internal static readonly char[] DefaultMatrixSeparators = [',', ' ', '\t'];
+
+    /// <summary>
+    /// Checks if an array is null or empty
+    /// </summary>
+    /// <typeparam name="T">Array type</typeparam>
+    /// <param name="array">Array to check</param>
+    /// <returns><see langword="true"/> if the array is <see langword="null"/> or empty, otherwise <see langword="false"/></returns>
+    [ContractAnnotation("null => true")]
+    public static bool IsNullOrEmpty<T>(T[]? array) => array?.Length is null or 0;
 
     /// <summary>
     /// Split the values in a string with the provided options
     /// </summary>
     /// <param name="value">Value to split</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns>The array of split values, or an empty array if <paramref name="value"/> is null or empty</returns>
+    /// <param name="options">Parsing options</param>
+    /// <returns>The array of split values, or an empty array if <paramref name="value"/> is <see langword="null"/> or empty</returns>
     public static string[] SplitValues(string? value, in ParseOptions? options = null)
     {
         // If value is empty, return an empty array
-        if (string.IsNullOrEmpty(value)) return [];
+        return !string.IsNullOrEmpty(value) ? SplitValuesInternal(value!, options) : [];
+    }
 
-        (ExtendedSplitOptions splitOptions, string[]? separators) = options ?? ParseOptions.DefaultOptions;
+    /// <summary>
+    /// Split the values in a string with the provided options
+    /// </summary>
+    /// <param name="value">Value to split</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns>The array of split values</returns>
+    private static string[] SplitValuesInternal(string value, in ParseOptions? options)
+    {
+        return SplitValuesInternal(value, options, ParseOptions.DefaultOptions, DefaultMatrixSeparators);
+    }
+
+    /// <summary>
+    /// Split the values in a string with the provided options
+    /// </summary>
+    /// <param name="value">Value to split</param>
+    /// <param name="options">Parsing options</param>
+    /// <param name="defaultOptions">Default parsing options if the passed options are <see langword="null"/></param>
+    /// <param name="defaultSeparators">Default string separators if the provided separators are <see langword="null"/> or empty</param>
+    /// <returns>The array of split values</returns>
+    private static string[] SplitValuesInternal(string value, in ParseOptions? options, in ParseOptions defaultOptions, char[] defaultSeparators)
+    {
+        // Extract options
+        (ExtendedSplitOptions splitOptions, char[]? separators) = options ?? defaultOptions;
 
         // Assign default separators if needed
-        if (separators is not { Length: > 0 })
+        if (IsNullOrEmpty(separators))
         {
-            separators = DefaultSeparators;
+            separators = defaultSeparators;
         }
 
         // Return splits
-        return value!.Split(separators, splitOptions);
+        return value!.Split(separators!, splitOptions);
     }
+    #endregion
 
+    #region Vector
     /// <summary>
     /// Tries to parse the given <paramref name="value"/> as a <see cref="Vector2"/>
     /// </summary>
@@ -84,7 +125,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 2
          && float.TryParse(splits[0], out float x)
          && float.TryParse(splits[1], out float y))
@@ -114,7 +155,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 2
          && double.TryParse(splits[0], out double x)
          && double.TryParse(splits[1], out double y))
@@ -124,6 +165,36 @@ public static partial class ParseUtils
         }
 
         result = Vector2d.zero;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="Vector2Int"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out Vector2Int result, in ParseOptions? options = null)
+    {
+        // If empty, return now
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            result = Vector2Int.zero;
+            return false;
+        }
+
+        // Split values and try parsing
+        string[] splits = SplitValuesInternal(value!, options);
+        if (splits.Length is 2
+         && int.TryParse(splits[0], out int x)
+         && int.TryParse(splits[1], out int y))
+        {
+            result = new Vector2Int(x, y);
+            return true;
+        }
+
+        result = Vector2Int.zero;
         return false;
     }
 
@@ -144,7 +215,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 3
          && float.TryParse(splits[0], out float x)
          && float.TryParse(splits[1], out float y)
@@ -175,7 +246,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 3
          && double.TryParse(splits[0], out double x)
          && double.TryParse(splits[1], out double y)
@@ -186,6 +257,37 @@ public static partial class ParseUtils
         }
 
         result = Vector3d.zero;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="Vector3Int"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out Vector3Int result, in ParseOptions? options = null)
+    {
+        // If empty, return now
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            result = Vector3Int.zero;
+            return false;
+        }
+
+        // Split values and try parsing
+        string[] splits = SplitValuesInternal(value!, options);
+        if (splits.Length is 3
+         && int.TryParse(splits[0], out int x)
+         && int.TryParse(splits[1], out int y)
+         && int.TryParse(splits[2], out int z))
+        {
+            result = new Vector3Int(x, y, z);
+            return true;
+        }
+
+        result = Vector3Int.zero;
         return false;
     }
 
@@ -206,7 +308,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
          && float.TryParse(splits[0], out float x)
          && float.TryParse(splits[1], out float y)
@@ -238,7 +340,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
          && double.TryParse(splits[0], out double x)
          && double.TryParse(splits[1], out double y)
@@ -252,7 +354,9 @@ public static partial class ParseUtils
         result = Vector4d.zero;
         return false;
     }
+    #endregion
 
+    #region Quaternion
     /// <summary>
     /// Tries to parse the given <paramref name="value"/> as a <see cref="Quaternion"/>
     /// </summary>
@@ -270,7 +374,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
          && float.TryParse(splits[0], out float x)
          && float.TryParse(splits[1], out float y)
@@ -302,7 +406,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
          && double.TryParse(splits[0], out double x)
          && double.TryParse(splits[1], out double y)
@@ -316,7 +420,9 @@ public static partial class ParseUtils
         result = QuaternionD.identity;
         return false;
     }
+    #endregion
 
+    #region Rect
     /// <summary>
     /// Tries to parse the given <paramref name="value"/> as a <see cref="Rect"/>
     /// </summary>
@@ -334,7 +440,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
          && float.TryParse(splits[0], out float x)
          && float.TryParse(splits[1], out float y)
@@ -348,6 +454,13 @@ public static partial class ParseUtils
         result = Rect.zero;
         return false;
     }
+    #endregion
+
+    #region Color
+    /// <summary>
+    /// Default <see cref="Color32"/> return value (white)
+    /// </summary>
+    private static readonly Color32 DefaultColor32 = new(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
 
     /// <summary>
     /// Tries to parse the given <paramref name="value"/> as a <see cref="Color"/>
@@ -366,23 +479,35 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
+        string[] splits = SplitValuesInternal(value!, options);
         switch (splits.Length)
         {
             // RGB only
-            case 3 when float.TryParse(splits[0], out float r)
-                     && float.TryParse(splits[1], out float g)
-                     && float.TryParse(splits[2], out float b):
-                result = new Color(Clamp01(r), Clamp01(g), Clamp01(b));
-                return true;
+            case 3:
+                if (float.TryParse(splits[0], out float r)
+                 && float.TryParse(splits[1], out float g)
+                 && float.TryParse(splits[2], out float b))
+                {
+                    result = new Color(Clamp01(r), Clamp01(g), Clamp01(b));
+                    return true;
+                }
+
+                result = Color.white;
+                return false;
 
             // RGBA
-            case 4 when float.TryParse(splits[0], out float r)
-                     && float.TryParse(splits[1], out float g)
-                     && float.TryParse(splits[2], out float b)
-                     && float.TryParse(splits[3], out float a):
-                result = new Color(Clamp01(r), Clamp01(g), Clamp01(b), Clamp01(a));
-                return true;
+            case 4:
+                if (float.TryParse(splits[0], out r)
+                 && float.TryParse(splits[1], out g)
+                 && float.TryParse(splits[2], out b)
+                 && float.TryParse(splits[3], out float a))
+                {
+                    result = new Color(Clamp01(r), Clamp01(g), Clamp01(b), Clamp01(a));
+                    return true;
+                }
+
+                result = Color.white;
+                return false;
 
             default:
                 // If all else fails, try to parse as a hex colour
@@ -402,26 +527,59 @@ public static partial class ParseUtils
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
         {
-            result = new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
+            result = DefaultColor32;
             return false;
         }
 
         // Split values and try parsing
-        string[] splits = SplitValues(value, options);
-        if (splits.Length is 4
-         && byte.TryParse(splits[0], out byte r)
-         && byte.TryParse(splits[1], out byte g)
-         && byte.TryParse(splits[2], out byte b)
-         && byte.TryParse(splits[3], out byte a))
+        string[] splits = SplitValuesInternal(value!, options);
+        switch (splits.Length)
         {
-            result = new Color32(r, g, b, a);
-            return true;
+            // RGB
+            case 3:
+                if (byte.TryParse(splits[0], out byte r)
+                 && byte.TryParse(splits[1], out byte g)
+                 && byte.TryParse(splits[2], out byte b))
+                {
+                    result = new Color32(r, g, b, byte.MaxValue);
+                    return true;
+                }
+
+                result = DefaultColor32;
+                return false;
+
+            // RGBA
+            case 4:
+                if (byte.TryParse(splits[0], out r)
+                 && byte.TryParse(splits[1], out g)
+                 && byte.TryParse(splits[2], out b)
+                 && byte.TryParse(splits[3], out byte a))
+                {
+                    result = new Color32(r, g, b, a);
+                    return true;
+                }
+
+                result = DefaultColor32;
+                return false;
+
+            default:
+                // If all else fails, try to parse as a hex colour
+                if (ColorUtility.TryParseHtmlString(value, out Color color))
+                {
+                    result = color;
+                    return true;
+                }
+
+                result = DefaultColor32;
+                return false;
         }
 
-        result = new Color32(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
+        result = DefaultColor32;
         return false;
     }
+    #endregion
 
+    #region Matrix4x4
     /// <summary>
     /// Tries to parse the given <paramref name="value"/> as a <see cref="Matrix4x4"/>
     /// </summary>
@@ -429,7 +587,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Matrix4x4 result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Matrix4x4 result, in ParseOptions? options = default)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -438,26 +596,8 @@ public static partial class ParseUtils
             return false;
         }
 
-        // We use different default separators for matrices, so unless custom separators have been passed, we replace them with the matrix separators
-        string[] splits;
-        if (options?.Separators is { Length: > 0 })
-        {
-            // If the options are not null, and the separators are not null or empty, we keep the custom separators
-            splits = SplitValues(value, options);
-        }
-        else
-        {
-            // Ensure options are not null
-            ParseOptions matrixOptions = options ?? ParseOptions.DefaultMatrixOptions;
-            if (matrixOptions.Separators is not { Length: > 0})
-            {
-                // And ensure separators are not null or empty
-                matrixOptions = matrixOptions with { Separators = DefaultMatrixSeparators };
-            }
-            splits = SplitValues(value, matrixOptions);
-        }
-
         // Split values and try parsing
+        string[] splits = SplitValuesInternal(value!, options, ParseOptions.DefaultMatrixOptions, DefaultMatrixSeparators);
         result = Matrix4x4.identity;
         if (splits.Length is 16
          && float.TryParse(splits[00], out result.m00)
@@ -500,26 +640,8 @@ public static partial class ParseUtils
             return false;
         }
 
-        // We use different default separators for matrices, so unless custom separators have been passed, we replace them with the matrix separators
-        string[] splits;
-        if (options?.Separators is { Length: > 0 })
-        {
-            // If the options are not null, and the separators are not null or empty, we keep the custom separators
-            splits = SplitValues(value, options);
-        }
-        else
-        {
-            // Ensure options are not null
-            ParseOptions matrixOptions = options ?? ParseOptions.DefaultMatrixOptions;
-            if (matrixOptions.Separators is not { Length: > 0})
-            {
-                // And ensure separators are not null or empty
-                matrixOptions = matrixOptions with { Separators = DefaultMatrixSeparators };
-            }
-            splits = SplitValues(value, matrixOptions);
-        }
-
         // Split values and try parsing
+        string[] splits = SplitValuesInternal(value!, options, ParseOptions.DefaultMatrixOptions, DefaultMatrixSeparators);
         result = Matrix4x4D.Identity();
         if (splits.Length is 16
          && double.TryParse(splits[00], out result.m00)
@@ -545,4 +667,5 @@ public static partial class ParseUtils
         result = Matrix4x4D.Identity();
         return false;
     }
+    #endregion
 }
