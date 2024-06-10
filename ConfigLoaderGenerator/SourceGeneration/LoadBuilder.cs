@@ -6,9 +6,9 @@ using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
-using static ConfigLoaderGenerator.SourceGeneration.ConfigBuilder;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
+using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *

@@ -1,5 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
+﻿using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -191,7 +190,7 @@ public static class SyntaxOperationExtensions
     /// <param name="accessModifier">Method access modifier</param>
     /// <param name="parameters">Method parameters</param>
     /// <returns>The created <see cref="MethodDeclarationSyntax"/></returns>
-    public static MethodDeclarationSyntax DeclareMethod(this IdentifierNameSyntax name, SyntaxKind returnType, SyntaxToken accessModifier, params ParameterSyntax[] parameters)
+    public static MethodDeclarationSyntax DeclareMethod(this IdentifierNameSyntax name, SyntaxKind returnType, SyntaxKind accessModifier, params ParameterSyntax[] parameters)
     {
         return DeclareMethod(name, returnType.AsType(), accessModifier, parameters);
     }
@@ -204,9 +203,37 @@ public static class SyntaxOperationExtensions
     /// <param name="accessModifier">Method access modifier</param>
     /// <param name="parameters">Method parameters</param>
     /// <returns>The created <see cref="MethodDeclarationSyntax"/></returns>
-    public static MethodDeclarationSyntax DeclareMethod(this IdentifierNameSyntax name, TypeSyntax returnType, SyntaxToken accessModifier, params ParameterSyntax[] parameters)
+    public static MethodDeclarationSyntax DeclareMethod(this IdentifierNameSyntax name, TypeSyntax returnType, SyntaxKind accessModifier, params ParameterSyntax[] parameters)
     {
-        return MethodDeclaration(returnType, name.Identifier).AddModifiers(accessModifier)
+        return MethodDeclaration(returnType, name.Identifier).AddModifiers(Token(accessModifier))
+                                                             .AddParameterListParameters(parameters)
+                                                             .WithBody(Block());
+    }
+
+    /// <summary>
+    /// Creates an explicit interface implementation <see cref="MethodDeclarationSyntax"/> for the given name token
+    /// </summary>
+    /// <param name="name">Method name</param>
+    /// <param name="returnType">Method return type</param>
+    /// <param name="interfaceType">Interface type</param>
+    /// <param name="parameters">Method parameters</param>
+    /// <returns>The created explicit interface implementation <see cref="MethodDeclarationSyntax"/></returns>
+    public static MethodDeclarationSyntax DeclareExplicitInterfaceMethod(this IdentifierNameSyntax name, SyntaxKind returnType, ExplicitInterfaceSpecifierSyntax interfaceType, params ParameterSyntax[] parameters)
+    {
+        return DeclareExplicitInterfaceMethod(name, returnType.AsType(), interfaceType, parameters);
+    }
+
+    /// <summary>
+    /// Creates an explicit interface implementation <see cref="MethodDeclarationSyntax"/> for the given name token
+    /// </summary>
+    /// <param name="name">Method name</param>
+    /// <param name="returnType">Method return type</param>
+    /// <param name="interfaceType">Interface type</param>
+    /// <param name="parameters">Method parameters</param>
+    /// <returns>The created explicit interface implementation <see cref="MethodDeclarationSyntax"/></returns>
+    public static MethodDeclarationSyntax DeclareExplicitInterfaceMethod(this IdentifierNameSyntax name, TypeSyntax returnType, ExplicitInterfaceSpecifierSyntax interfaceType, params ParameterSyntax[] parameters)
+    {
+        return MethodDeclaration(returnType, name.Identifier).WithExplicitInterfaceSpecifier(interfaceType)
                                                              .AddParameterListParameters(parameters)
                                                              .WithBody(Block());
     }

@@ -39,7 +39,7 @@ public enum ExtendedSplitOptions
 /// Config generation target field attribute
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field), PublicAPI]
-public class ConfigFieldAttribute : Attribute
+public sealed class ConfigFieldAttribute : Attribute
 {
     #region Defaults
     /// <summary>

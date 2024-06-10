@@ -7,12 +7,17 @@
  * Basically the same idea as C++ forward declarations.
  */
 
-namespace ConfigLoader.Utils
+namespace ConfigLoader
 {
-    public static partial class ParseUtils;
-}
+    public partial interface IGeneratedConfigNode;
 
-namespace ConfigLoader.Exceptions
-{
-    public partial class MissingRequiredConfigFieldException;
+    namespace Utils
+    {
+        public partial class ParseUtils;
+    }
+
+    namespace Exceptions
+    {
+        public partial class MissingRequiredConfigFieldException;
+    }
 }

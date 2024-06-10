@@ -26,14 +26,21 @@ internal static class SyntaxConversionExtensions
     /// <param name="modifier">Access modifier to get the keyword for</param>
     /// <returns>The string keyword for <paramref name="modifier"/></returns>
     /// <exception cref="InvalidEnumArgumentException"></exception>
-    public static SyntaxToken AsKeyword(this AccessModifier modifier) => modifier switch
+    public static SyntaxKind AsKeyword(this AccessModifier modifier) => modifier switch
     {
-        AccessModifier.Private   => Token(SyntaxKind.PrivateKeyword),
-        AccessModifier.Protected => Token(SyntaxKind.ProtectedKeyword),
-        AccessModifier.Internal  => Token(SyntaxKind.InternalKeyword),
-        AccessModifier.Public    => Token(SyntaxKind.PublicKeyword),
+        AccessModifier.Private   => SyntaxKind.PrivateKeyword,
+        AccessModifier.Protected => SyntaxKind.ProtectedKeyword,
+        AccessModifier.Internal  => SyntaxKind.InternalKeyword,
+        AccessModifier.Public    => SyntaxKind.PublicKeyword,
         _                        => throw new InvalidEnumArgumentException(nameof(modifier), (int)modifier, typeof(AccessModifier))
     };
+
+    /// <summary>
+    /// Creates a <see cref="SyntaxToken"/> for the provided keyword
+    /// </summary>
+    /// <param name="keyword">Keyword to get the token for</param>
+    /// <returns>The <see cref="SyntaxToken"/> associated to <paramref name="keyword"/></returns>
+    public static SyntaxToken AsToken(this SyntaxKind keyword) => Token(keyword);
 
     /// <summary>
     /// Gets the type syntax for a predefined type token
@@ -86,6 +93,20 @@ internal static class SyntaxConversionExtensions
     /// <param name="name">Value to create the namespace for</param>
     /// <returns>The namespace associated to <paramref name="name"/></returns>
     public static NamespaceDeclarationSyntax AsNamespace(this string name) => NamespaceDeclaration(IdentifierName(name));
+
+    /// <summary>
+    /// Creates a <see cref="BaseTypeSyntax"/> from the given <see cref="string"/> value
+    /// </summary>
+    /// <param name="name">Value to create the base type for</param>
+    /// <returns>The base type associated with <paramref name="name"/></returns>
+    public static BaseTypeSyntax AsBaseType(this string name) => SimpleBaseType(IdentifierName(name));
+
+    /// <summary>
+    /// Creates a <see cref="ExplicitInterfaceSpecifierSyntax"/> from the given <see cref="IdentifierNameSyntax"/>
+    /// </summary>
+    /// <param name="name">Identifier to create the explicit interface for</param>
+    /// <returns>The explicit interface associated with <paramref name="name"/></returns>
+    public static ExplicitInterfaceSpecifierSyntax AsExplicitInterface(this IdentifierNameSyntax name) => ExplicitInterfaceSpecifier(name);
 
     /// <summary>
     /// Creates a <see cref="CaseSwitchLabelSyntax"/> from the given expression value

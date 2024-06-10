@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -61,5 +63,55 @@ public static class SyntaxModificationExtensions
     public static IdentifierNameSyntax Postfix(this IdentifierNameSyntax identifier, string postfix)
     {
         return IdentifierName(identifier.Identifier.ValueText + postfix);
+    }
+
+    /// <summary>
+    /// Adds a named <c>#region</c> directive before this node
+    /// </summary>
+    /// <typeparam name="T">SyntaxNode type</typeparam>
+    /// <param name="node">Node to add the region to</param>
+    /// <param name="regionName">Name of the region</param>
+    /// <returns>The node with a <c>#region</c> directive added before</returns>
+    public static T AddRegionStart<T>(this T node, SyntaxTrivia regionName) where T : SyntaxNode
+    {
+        SyntaxToken token   = Token(TriviaList(regionName), SyntaxKind.EndOfDirectiveToken, TriviaList());
+        SyntaxTrivia region = Trivia(RegionDirectiveTrivia(true).WithEndOfDirectiveToken(token));
+        return node.AddLeadingTrivia(region);
+    }
+
+    /// <summary>
+    /// Adds an <c>#endregion</c> directive after this node
+    /// </summary>
+    /// <typeparam name="T">SyntaxNode type</typeparam>
+    /// <param name="node">Node to add the region to</param>
+    /// <returns>The node with a <c>#endregion</c> directive added after</returns>
+    public static T AddRegionEnd<T>(this T node) where T : SyntaxNode
+    {
+        SyntaxTrivia endregion = Trivia(EndRegionDirectiveTrivia(true));
+        return node.AddTrailingTrivia(endregion);
+    }
+
+    /// <summary>
+    /// Adds the leading trivia in front of all the existing leading trivia
+    /// </summary>
+    /// <typeparam name="T">Node type</typeparam>
+    /// <param name="node">Node to add the trivia to</param>
+    /// <param name="trivia">Trivia to add</param>
+    /// <returns>The node, with the given leading trivia added to it</returns>
+    public static T AddLeadingTrivia<T>(this T node, params SyntaxTrivia[] trivia) where T : SyntaxNode
+    {
+        return !node.HasLeadingTrivia ? node.WithLeadingTrivia(trivia) : node.WithLeadingTrivia(trivia.Concat(node.GetLeadingTrivia()));
+    }
+
+    /// <summary>
+    /// Adds the trailing trivia in front of all the existing trailing trivia
+    /// </summary>
+    /// <typeparam name="T">Node type</typeparam>
+    /// <param name="node">Node to add the trivia to</param>
+    /// <param name="trivia">Trivia to add</param>
+    /// <returns>The node, with the given trailing trivia added to it</returns>
+    public static T AddTrailingTrivia<T>(this T node, params SyntaxTrivia[] trivia) where T : SyntaxNode
+    {
+        return !node.HasTrailingTrivia ? node.WithTrailingTrivia(trivia) : node.WithTrailingTrivia(trivia.Concat(node.GetTrailingTrivia()));
     }
 }
