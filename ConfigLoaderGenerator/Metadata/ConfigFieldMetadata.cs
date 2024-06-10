@@ -40,6 +40,10 @@ public readonly struct ConfigFieldMetadata
         /// </summary>
         public bool IsBuiltin { get; }
         /// <summary>
+        /// If this is an enum type
+        /// </summary>
+        public bool IsEnum { get; }
+        /// <summary>
         /// Type identifier
         /// </summary>
         public IdentifierNameSyntax Identifier { get; }
@@ -54,6 +58,7 @@ public readonly struct ConfigFieldMetadata
             this.FullName   = this.Symbol.FullName();
             this.Namespace  = this.Symbol.ContainingNamespace;
             this.IsBuiltin  = BuiltinTypes.Contains(this.FullName);
+            this.IsEnum     = this.Symbol.IsEnum();
             this.Identifier = IdentifierName(this.Symbol.DisplayName());
         }
     }
@@ -85,6 +90,10 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public ISymbol Symbol { get; }
     /// <summary>
+    /// Name of the field associated to this metadata
+    /// </summary>
+    public IdentifierNameSyntax FieldName { get; }
+    /// <summary>
     /// Type of this field
     /// </summary>
     public TypeInfo Type { get; }
@@ -101,13 +110,9 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public IdentifierNameSyntax SerializedName { get; } = IdentifierName(string.Empty);
     /// <summary>
-    /// Name of the field associated to this metadata
-    /// </summary>
-    public IdentifierNameSyntax FieldName { get; }
-    /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
-    public string? NodeNameValue { get; }
+    public IdentifierNameSyntax? NodeName { get; }
     /// <summary>
     /// Enum serialization method
     /// </summary>
@@ -153,7 +158,7 @@ public readonly struct ConfigFieldMetadata
                     break;
 
                 case nameof(ConfigFieldAttribute.NodeNameValue):
-                    this.NodeNameValue = (string)value.Value;
+                    this.NodeName = IdentifierName((string)value.Value);
                     break;
 
                 case nameof(ConfigFieldAttribute.EnumHandling):

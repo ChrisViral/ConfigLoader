@@ -42,7 +42,7 @@ internal static class SymbolExtensions
     public static string FullName(this INamedTypeSymbol type) => type.ToDisplayString(FullNameFormat);
 
     /// <summary>
-    /// The display type name for this
+    /// The display type name for this type
     /// </summary>
     /// <param name="type">Type to get the display name for</param>
     /// <returns>The type's display name</returns>
@@ -54,5 +54,12 @@ internal static class SymbolExtensions
     /// <param name="type">Type to get the namespace of</param>
     /// <returns>The namespace of the type</returns>
     public static string FullNamespace(this INamedTypeSymbol type) => type.ContainingNamespace.ToDisplayString();
+
+    /// <summary>
+    /// Checks if a given type is an enum
+    /// </summary>
+    /// <param name="type">Type to check</param>
+    /// <returns><see langword="true"/> if <paramref name="type"/> is an <see cref="Enum"/> type, otherwise <see langword="false"/></returns>
+    public static bool IsEnum(this INamedTypeSymbol type) => type.IsValueType && type.BaseType?.FullName() == typeof(Enum).FullName;
     #endregion
 }

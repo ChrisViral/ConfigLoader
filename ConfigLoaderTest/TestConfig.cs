@@ -12,6 +12,8 @@ namespace ConfigLoaderTest.Test
         public float floatValue = 0f;
         [ConfigField]
         public string stringValue = string.Empty;
+        [ConfigField]
+        public AccessModifier modifier = AccessModifier.Public;
 
         [ConfigField(Name = "OtherName")]
         public Vector3 VectorProperty { get; set; }

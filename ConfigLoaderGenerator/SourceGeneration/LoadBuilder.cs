@@ -104,11 +104,12 @@ public static class LoadBuilder
     public static BlockSyntax GenerateFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save option
-        if (TryParseTypes.Contains(field.Type.FullName))
+        if (TryParseTypes.Contains(field.Type.FullName) || field.Type.IsEnum)
         {
             context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
             return GenerateTryParseFieldLoad(value, ParseUtils, field, context);
         }
+
         if (AssignableTypes.Contains(field.Type.FullName))
         {
             return GenerateAssignFieldLoad(value, field, context);

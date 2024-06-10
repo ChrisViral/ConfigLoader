@@ -28,21 +28,6 @@ public static class SaveBuilder
     /// </summary>
     private static readonly HashSet<string> AddValueTypes =
     [
-        typeof(bool).FullName,
-        typeof(byte).FullName,
-        typeof(sbyte).FullName,
-        typeof(short).FullName,
-        typeof(ushort).FullName,
-        typeof(int).FullName,
-        typeof(uint).FullName,
-        typeof(long).FullName,
-        typeof(ulong).FullName,
-        typeof(float).FullName,
-        typeof(double).FullName,
-        typeof(decimal).FullName,
-        typeof(char).FullName,
-        typeof(string).FullName,
-        typeof(object).FullName,
         $"{UnityEngine}.Vector2",
         $"{UnityEngine}.Vector3",
         "Vector3d",
@@ -66,7 +51,7 @@ public static class SaveBuilder
     /// <exception cref="InvalidOperationException">If the generator does not know how to save the given field type</exception>
     public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
-        if (AddValueTypes.Contains(field.Type.FullName))
+        if (field.Type.IsBuiltin || AddValueTypes.Contains(field.Type.FullName) || field.Type.IsEnum)
         {
             return GenerateAddValueSave(body, name, value, field, context);
         }
