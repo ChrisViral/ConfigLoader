@@ -1,4 +1,6 @@
-﻿using ConfigLoader.Attributes;
+﻿using System;
+using System.Globalization;
+using ConfigLoader.Attributes;
 using ConfigLoader.Extensions;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -41,7 +43,7 @@ public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = E
 [PublicAPI]
 public static partial class ParseUtils
 {
-    #region Split
+    #region Defaults
     /// <summary>
     /// Default separators
     /// </summary>
@@ -50,7 +52,25 @@ public static partial class ParseUtils
     /// Default <see cref="Matrix4x4"/> separators
     /// </summary>
     internal static readonly char[] DefaultMatrixSeparators = [',', ' ', '\t'];
+    /// <summary>
+    /// Default <see cref="Color32"/> return value (white)
+    /// </summary>
+    private static readonly Color32 DefaultColor32 = new(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
+    /// <summary>
+    /// Number style flags for integer parses
+    /// </summary>
+    private const NumberStyles INTEGER_STYLES = NumberStyles.Integer;
+    /// <summary>
+    /// Number style flags for floating point parses
+    /// </summary>
+    private const NumberStyles FLOAT_STYLES = NumberStyles.Float | NumberStyles.AllowThousands;
+    /// <summary>
+    ///Number style flags for decimal parses
+    /// </summary>
+    private const NumberStyles DECIMAL_STYLES = NumberStyles.Number;
+    #endregion
 
+    #region Utility
     /// <summary>
     /// Checks if an array is null or empty
     /// </summary>
@@ -59,7 +79,9 @@ public static partial class ParseUtils
     /// <returns><see langword="true"/> if the array is <see langword="null"/> or empty, otherwise <see langword="false"/></returns>
     [ContractAnnotation("null => true")]
     public static bool IsNullOrEmpty<T>(T[]? array) => array?.Length is null or 0;
+    #endregion
 
+    #region Split
     /// <summary>
     /// Split the values in a string with the provided options
     /// </summary>
@@ -104,6 +126,180 @@ public static partial class ParseUtils
 
         // Return splits
         return value!.Split(separators!, splitOptions);
+    }
+    #endregion
+
+    #region Integers
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="bool"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out bool result, in ParseOptions? options = null)
+    {
+        return bool.TryParse(value, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="char"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out char result, in ParseOptions? options = null)
+    {
+        return char.TryParse(value, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="byte"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out byte result, in ParseOptions? options = null)
+    {
+        return byte.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="sbyte"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out sbyte result, in ParseOptions? options = null)
+    {
+        return sbyte.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="short"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out short result, in ParseOptions? options = null)
+    {
+        return short.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="ushort"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out ushort result, in ParseOptions? options = null)
+    {
+        return ushort.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="int"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out int result, in ParseOptions? options = null)
+    {
+        return int.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="uint"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out uint result, in ParseOptions? options = null)
+    {
+        return uint.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="long"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out long result, in ParseOptions? options = null)
+    {
+        return long.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="ulong"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out ulong result, in ParseOptions? options = null)
+    {
+        return ulong.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+    #endregion
+
+    #region Floating point
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="float"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out float result, in ParseOptions? options = null)
+    {
+        return float.TryParse(value, FLOAT_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="double"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out double result, in ParseOptions? options = null)
+    {
+        return double.TryParse(value, FLOAT_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="decimal"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out decimal result, in ParseOptions? options = null)
+    {
+        return decimal.TryParse(value, DECIMAL_STYLES, CultureInfo.InvariantCulture, out result);
+    }
+    #endregion
+
+    #region Guid
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="Guid"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out Guid result, in ParseOptions? options = null)
+    {
+        return Guid.TryParse(value, out result);
     }
     #endregion
 
@@ -458,11 +654,6 @@ public static partial class ParseUtils
 
     #region Color
     /// <summary>
-    /// Default <see cref="Color32"/> return value (white)
-    /// </summary>
-    private static readonly Color32 DefaultColor32 = new(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
-
-    /// <summary>
     /// Tries to parse the given <paramref name="value"/> as a <see cref="Color"/>
     /// </summary>
     /// <param name="value">String value to parse</param>
@@ -573,9 +764,6 @@ public static partial class ParseUtils
                 result = DefaultColor32;
                 return false;
         }
-
-        result = DefaultColor32;
-        return false;
     }
     #endregion
 

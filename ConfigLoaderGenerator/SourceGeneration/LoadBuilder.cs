@@ -44,6 +44,7 @@ public static class LoadBuilder
     private static readonly HashSet<string> TryParseTypes =
     [
         typeof(bool).FullName,
+        typeof(char).FullName,
         typeof(byte).FullName,
         typeof(sbyte).FullName,
         typeof(short).FullName,
@@ -55,7 +56,6 @@ public static class LoadBuilder
         typeof(float).FullName,
         typeof(double).FullName,
         typeof(decimal).FullName,
-        typeof(char).FullName,
         typeof(Guid).FullName
     ];
     /// <summary>
