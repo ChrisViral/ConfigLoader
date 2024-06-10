@@ -13,6 +13,13 @@ namespace ConfigLoaderGenerator.Extensions;
 /// </summary>
 internal static class SymbolExtensions
 {
+    /// <summary>
+    /// Symbol formatting for displaying type fully qualified names
+    /// </summary>
+    private static readonly SymbolDisplayFormat FullNameFormat = SymbolDisplayFormat.FullyQualifiedFormat
+                                                                                    .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
+                                                                                    .RemoveMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
+
     #region Attribute extensions
     /// <summary>
     /// Tries to get the first attribute of type <typeparamref name="T"/> attached to the <paramref name="symbol"/>
@@ -32,21 +39,14 @@ internal static class SymbolExtensions
     /// </summary>
     /// <param name="type">Type to get the full name for</param>
     /// <returns>The fully qualified name of the type</returns>
-    public static string FullName(this ITypeSymbol type) => $"{type.FullNamespace()}.{type.Name}";
+    public static string FullName(this INamedTypeSymbol type) => type.ToDisplayString(FullNameFormat);
 
     /// <summary>
-    /// The fully qualified name of this type
+    /// The display type name for this
     /// </summary>
-    /// <param name="type">Type to get the full name for</param>
-    /// <returns>The fully qualified name of the type</returns>
-    public static string FullName(this INamedTypeSymbol type) => $"{type.FullNamespace()}.{type.Name}";
-
-    /// <summary>
-    /// Gets the full namespace of this type, including parent namespaces
-    /// </summary>
-    /// <param name="type">Type to get the namespace of</param>
-    /// <returns>The namespace of the type</returns>
-    public static string FullNamespace(this ITypeSymbol type) => type.ContainingNamespace.ToDisplayString();
+    /// <param name="type">Type to get the display name for</param>
+    /// <returns>The type's display name</returns>
+    public static string DisplayName(this INamedTypeSymbol type) => type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
     /// <summary>
     /// Gets the full namespace of this type, including parent namespaces

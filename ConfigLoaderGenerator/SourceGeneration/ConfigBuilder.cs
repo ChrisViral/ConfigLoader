@@ -188,7 +188,7 @@ public static class ConfigBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // case "name":
-        SwitchLabelSyntax label = field.Name.AsLiteral().AsSwitchLabel();
+        SwitchLabelSyntax label = field.SerializedName.AsLiteral().AsSwitchLabel();
         // Value parsing implementation
         BlockSyntax body = LoadBuilder.GenerateFieldLoad(Value.Access(Value), field, context);
 
@@ -232,7 +232,7 @@ public static class ConfigBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // Variables
-        ExpressionSyntax name = field.Name.AsLiteral();
+        ExpressionSyntax name = field.SerializedName.AsLiteral();
         ExpressionSyntax value = ThisExpression().Access(field.FieldName);
 
         // Value saving implementation

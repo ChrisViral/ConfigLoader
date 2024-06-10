@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -105,31 +104,29 @@ public static class LoadBuilder
     public static BlockSyntax GenerateFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save option
-        string typeName = field.Type.FullName();
-        if (TryParseTypes.Contains(typeName))
+        if (TryParseTypes.Contains(field.Type.FullName))
         {
             context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
             return GenerateTryParseFieldLoad(value, ParseUtils, field, context);
         }
-        if (field.Type.ise)
-        if (AssignableTypes.Contains(typeName))
+        if (AssignableTypes.Contains(field.Type.FullName))
         {
             return GenerateAssignFieldLoad(value, field, context);
         }
 
         // Unknown type
-        throw new InvalidOperationException($"Unknown type to parse {typeName}");
+        throw new InvalidOperationException($"Unknown type to parse ({field.Type.FullName})");
     }
 
     /// <summary>
     /// Generate the field load code implementation using <c>TryParse</c>
     /// </summary>
     /// <param name="value">Value expression</param>
-    /// <param name="type">TryParse parent type</param>
+    /// <param name="parent">TryParse parent type</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateTryParseFieldLoad(ExpressionSyntax value, IdentifierNameSyntax type, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateTryParseFieldLoad(ExpressionSyntax value, IdentifierNameSyntax parent, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -137,7 +134,7 @@ public static class LoadBuilder
         IdentifierNameSyntax tempVar = field.FieldName.Prefix("_");
 
         // out Type _value
-        ArgumentSyntax outVar = tempVar.Declaration(field.TypeName)
+        ArgumentSyntax outVar = tempVar.Declaration(field.Type.Identifier)
                                        .AsArgument()
                                        .WithOut();
 
@@ -145,7 +142,7 @@ public static class LoadBuilder
         ArgumentSyntax defaults = ParseOptions.Access(Defaults).AsArgument();
 
         // Type.TryParse(value.value, out Type _value)
-        ExpressionSyntax tryParse = type.Access(TryParse);
+        ExpressionSyntax tryParse = parent.Access(TryParse);
         ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar, defaults);
 
         // this.value = _value;
@@ -155,8 +152,12 @@ public static class LoadBuilder
         BlockSyntax ifBlock           = Block().AddStatements(fieldAssign.AsStatement());
         IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
 
-        // Add namespace and statement, then return
-        context.UsedNamespaces.AddNamespace(field.Type.ContainingNamespace);
+        // Add namespace if the type isn't builtin
+        if (!field.Type.IsBuiltin)
+        {
+            context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+        }
+
         return Block().AddStatements(ifStatement);
     }
 

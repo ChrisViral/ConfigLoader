@@ -66,13 +66,12 @@ public static class SaveBuilder
     /// <exception cref="InvalidOperationException">If the generator does not know how to save the given field type</exception>
     public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, ExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
-        string typeName = field.Type.FullName();
-        if (AddValueTypes.Contains(typeName))
+        if (AddValueTypes.Contains(field.Type.FullName))
         {
             return GenerateAddValueSave(body, name, value, field, context);
         }
 
-        throw new InvalidOperationException($"Unknown type to save {typeName}");
+        throw new InvalidOperationException($"Unknown type to save {field.Type.FullName}");
     }
 
     /// <summary>

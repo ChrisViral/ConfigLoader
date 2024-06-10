@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
@@ -18,13 +19,75 @@ namespace ConfigLoaderGenerator.Metadata;
 public readonly struct ConfigFieldMetadata
 {
     /// <summary>
+    /// Type info container
+    /// </summary>
+    public readonly struct TypeInfo
+    {
+        /// <summary>
+        /// Type symbol
+        /// </summary>
+        public INamedTypeSymbol Symbol { get; }
+        /// <summary>
+        /// Fully qualified name
+        /// </summary>
+        public string FullName { get; }
+        /// <summary>
+        /// Containing namespace
+        /// </summary>
+        public INamespaceSymbol? Namespace { get; }
+        /// <summary>
+        /// If this is a builtin type
+        /// </summary>
+        public bool IsBuiltin { get; }
+        /// <summary>
+        /// Type identifier
+        /// </summary>
+        public IdentifierNameSyntax Identifier { get; }
+
+        /// <summary>
+        /// Creates a new TypeInfo based on a given type symbol
+        /// </summary>
+        /// <param name="symbol">Symbol to make the info container for</param>
+        public TypeInfo(ITypeSymbol symbol)
+        {
+            this.Symbol     = (INamedTypeSymbol)symbol;
+            this.FullName   = this.Symbol.FullName();
+            this.Namespace  = this.Symbol.ContainingNamespace;
+            this.IsBuiltin  = BuiltinTypes.Contains(this.FullName);
+            this.Identifier = IdentifierName(this.Symbol.DisplayName());
+        }
+    }
+
+    /// <summary>
+    /// C# builtin types
+    /// </summary>
+    private static readonly HashSet<string> BuiltinTypes =
+    [
+        typeof(byte).FullName,
+        typeof(sbyte).FullName,
+        typeof(short).FullName,
+        typeof(ushort).FullName,
+        typeof(int).FullName,
+        typeof(uint).FullName,
+        typeof(long).FullName,
+        typeof(ulong).FullName,
+        typeof(float).FullName,
+        typeof(double).FullName,
+        typeof(decimal).FullName,
+        typeof(bool).FullName,
+        typeof(char).FullName,
+        typeof(string).FullName,
+        typeof(object).FullName
+    ];
+
+    /// <summary>
     /// Symbol this field is associated to
     /// </summary>
     public ISymbol Symbol { get; }
     /// <summary>
     /// Type of this field
     /// </summary>
-    public INamedTypeSymbol Type { get; }
+    public TypeInfo Type { get; }
     /// <summary>
     /// If this field targets a property
     /// </summary>
@@ -36,15 +99,11 @@ public readonly struct ConfigFieldMetadata
     /// <summary>
     /// Name under which to serialize this field
     /// </summary>
-    public IdentifierNameSyntax Name { get; } = IdentifierName(string.Empty);
+    public IdentifierNameSyntax SerializedName { get; } = IdentifierName(string.Empty);
     /// <summary>
     /// Name of the field associated to this metadata
     /// </summary>
     public IdentifierNameSyntax FieldName { get; }
-    /// <summary>
-    /// Name of the type of the field
-    /// </summary>
-    public IdentifierNameSyntax TypeName { get; }
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
@@ -66,12 +125,12 @@ public readonly struct ConfigFieldMetadata
         switch (symbol)
         {
             case IFieldSymbol field:
-                this.Type       = (INamedTypeSymbol)field.Type;
+                this.Type       = new TypeInfo(field.Type);
                 this.IsProperty = false;
                 break;
 
             case IPropertySymbol property:
-                this.Type       = (INamedTypeSymbol)property.Type;
+                this.Type       = new TypeInfo(property.Type);
                 this.IsProperty = true;
                 break;
 
@@ -79,7 +138,6 @@ public readonly struct ConfigFieldMetadata
                 throw new InvalidOperationException($"Cannot parse field for {symbol.GetType().Name} symbol");
         }
 
-        this.TypeName = IdentifierName(this.Type.Name);
         foreach ((string name, TypedConstant value) in data.NamedArguments)
         {
             if (value.Value is null) continue;
@@ -91,7 +149,7 @@ public readonly struct ConfigFieldMetadata
                     break;
 
                 case nameof(ConfigFieldAttribute.Name):
-                    this.Name = IdentifierName((string)value.Value);
+                    this.SerializedName = IdentifierName((string)value.Value);
                     break;
 
                 case nameof(ConfigFieldAttribute.NodeNameValue):
@@ -105,9 +163,9 @@ public readonly struct ConfigFieldMetadata
         }
 
         // Ensure a serialization name is set
-        if (string.IsNullOrWhiteSpace(this.Name.Identifier.ValueText))
+        if (string.IsNullOrWhiteSpace(this.SerializedName.Identifier.ValueText))
         {
-            this.Name = this.FieldName;
+            this.SerializedName = this.FieldName;
         }
     }
 }
