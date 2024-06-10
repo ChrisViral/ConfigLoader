@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -22,9 +23,9 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 public static class LoadBuilder
 {
     /// <summary>
-    /// ParseUtils namespace
+    /// ConfigLoader parse utils namespace namespace
     /// </summary>
-    private static readonly string ParseUtilsNamespace = typeof(ParseUtils).Namespace!;
+    private static readonly string UtilsNamespace = typeof(ParseUtils).Namespace!;
     /// <summary>
     /// TryParse method identifier
     /// </summary>
@@ -34,17 +35,24 @@ public static class LoadBuilder
     /// </summary>
     private static readonly IdentifierNameSyntax ParseUtils = nameof(ConfigLoader.Utils.ParseUtils).AsIdentifier();
     /// <summary>
+    /// ParseOptions struct identifier
+    /// </summary>
+    private static readonly IdentifierNameSyntax ParseOptions = nameof(ConfigLoader.Utils.ParseOptions).AsIdentifier();
+    /// <summary>
+    /// ParseOptions defaults identifier
+    /// </summary>
+    private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.ParseOptions.Defaults).AsIdentifier();
+    /// <summary>
     /// IsNullOrEmpty method identifier
     /// </summary>
     private static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsIdentifier();
 
     /// <summary>
-    /// Types that have a static TryParse method implementation
+    /// Types that have a static TryParse method implementation in the ParseUtils class
     /// </summary>
     private static readonly HashSet<string> TryParseTypes =
     [
-        typeof(bool).FullName,
-        typeof(char).FullName,
+        // Base types
         typeof(byte).FullName,
         typeof(sbyte).FullName,
         typeof(short).FullName,
@@ -56,17 +64,17 @@ public static class LoadBuilder
         typeof(float).FullName,
         typeof(double).FullName,
         typeof(decimal).FullName,
-        typeof(Guid).FullName
-    ];
-    /// <summary>
-    /// Types that have TryParse methods in the <see cref="ParseUtils"/> class
-    /// </summary>
-    private static readonly HashSet<string> ParseUtilsTypes =
-    [
+        typeof(bool).FullName,
+        typeof(char).FullName,
+        typeof(Guid).FullName,
+
+        // Unity types
         $"{UnityEngine}.Vector2",
         "Vector2d",
+        $"{UnityEngine}.Vector2Int",
         $"{UnityEngine}.Vector3",
         "Vector3d",
+        $"{UnityEngine}.Vector3Int",
         $"{UnityEngine}.Vector4",
         "Vector4d",
         $"{UnityEngine}.Quaternion",
@@ -100,13 +108,10 @@ public static class LoadBuilder
         string typeName = field.Type.FullName();
         if (TryParseTypes.Contains(typeName))
         {
-            return GenerateTryParseFieldLoad(value, field.TypeName, field, context);
-        }
-        if (ParseUtilsTypes.Contains(typeName))
-        {
-            context.UsedNamespaces.AddNamespaceName(ParseUtilsNamespace);
+            context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
             return GenerateTryParseFieldLoad(value, ParseUtils, field, context);
         }
+        if (field.Type.ise)
         if (AssignableTypes.Contains(typeName))
         {
             return GenerateAssignFieldLoad(value, field, context);
@@ -136,9 +141,12 @@ public static class LoadBuilder
                                        .AsArgument()
                                        .WithOut();
 
+        // ParseOptions.Defaults
+        ArgumentSyntax defaults = ParseOptions.Access(Defaults).AsArgument();
+
         // Type.TryParse(value.value, out Type _value)
         ExpressionSyntax tryParse = type.Access(TryParse);
-        ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar);
+        ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar, defaults);
 
         // this.value = _value;
         ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(tempVar);

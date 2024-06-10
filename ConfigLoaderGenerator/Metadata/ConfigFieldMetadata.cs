@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
@@ -24,7 +24,7 @@ public readonly struct ConfigFieldMetadata
     /// <summary>
     /// Type of this field
     /// </summary>
-    public ITypeSymbol Type { get; }
+    public INamedTypeSymbol Type { get; }
     /// <summary>
     /// If this field targets a property
     /// </summary>
@@ -66,12 +66,12 @@ public readonly struct ConfigFieldMetadata
         switch (symbol)
         {
             case IFieldSymbol field:
-                this.Type       = field.Type;
+                this.Type       = (INamedTypeSymbol)field.Type;
                 this.IsProperty = false;
                 break;
 
             case IPropertySymbol property:
-                this.Type       = property.Type;
+                this.Type       = (INamedTypeSymbol)property.Type;
                 this.IsProperty = true;
                 break;
 

@@ -34,6 +34,7 @@
     <!-- Including these files this way avoids requiring a hard reference to the runtime .dll in the generator -->
     <Compile Include="..\ConfigLoader\Attributes\ConfigFieldAttribute.cs" Link="Imported\ConfigFieldAttribute.cs" />
     <Compile Include="..\ConfigLoader\Attributes\ConfigObjectAttribute.cs" Link="Imported\ConfigObjectAttribute.cs" />
+    <Compile Include="..\ConfigLoader\Utils\ParseOptions.cs" Link="Imported\ParseOptions.cs" />
     <Compile Include="..\ConfigLoader\NameExports.cs" Link="Imported\NameExports.cs" />
   </ItemGroup>
 

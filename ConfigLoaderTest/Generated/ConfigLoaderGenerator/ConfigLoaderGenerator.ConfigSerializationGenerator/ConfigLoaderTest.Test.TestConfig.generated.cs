@@ -16,7 +16,7 @@ namespace ConfigLoaderTest.Test
                 {
                     case "intValue":
                     {
-                        if (Int32.TryParse(value.value, out Int32 _intValue))
+                        if (ParseUtils.TryParse(value.value, out Int32 _intValue, ParseOptions.Defaults))
                         {
                             this.intValue = _intValue;
                         }
@@ -26,7 +26,7 @@ namespace ConfigLoaderTest.Test
 
                     case "floatValue":
                     {
-                        if (Single.TryParse(value.value, out Single _floatValue))
+                        if (ParseUtils.TryParse(value.value, out Single _floatValue, ParseOptions.Defaults))
                         {
                             this.floatValue = _floatValue;
                         }
@@ -46,7 +46,7 @@ namespace ConfigLoaderTest.Test
 
                     case "OtherName":
                     {
-                        if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty))
+                        if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, ParseOptions.Defaults))
                         {
                             this.VectorProperty = _VectorProperty;
                         }
