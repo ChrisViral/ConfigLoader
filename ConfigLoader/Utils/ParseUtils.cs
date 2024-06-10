@@ -323,8 +323,8 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 2
-         && float.TryParse(splits[0], out float x)
-         && float.TryParse(splits[1], out float y))
+         && TryParse(splits[0], out float x)
+         && TryParse(splits[1], out float y))
         {
             result = new Vector2(x, y);
             return true;
@@ -353,8 +353,8 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 2
-         && double.TryParse(splits[0], out double x)
-         && double.TryParse(splits[1], out double y))
+         && TryParse(splits[0], out double x)
+         && TryParse(splits[1], out double y))
         {
             result = new Vector2d(x, y);
             return true;
@@ -383,8 +383,8 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 2
-         && int.TryParse(splits[0], out int x)
-         && int.TryParse(splits[1], out int y))
+         && TryParse(splits[0], out int x)
+         && TryParse(splits[1], out int y))
         {
             result = new Vector2Int(x, y);
             return true;
@@ -413,9 +413,9 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 3
-         && float.TryParse(splits[0], out float x)
-         && float.TryParse(splits[1], out float y)
-         && float.TryParse(splits[2], out float z))
+         && TryParse(splits[0], out float x)
+         && TryParse(splits[1], out float y)
+         && TryParse(splits[2], out float z))
         {
             result = new Vector3(x, y, z);
             return true;
@@ -444,9 +444,9 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 3
-         && double.TryParse(splits[0], out double x)
-         && double.TryParse(splits[1], out double y)
-         && double.TryParse(splits[2], out double z))
+         && TryParse(splits[0], out double x)
+         && TryParse(splits[1], out double y)
+         && TryParse(splits[2], out double z))
         {
             result = new Vector3d(x, y, z);
             return true;
@@ -475,9 +475,9 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 3
-         && int.TryParse(splits[0], out int x)
-         && int.TryParse(splits[1], out int y)
-         && int.TryParse(splits[2], out int z))
+         && TryParse(splits[0], out int x)
+         && TryParse(splits[1], out int y)
+         && TryParse(splits[2], out int z))
         {
             result = new Vector3Int(x, y, z);
             return true;
@@ -506,10 +506,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && float.TryParse(splits[0], out float x)
-         && float.TryParse(splits[1], out float y)
-         && float.TryParse(splits[2], out float z)
-         && float.TryParse(splits[3], out float w))
+         && TryParse(splits[0], out float x)
+         && TryParse(splits[1], out float y)
+         && TryParse(splits[2], out float z)
+         && TryParse(splits[3], out float w))
         {
             result = new Vector4(x, y, z, w);
             return true;
@@ -538,10 +538,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && double.TryParse(splits[0], out double x)
-         && double.TryParse(splits[1], out double y)
-         && double.TryParse(splits[2], out double z)
-         && double.TryParse(splits[3], out double w))
+         && TryParse(splits[0], out double x)
+         && TryParse(splits[1], out double y)
+         && TryParse(splits[2], out double z)
+         && TryParse(splits[3], out double w))
         {
             result = new Vector4d(x, y, z, w);
             return true;
@@ -572,10 +572,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && float.TryParse(splits[0], out float x)
-         && float.TryParse(splits[1], out float y)
-         && float.TryParse(splits[2], out float z)
-         && float.TryParse(splits[3], out float w))
+         && TryParse(splits[0], out float x)
+         && TryParse(splits[1], out float y)
+         && TryParse(splits[2], out float z)
+         && TryParse(splits[3], out float w))
         {
             result = new Quaternion(x, y, z, w);
             return true;
@@ -604,10 +604,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && double.TryParse(splits[0], out double x)
-         && double.TryParse(splits[1], out double y)
-         && double.TryParse(splits[2], out double z)
-         && double.TryParse(splits[3], out double w))
+         && TryParse(splits[0], out double x)
+         && TryParse(splits[1], out double y)
+         && TryParse(splits[2], out double z)
+         && TryParse(splits[3], out double w))
         {
             result = new QuaternionD(x, y, z, w);
             return true;
@@ -638,10 +638,10 @@ public static partial class ParseUtils
         // Split values and try parsing
         string[] splits = SplitValuesInternal(value!, options);
         if (splits.Length is 4
-         && float.TryParse(splits[0], out float x)
-         && float.TryParse(splits[1], out float y)
-         && float.TryParse(splits[2], out float w)
-         && float.TryParse(splits[3], out float h))
+         && TryParse(splits[0], out float x)
+         && TryParse(splits[1], out float y)
+         && TryParse(splits[2], out float w)
+         && TryParse(splits[3], out float h))
         {
             result = new Rect(x, y, w, h);
             return true;
@@ -675,9 +675,9 @@ public static partial class ParseUtils
         {
             // RGB only
             case 3:
-                if (float.TryParse(splits[0], out float r)
-                 && float.TryParse(splits[1], out float g)
-                 && float.TryParse(splits[2], out float b))
+                if (TryParse(splits[0], out float r)
+                 && TryParse(splits[1], out float g)
+                 && TryParse(splits[2], out float b))
                 {
                     result = new Color(Clamp01(r), Clamp01(g), Clamp01(b));
                     return true;
@@ -688,10 +688,10 @@ public static partial class ParseUtils
 
             // RGBA
             case 4:
-                if (float.TryParse(splits[0], out r)
-                 && float.TryParse(splits[1], out g)
-                 && float.TryParse(splits[2], out b)
-                 && float.TryParse(splits[3], out float a))
+                if (TryParse(splits[0], out r)
+                 && TryParse(splits[1], out g)
+                 && TryParse(splits[2], out b)
+                 && TryParse(splits[3], out float a))
                 {
                     result = new Color(Clamp01(r), Clamp01(g), Clamp01(b), Clamp01(a));
                     return true;
@@ -728,9 +728,9 @@ public static partial class ParseUtils
         {
             // RGB
             case 3:
-                if (byte.TryParse(splits[0], out byte r)
-                 && byte.TryParse(splits[1], out byte g)
-                 && byte.TryParse(splits[2], out byte b))
+                if (TryParse(splits[0], out byte r)
+                 && TryParse(splits[1], out byte g)
+                 && TryParse(splits[2], out byte b))
                 {
                     result = new Color32(r, g, b, byte.MaxValue);
                     return true;
@@ -741,10 +741,10 @@ public static partial class ParseUtils
 
             // RGBA
             case 4:
-                if (byte.TryParse(splits[0], out r)
-                 && byte.TryParse(splits[1], out g)
-                 && byte.TryParse(splits[2], out b)
-                 && byte.TryParse(splits[3], out byte a))
+                if (TryParse(splits[0], out r)
+                 && TryParse(splits[1], out g)
+                 && TryParse(splits[2], out b)
+                 && TryParse(splits[3], out byte a))
                 {
                     result = new Color32(r, g, b, a);
                     return true;
@@ -788,22 +788,22 @@ public static partial class ParseUtils
         string[] splits = SplitValuesInternal(value!, options, ParseOptions.DefaultMatrixOptions, DefaultMatrixSeparators);
         result = Matrix4x4.identity;
         if (splits.Length is 16
-         && float.TryParse(splits[00], out result.m00)
-         && float.TryParse(splits[01], out result.m01)
-         && float.TryParse(splits[02], out result.m02)
-         && float.TryParse(splits[03], out result.m03)
-         && float.TryParse(splits[04], out result.m10)
-         && float.TryParse(splits[05], out result.m11)
-         && float.TryParse(splits[06], out result.m12)
-         && float.TryParse(splits[07], out result.m13)
-         && float.TryParse(splits[08], out result.m20)
-         && float.TryParse(splits[09], out result.m21)
-         && float.TryParse(splits[10], out result.m22)
-         && float.TryParse(splits[11], out result.m23)
-         && float.TryParse(splits[12], out result.m30)
-         && float.TryParse(splits[13], out result.m31)
-         && float.TryParse(splits[14], out result.m32)
-         && float.TryParse(splits[15], out result.m33))
+         && TryParse(splits[00], out result.m00)
+         && TryParse(splits[01], out result.m01)
+         && TryParse(splits[02], out result.m02)
+         && TryParse(splits[03], out result.m03)
+         && TryParse(splits[04], out result.m10)
+         && TryParse(splits[05], out result.m11)
+         && TryParse(splits[06], out result.m12)
+         && TryParse(splits[07], out result.m13)
+         && TryParse(splits[08], out result.m20)
+         && TryParse(splits[09], out result.m21)
+         && TryParse(splits[10], out result.m22)
+         && TryParse(splits[11], out result.m23)
+         && TryParse(splits[12], out result.m30)
+         && TryParse(splits[13], out result.m31)
+         && TryParse(splits[14], out result.m32)
+         && TryParse(splits[15], out result.m33))
         {
             return true;
         }
@@ -832,22 +832,22 @@ public static partial class ParseUtils
         string[] splits = SplitValuesInternal(value!, options, ParseOptions.DefaultMatrixOptions, DefaultMatrixSeparators);
         result = Matrix4x4D.Identity();
         if (splits.Length is 16
-         && double.TryParse(splits[00], out result.m00)
-         && double.TryParse(splits[01], out result.m01)
-         && double.TryParse(splits[02], out result.m02)
-         && double.TryParse(splits[03], out result.m03)
-         && double.TryParse(splits[04], out result.m10)
-         && double.TryParse(splits[05], out result.m11)
-         && double.TryParse(splits[06], out result.m12)
-         && double.TryParse(splits[07], out result.m13)
-         && double.TryParse(splits[08], out result.m20)
-         && double.TryParse(splits[09], out result.m21)
-         && double.TryParse(splits[10], out result.m22)
-         && double.TryParse(splits[11], out result.m23)
-         && double.TryParse(splits[12], out result.m30)
-         && double.TryParse(splits[13], out result.m31)
-         && double.TryParse(splits[14], out result.m32)
-         && double.TryParse(splits[15], out result.m33))
+         && TryParse(splits[00], out result.m00)
+         && TryParse(splits[01], out result.m01)
+         && TryParse(splits[02], out result.m02)
+         && TryParse(splits[03], out result.m03)
+         && TryParse(splits[04], out result.m10)
+         && TryParse(splits[05], out result.m11)
+         && TryParse(splits[06], out result.m12)
+         && TryParse(splits[07], out result.m13)
+         && TryParse(splits[08], out result.m20)
+         && TryParse(splits[09], out result.m21)
+         && TryParse(splits[10], out result.m22)
+         && TryParse(splits[11], out result.m23)
+         && TryParse(splits[12], out result.m30)
+         && TryParse(splits[13], out result.m31)
+         && TryParse(splits[14], out result.m32)
+         && TryParse(splits[15], out result.m33))
         {
             return true;
         }
