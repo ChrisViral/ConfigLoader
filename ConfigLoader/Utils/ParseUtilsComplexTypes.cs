@@ -1,6 +1,4 @@
-﻿using System;
-using System.Globalization;
-using ConfigLoader.Attributes;
+﻿using ConfigLoader.Attributes;
 using ConfigLoader.Extensions;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -14,32 +12,9 @@ using static UnityEngine.Mathf;
 namespace ConfigLoader.Utils;
 
 /// <summary>
-/// Value parse options
-/// </summary>
-/// <param name="SplitOptions">String splitting options, defaults to <see cref="ExtendedSplitOptions.TrimAndRemoveEmptyEntries"/></param>
-/// <param name="Separators">String splitting separators, if left <see langword="null"/>, the default separators, a single comma, will be used</param>
-[PublicAPI]
-public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ExtendedSplitOptions.TrimAndRemoveEmptyEntries,
-                                           char[]? Separators = null)
-{
-    /// <summary>
-    /// Default parse options
-    /// </summary>
-    internal static readonly ParseOptions DefaultOptions = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultSeparators);
-    /// <summary>
-    /// Default <see cref="Matrix4x4"/> parse options
-    /// </summary>
-    internal static readonly ParseOptions DefaultMatrixOptions = new(ExtendedSplitOptions.TrimAndRemoveEmptyEntries, ParseUtils.DefaultMatrixSeparators);
-
-    /// <summary>
-    /// Creates new parse options with default parameters
-    /// </summary>
-    public ParseOptions() : this(ExtendedSplitOptions.TrimAndRemoveEmptyEntries) { }
-}
-
-/// <summary>
 /// Extra parsing utilities
 /// </summary>
+/// Complex types TryParse implementations
 [PublicAPI]
 public static partial class ParseUtils
 {
@@ -56,18 +31,6 @@ public static partial class ParseUtils
     /// Default <see cref="Color32"/> return value (white)
     /// </summary>
     private static readonly Color32 DefaultColor32 = new(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
-    /// <summary>
-    /// Number style flags for integer parses
-    /// </summary>
-    private const NumberStyles INTEGER_STYLES = NumberStyles.Integer;
-    /// <summary>
-    /// Number style flags for floating point parses
-    /// </summary>
-    private const NumberStyles FLOAT_STYLES = NumberStyles.Float | NumberStyles.AllowThousands;
-    /// <summary>
-    ///Number style flags for decimal parses
-    /// </summary>
-    private const NumberStyles DECIMAL_STYLES = NumberStyles.Number;
     #endregion
 
     #region Utility
@@ -88,10 +51,13 @@ public static partial class ParseUtils
     /// <param name="value">Value to split</param>
     /// <param name="options">Parsing options</param>
     /// <returns>The array of split values, or an empty array if <paramref name="value"/> is <see langword="null"/> or empty</returns>
-    public static string[] SplitValues(string? value, in ParseOptions? options = null)
+    public static string[] SplitValues(string? value, in ParseOptions options)
     {
         // If value is empty, return an empty array
-        return !string.IsNullOrEmpty(value) ? SplitValuesInternal(value!, options) : [];
+        // ReSharper disable once ConvertIfStatementToReturnStatement
+        if (string.IsNullOrEmpty(value)) return [];
+
+        return SplitValuesInternal(value!, options, DefaultSeparators);
     }
 
     /// <summary>
@@ -100,9 +66,9 @@ public static partial class ParseUtils
     /// <param name="value">Value to split</param>
     /// <param name="options">Parsing options</param>
     /// <returns>The array of split values</returns>
-    private static string[] SplitValuesInternal(string value, in ParseOptions? options)
+    private static string[] SplitValuesInternal(string value, in ParseOptions options)
     {
-        return SplitValuesInternal(value, options, ParseOptions.DefaultOptions, DefaultMatrixSeparators);
+        return SplitValuesInternal(value, options, DefaultSeparators);
     }
 
     /// <summary>
@@ -110,13 +76,12 @@ public static partial class ParseUtils
     /// </summary>
     /// <param name="value">Value to split</param>
     /// <param name="options">Parsing options</param>
-    /// <param name="defaultOptions">Default parsing options if the passed options are <see langword="null"/></param>
     /// <param name="defaultSeparators">Default string separators if the provided separators are <see langword="null"/> or empty</param>
     /// <returns>The array of split values</returns>
-    private static string[] SplitValuesInternal(string value, in ParseOptions? options, in ParseOptions defaultOptions, char[] defaultSeparators)
+    private static string[] SplitValuesInternal(string value, in ParseOptions options, char[] defaultSeparators)
     {
         // Extract options
-        (ExtendedSplitOptions splitOptions, char[]? separators) = options ?? defaultOptions;
+        (ExtendedSplitOptions splitOptions, char[]? separators) = options;
 
         // Assign default separators if needed
         if (IsNullOrEmpty(separators))
@@ -125,181 +90,7 @@ public static partial class ParseUtils
         }
 
         // Return splits
-        return value!.Split(separators!, splitOptions);
-    }
-    #endregion
-
-    #region Integers
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="bool"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out bool result, in ParseOptions? options = null)
-    {
-        return bool.TryParse(value, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="char"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out char result, in ParseOptions? options = null)
-    {
-        return char.TryParse(value, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="byte"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out byte result, in ParseOptions? options = null)
-    {
-        return byte.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="sbyte"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out sbyte result, in ParseOptions? options = null)
-    {
-        return sbyte.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="short"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out short result, in ParseOptions? options = null)
-    {
-        return short.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="ushort"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out ushort result, in ParseOptions? options = null)
-    {
-        return ushort.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="int"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out int result, in ParseOptions? options = null)
-    {
-        return int.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="uint"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out uint result, in ParseOptions? options = null)
-    {
-        return uint.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="long"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out long result, in ParseOptions? options = null)
-    {
-        return long.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="ulong"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out ulong result, in ParseOptions? options = null)
-    {
-        return ulong.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-    #endregion
-
-    #region Floating point
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="float"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out float result, in ParseOptions? options = null)
-    {
-        return float.TryParse(value, FLOAT_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="double"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out double result, in ParseOptions? options = null)
-    {
-        return double.TryParse(value, FLOAT_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="decimal"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out decimal result, in ParseOptions? options = null)
-    {
-        return decimal.TryParse(value, DECIMAL_STYLES, CultureInfo.InvariantCulture, out result);
-    }
-    #endregion
-
-    #region Guid
-    /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="Guid"/>
-    /// </summary>
-    /// <param name="value">String value to parse</param>
-    /// <param name="result">Parse result output parameter</param>
-    /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
-    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Guid result, in ParseOptions? options = null)
-    {
-        return Guid.TryParse(value, out result);
+        return value.Split(separators!, splitOptions);
     }
     #endregion
 
@@ -311,7 +102,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Vector2 result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Vector2 result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -341,7 +132,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Vector2d result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Vector2d result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -371,7 +162,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Vector2Int result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Vector2Int result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -401,7 +192,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Vector3 result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Vector3 result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -432,7 +223,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Vector3d result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Vector3d result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -463,7 +254,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Vector3Int result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Vector3Int result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -494,7 +285,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Vector4 result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Vector4 result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -526,7 +317,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Vector4d result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Vector4d result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -560,7 +351,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Quaternion result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Quaternion result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -592,7 +383,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out QuaternionD result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out QuaternionD result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -626,7 +417,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Rect result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Rect result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -660,7 +451,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Color result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Color result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -713,7 +504,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Color32 result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Color32 result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -775,7 +566,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Matrix4x4 result, in ParseOptions? options = default)
+    public static bool TryParse(string? value, out Matrix4x4 result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -785,7 +576,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValuesInternal(value!, options, ParseOptions.DefaultMatrixOptions, DefaultMatrixSeparators);
+        string[] splits = SplitValuesInternal(value!, options, DefaultMatrixSeparators);
         result = Matrix4x4.identity;
         if (splits.Length is 16
          && TryParse(splits[00], out result.m00)
@@ -819,7 +610,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options, defaults to <see cref="ParseOptions.DefaultOptions"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out Matrix4x4D result, in ParseOptions? options = null)
+    public static bool TryParse(string? value, out Matrix4x4D result, in ParseOptions options)
     {
         // If empty, return now
         if (string.IsNullOrWhiteSpace(value))
@@ -829,7 +620,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValuesInternal(value!, options, ParseOptions.DefaultMatrixOptions, DefaultMatrixSeparators);
+        string[] splits = SplitValuesInternal(value!, options, DefaultMatrixSeparators);
         result = Matrix4x4D.Identity();
         if (splits.Length is 16
          && TryParse(splits[00], out result.m00)
