@@ -107,6 +107,7 @@ public static class StringSplitExtensions
         if (validCount == splits.Length) return splits;
 
         // If not, copy to a smaller array and return
+        // TODO: maybe this could be optimized internally with ArraySegment?
         string[] validSplits = new string[validCount];
         for (int i = 0; i < validCount; i++)
         {
