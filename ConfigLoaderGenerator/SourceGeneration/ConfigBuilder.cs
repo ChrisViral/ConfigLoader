@@ -216,7 +216,8 @@ public static class ConfigBuilder
     /// Generates a section of code which iterates over a set of values from the ConfigNode and switches over their name
     /// </summary>
     /// <param name="method">Load method declaration</param>
-    /// <param name="count">Count variable name</param>
+    /// <param name="countName">Count variable name</param>
+    /// <param name="count">Count getter name</param>
     /// <param name="values">Values to access name</param>
     /// <param name="valueType">Type of values being accessed</param>
     /// <param name="value">Value to load expression</param>
@@ -225,9 +226,12 @@ public static class ConfigBuilder
     /// <param name="context">Generation context</param>
     /// <returns>The edited load method declaration with the load code generated</returns>
     private static MethodDeclarationSyntax GenerateNodeLoop(MethodDeclarationSyntax method, IdentifierNameSyntax countName, IdentifierNameSyntax count, IdentifierNameSyntax values, TypeSyntax valueType,
-                                                            ExpressionSyntax value, IEnumerable<ConfigFieldMetadata> fields, LoadSectionGenerator generateSection, in ConfigBuilderContext context)
+                                                            ExpressionSyntax value, IReadOnlyCollection<ConfigFieldMetadata> fields, LoadSectionGenerator generateSection, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
+
+        // If there are no fields to load, return early
+        if (fields.Count == 0) return method;
 
         // int count = node.count;
         VariableDeclarationSyntax countVariable = countName.DeclareVariable(SyntaxKind.IntKeyword, Node.Access(count));
