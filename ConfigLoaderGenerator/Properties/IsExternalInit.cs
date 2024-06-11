@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-// ReSharper disable All
-
 // MIT License
 //
 // Copyright (c) Manuel Römer

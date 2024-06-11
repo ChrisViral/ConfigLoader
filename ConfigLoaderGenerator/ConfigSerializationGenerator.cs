@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
+using ConfigLoaderGenerator.Metadata;
+using ConfigLoaderGenerator.SourceGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -13,16 +18,32 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace ConfigLoaderGenerator;
 
 /// <summary>
+/// Config generation data
+/// </summary>
+/// <param name="Syntax">Syntax node to generate for</param>
+/// <param name="Type">Type to generate for</param>
+/// <param name="Attribute">ConfigObject attribute metadata</param>
+/// <param name="ValueFields">Valid fields attribute metadata</param>
+public record ConfigData(TypeDeclarationSyntax Syntax, INamedTypeSymbol Type, ConfigObjectMetadata Attribute, ReadOnlyCollection<ConfigFieldMetadata> ValueFields, ReadOnlyCollection<ConfigFieldMetadata> NodeFields);
+
+/// <summary>
 /// ConfigNode serializer load/save generator
 /// </summary>
 [Generator]
 public class ConfigSerializationGenerator : IIncrementalGenerator
 {
+    private static readonly HashSet<SyntaxKind> RequiredKeywords = [SyntaxKind.PartialKeyword];
+    private static readonly HashSet<SyntaxKind> BannedKeywords   = [SyntaxKind.AbstractKeyword, SyntaxKind.StaticKeyword, SyntaxKind.ReadOnlyKeyword];
+
     #region Generator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        IncrementalValuesProvider<ConfigTemplate> configDataProvider = context.SyntaxProvider.CreateSyntaxProvider(FilterConfigClasses, CreateConfigTemplate);
+        IncrementalValuesProvider<ConfigData> configDataProvider = context.SyntaxProvider
+                                                                          .ForAttributeWithMetadataName(typeof(ConfigObjectAttribute).FullName!,
+                                                                                                        FilterConfigClasses,
+                                                                                                        CreateConfigTemplate)
+                                                                          .Where(c => c.ValueFields.Count > 0);
         context.RegisterSourceOutput(configDataProvider, GenerateConfigMethods);
     }
 
@@ -37,49 +58,75 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
     {
         token.ThrowIfCancellationRequested();
 
-        // Make sure we are on a supported type of object
-        TypeDeclarationSyntax? typeSyntax = syntax switch
-        {
-            ClassDeclarationSyntax classSyntax   => classSyntax,
-            StructDeclarationSyntax structSyntax => structSyntax,
-            RecordDeclarationSyntax recordSyntax => recordSyntax,
-            _                                    => null
-        };
+        // Valid kind of type
+        if (syntax is not TypeDeclarationSyntax typeSyntax) return false;
+        if (typeSyntax is not (ClassDeclarationSyntax or StructDeclarationSyntax or RecordDeclarationSyntax)) return false;
 
-        // TODO: check nested types
-        return typeSyntax is not null                                // Valid kind of type
-            && typeSyntax.Modifiers.Any(SyntaxKind.PartialKeyword)   // Is declared as partial
-            && !typeSyntax.Modifiers.Any(SyntaxKind.AbstractKeyword) // Is not declared abstract
-            && typeSyntax.HasAttribute<ConfigObjectAttribute>();
+        // Validate modifiers
+        HashSet<SyntaxKind> modifiers = [..typeSyntax.Modifiers.Select(m => m.Kind())];
+        return RequiredKeywords.IsSubsetOf(modifiers) && !BannedKeywords.Overlaps(modifiers);
     }
 
     /// <summary>
-    /// Creates the <see cref="ConfigTemplate"/> associated with the current syntax context
+    /// Creates the <see cref="ConfigBuilder"/> associated with the current syntax context
     /// </summary>
     /// <param name="context">Current generator context</param>
     /// <param name="token">Cancellation token</param>
-    /// <returns>The created <see cref="ConfigTemplate"/></returns>
+    /// <returns>The created <see cref="ConfigBuilder"/></returns>
     /// <exception cref="OperationCanceledException">If the operation is cancelled through the <paramref name="token"/></exception>
-    private static ConfigTemplate CreateConfigTemplate(GeneratorSyntaxContext context, CancellationToken token)
+    private static ConfigData CreateConfigTemplate(GeneratorAttributeSyntaxContext context, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
 
-        // Create config template source generation
-        return new ConfigTemplate(context);
+        // Get required data
+        TypeDeclarationSyntax syntax     = (TypeDeclarationSyntax)context.TargetNode;
+        INamedTypeSymbol type            = (INamedTypeSymbol)context.TargetSymbol;
+        ConfigObjectMetadata attribute   = new(context.Attributes.First(a => a.AttributeClass?.Name == nameof(ConfigObjectAttribute)));
+
+        // Load parseable fields
+        List<ConfigFieldMetadata> values = [];
+        List<ConfigFieldMetadata> nodes  = [];
+        foreach (ISymbol member in type.GetMembers().Where(FilterMembers))
+        {
+            if (!member.TryGetAttribute<ConfigFieldAttribute>(out AttributeData? attributeData)) continue;
+
+            ConfigFieldMetadata field = new(member, attributeData!);
+            if (field.IsConfigLoadable)
+            {
+                nodes.Add(field);
+            }
+            else
+            {
+                values.Add(field);
+            }
+        }
+
+        // Create data structure and return
+        return new ConfigData(syntax, type, attribute, values.AsReadOnly(), nodes.AsReadOnly());
     }
+
+    /// <summary>
+    /// Filters out valid members
+    /// </summary>
+    /// <param name="member">Member to filter</param>
+    /// <returns><see langword="true"/> if the member is valid, otherwise <see langword="false"/></returns>
+    private static bool FilterMembers(ISymbol member) => member.Kind switch
+    {
+        SymbolKind.Field    => member is IFieldSymbol { IsReadOnly: false, IsConst: false, IsStatic: false },
+        SymbolKind.Property => member is IPropertySymbol { IsReadOnly: false, IsWriteOnly: false, IsAbstract: false, IsStatic: false, IsIndexer: false },
+        _                   => false
+    };
 
     /// <summary>
     /// Generates the source file for the given template
     /// </summary>
     /// <param name="context">Current source context</param>
-    /// <param name="template">Config template to generate the source for</param>
+    /// <param name="data">Config data to generate the source for</param>
     /// <exception cref="OperationCanceledException">If the operation is cancelled through the <paramref name="context"/></exception>
-    private static void GenerateConfigMethods(SourceProductionContext context, ConfigTemplate template)
+    private static void GenerateConfigMethods(SourceProductionContext context, ConfigData data)
     {
-        context.CancellationToken.ThrowIfCancellationRequested();
-
         // Generate source file and add to compilation
-        (string fileName, string source) = template.GenerateSource();
+        (string fileName, string source) = ConfigBuilder.GenerateSource(data, context.CancellationToken);
         context.AddSource(fileName, source);
     }
     #endregion

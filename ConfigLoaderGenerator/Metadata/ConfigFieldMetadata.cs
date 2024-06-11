@@ -1,7 +1,13 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -15,13 +21,102 @@ namespace ConfigLoaderGenerator.Metadata;
 public readonly struct ConfigFieldMetadata
 {
     /// <summary>
+    /// Type info container
+    /// </summary>
+    public readonly struct TypeInfo
+    {
+        /// <summary>
+        /// Type symbol
+        /// </summary>
+        public INamedTypeSymbol Symbol { get; }
+        /// <summary>
+        /// Fully qualified name
+        /// </summary>
+        public string FullName { get; }
+        /// <summary>
+        /// Containing namespace
+        /// </summary>
+        public INamespaceSymbol? Namespace { get; }
+        /// <summary>
+        /// If this is a builtin type
+        /// </summary>
+        public bool IsBuiltin { get; }
+        /// <summary>
+        /// If this is an enum type
+        /// </summary>
+        public bool IsEnum { get; }
+        /// <summary>
+        /// If this is an IConfigNode implementation
+        /// </summary>
+        public bool IsConfigNode { get; }
+        /// <summary>
+        /// If this is a ConfigNode object
+        /// </summary>
+        public bool IsNodeObject { get; }
+        /// <summary>
+        /// Type identifier
+        /// </summary>
+        public IdentifierNameSyntax Identifier { get; }
+
+        /// <summary>
+        /// Creates a new TypeInfo based on a given type symbol
+        /// </summary>
+        /// <param name="symbol">Symbol to make the info container for</param>
+        public TypeInfo(ITypeSymbol symbol)
+        {
+            this.Symbol       = (INamedTypeSymbol)symbol;
+            this.FullName     = this.Symbol.FullName();
+            this.Namespace    = this.Symbol.ContainingNamespace;
+            this.IsBuiltin    = BuiltinTypes.Contains(this.FullName);
+            this.IsEnum       = this.Symbol.IsEnum();
+            this.Identifier   = IdentifierName(this.Symbol.DisplayName());
+            this.IsConfigNode = this.Symbol.AllInterfaces.Any(i => i.FullName() == IConfigNode.AsRaw());
+            this.IsNodeObject = this.FullName == ConfigNode.AsRaw();
+        }
+    }
+
+    /// <summary>
+    /// C# builtin types
+    /// </summary>
+    private static readonly HashSet<string> BuiltinTypes =
+    [
+        typeof(byte).FullName,
+        typeof(sbyte).FullName,
+        typeof(short).FullName,
+        typeof(ushort).FullName,
+        typeof(int).FullName,
+        typeof(uint).FullName,
+        typeof(long).FullName,
+        typeof(ulong).FullName,
+        typeof(float).FullName,
+        typeof(double).FullName,
+        typeof(decimal).FullName,
+        typeof(bool).FullName,
+        typeof(char).FullName,
+        typeof(string).FullName,
+        typeof(object).FullName
+    ];
+
+    /// <summary>
     /// Symbol this field is associated to
     /// </summary>
     public ISymbol Symbol { get; }
     /// <summary>
+    /// Name of the field associated to this metadata
+    /// </summary>
+    public IdentifierNameSyntax FieldName { get; }
+    /// <summary>
     /// Type of this field
     /// </summary>
-    public ITypeSymbol Type { get; }
+    public TypeInfo Type { get; }
+    /// <summary>
+    /// If this object must be loaded as a ConfigNode
+    /// </summary>
+    public bool IsConfigLoadable => this.Type.IsConfigNode || this.Type.IsNodeObject;
+    /// <summary>
+    /// If this field targets a property
+    /// </summary>
+    public bool IsProperty { get; }
     /// <summary>
     /// If this field is required
     /// </summary>
@@ -29,11 +124,11 @@ public readonly struct ConfigFieldMetadata
     /// <summary>
     /// Name under which to serialize this field
     /// </summary>
-    public string Name { get; } = string.Empty;
+    public IdentifierNameSyntax SerializedName { get; } = IdentifierName(string.Empty);
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
-    public string? NodeNameValue { get; }
+    public IdentifierNameSyntax? NodeName { get; }
     /// <summary>
     /// Enum serialization method
     /// </summary>
@@ -46,14 +141,23 @@ public readonly struct ConfigFieldMetadata
     /// <param name="data">Attribute data to parse the metadata from</param>
     public ConfigFieldMetadata(ISymbol symbol, AttributeData data)
     {
-
-        this.Symbol = symbol;
-        this.Type = symbol switch
+        this.Symbol    = symbol;
+        this.FieldName = IdentifierName(symbol.Name);
+        switch (symbol)
         {
-            IFieldSymbol field       => field.Type,
-            IPropertySymbol property => property.Type,
-            _                        => throw new InvalidOperationException("Invalid symbol type to create ConfigFieldMetadata")
-        };
+            case IFieldSymbol field:
+                this.Type       = new TypeInfo(field.Type);
+                this.IsProperty = false;
+                break;
+
+            case IPropertySymbol property:
+                this.Type       = new TypeInfo(property.Type);
+                this.IsProperty = true;
+                break;
+
+            default:
+                throw new InvalidOperationException($"Cannot parse field for {symbol.GetType().Name} symbol");
+        }
 
         foreach ((string name, TypedConstant value) in data.NamedArguments)
         {
@@ -66,11 +170,11 @@ public readonly struct ConfigFieldMetadata
                     break;
 
                 case nameof(ConfigFieldAttribute.Name):
-                    this.Name = (string)value.Value;
+                    this.SerializedName = IdentifierName((string)value.Value);
                     break;
 
                 case nameof(ConfigFieldAttribute.NodeNameValue):
-                    this.NodeNameValue = (string)value.Value;
+                    this.NodeName = IdentifierName((string)value.Value);
                     break;
 
                 case nameof(ConfigFieldAttribute.EnumHandling):
@@ -80,9 +184,9 @@ public readonly struct ConfigFieldMetadata
         }
 
         // Ensure a serialization name is set
-        if (string.IsNullOrWhiteSpace(this.Name))
+        if (string.IsNullOrWhiteSpace(this.SerializedName.Identifier.ValueText))
         {
-            this.Name = symbol.Name;
+            this.SerializedName = this.FieldName;
         }
     }
 }

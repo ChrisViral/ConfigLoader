@@ -10,7 +10,7 @@ namespace ConfigLoader.Attributes;
 /// <summary>
 /// Method access modifiers
 /// </summary>
-[UsedImplicitly(ImplicitUseTargetFlags.Members)]
+[PublicAPI]
 public enum AccessModifier
 {
     Private,
@@ -20,10 +20,35 @@ public enum AccessModifier
 }
 
 /// <summary>
+/// <see cref="IConfigNode"/> implementation handling
+/// </summary>
+[PublicAPI]
+public enum InterfaceImplementation
+{
+    /// <summary>
+    /// No <see cref="IConfigNode"/> implementation will be generated, the user is forced to implement it themselves
+    /// </summary>
+    None,
+    /// <summary>
+    /// The <see cref="IConfigNode"/> implementation will be generated as an explicit interface implementation
+    /// </summary>
+    Explicit,
+    /// <summary>
+    /// The <see cref="IConfigNode"/> implementation will be generated as public methods
+    /// </summary>
+    Public,
+    /// <summary>
+    /// The <see cref="IConfigNode"/> implementation will be implemented directly through the generated load/save methods<br/>
+    /// This means that other settings controlling method accessibility and naming will be ignored in order to match <see cref="IConfigNode"/> implementation
+    /// </summary>
+    UseGenerated
+}
+
+/// <summary>
 /// Object config source generation attribute
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct), UsedImplicitly(ImplicitUseTargetFlags.Members)]
-public class ConfigObjectAttribute : Attribute
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct), PublicAPI]
+public sealed class ConfigObjectAttribute : Attribute
 {
     #region Defaults
     /// <summary>
@@ -38,6 +63,10 @@ public class ConfigObjectAttribute : Attribute
     /// Default save method name
     /// </summary>
     public const string DefaultSaveName = "SaveToConfig";
+    /// <summary>
+    /// Default interface implementation
+    /// </summary>
+    public const InterfaceImplementation DefaultImplementation = InterfaceImplementation.Explicit;
     #endregion
 
     #region Properties
@@ -57,5 +86,9 @@ public class ConfigObjectAttribute : Attribute
     /// Name of the save method
     /// </summary>
     public string SaveMethodName { get; init; } = DefaultSaveName;
+    /// <summary>
+    /// <see cref="IConfigNode"/> implementation handling
+    /// </summary>
+    public InterfaceImplementation Implementation { get; init; } = DefaultImplementation;
     #endregion
 }

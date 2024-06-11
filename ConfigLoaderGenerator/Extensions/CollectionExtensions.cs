@@ -6,8 +6,12 @@
 
 namespace ConfigLoaderGenerator.Extensions;
 
+/// <summary>
+/// Collection extensions
+/// </summary>
 internal static class CollectionExtensions
 {
+    #region Dictionary extensions
     /// <summary>
     /// Deconstructs a <see cref="KeyValuePair{TKey,TValue}"/> into it constituents
     /// </summary>
@@ -21,4 +25,5 @@ internal static class CollectionExtensions
         key   = pair.Key;
         value = pair.Value;
     }
+    #endregion
 }
