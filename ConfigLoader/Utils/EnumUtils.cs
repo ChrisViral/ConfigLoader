@@ -15,6 +15,7 @@ namespace ConfigLoader.Utils;
 /// Fast <see cref="Enum"/> parsing and writing utility class
 /// </summary>
 /// <remarks>
+/// TODO:
 /// Some of the functionality of this class, especially when it comes to flags and integer value handling, still relies on base slow <see cref="Enum"/> methods<br/>
 /// Rewriting these in a fast way at some point in the future could be interesting
 /// </remarks>

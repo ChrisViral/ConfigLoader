@@ -22,13 +22,13 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 public static class LoadBuilder
 {
     /// <summary>
-    /// ConfigLoader parse utils namespace namespace
+    /// ConfigLoader parse utils namespace
     /// </summary>
     private static readonly string UtilsNamespace = typeof(ParseUtils).Namespace!;
     /// <summary>
     /// TryParse method identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax TryParse = nameof(int.TryParse).AsIdentifier();
+    private static readonly IdentifierNameSyntax TryParse = nameof(ConfigLoader.Utils.ParseUtils.TryParse).AsIdentifier();
     /// <summary>
     /// ParseUtils class identifier
     /// </summary>
@@ -46,44 +46,6 @@ public static class LoadBuilder
     /// </summary>
     private static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsIdentifier();
 
-    /// <summary>
-    /// Types that have a static TryParse method implementation in the ParseUtils class
-    /// </summary>
-    private static readonly HashSet<string> TryParseTypes =
-    [
-        // Base types
-        typeof(byte).FullName,
-        typeof(sbyte).FullName,
-        typeof(short).FullName,
-        typeof(ushort).FullName,
-        typeof(int).FullName,
-        typeof(uint).FullName,
-        typeof(long).FullName,
-        typeof(ulong).FullName,
-        typeof(float).FullName,
-        typeof(double).FullName,
-        typeof(decimal).FullName,
-        typeof(bool).FullName,
-        typeof(char).FullName,
-        typeof(Guid).FullName,
-
-        // Unity types
-        $"{UnityEngine}.Vector2",
-        "Vector2d",
-        $"{UnityEngine}.Vector2Int",
-        $"{UnityEngine}.Vector3",
-        "Vector3d",
-        $"{UnityEngine}.Vector3Int",
-        $"{UnityEngine}.Vector4",
-        "Vector4d",
-        $"{UnityEngine}.Quaternion",
-        "QuaternionD",
-        $"{UnityEngine}.Rect",
-        $"{UnityEngine}.Color",
-        $"{UnityEngine}.Color32",
-        $"{UnityEngine}.Matrix4x4",
-        "Matrix4x4D",
-    ];
     /// <summary>
     /// Types that can be directly assigned to the field
     /// </summary>
@@ -105,62 +67,18 @@ public static class LoadBuilder
     public static BlockSyntax GenerateValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save option
-        if (TryParseTypes.Contains(field.Type.FullName) || field.Type.IsEnum)
-        {
-            return GenerateTryParseValueLoad(value, ParseUtils, field, context);
-        }
-
         if (AssignableTypes.Contains(field.Type.FullName))
         {
             return GenerateAssignValueLoad(value, field, context);
         }
 
-        // Unknown type
-        throw new InvalidOperationException($"Unknown value type to parse ({field.Type.FullName})");
-    }
-
-    /// <summary>
-    /// Generate the value load code implementation using <c>TryParse</c>
-    /// </summary>
-    /// <param name="value">Value expression</param>
-    /// <param name="parent">TryParse parent type</param>
-    /// <param name="field">Field data</param>
-    /// <param name="context">Generation context</param>
-    /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateTryParseValueLoad(ExpressionSyntax value, IdentifierNameSyntax parent, in ConfigFieldMetadata field, in ConfigBuilderContext context)
-    {
-        context.Token.ThrowIfCancellationRequested();
-
-        // Temporary variable
-        IdentifierNameSyntax tempVar = field.FieldName.Prefix("_");
-
-        // out Type _value
-        ArgumentSyntax outVar = tempVar.Declaration(field.Type.Identifier)
-                                       .AsArgument()
-                                       .WithOut();
-
-        // ParseOptions.Defaults
-        ArgumentSyntax defaults = ParseOptions.Access(Defaults).AsArgument();
-
-        // Type.TryParse(value.value, out Type _value)
-        ExpressionSyntax tryParse = parent.Access(TryParse);
-        ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar, defaults);
-
-        // this.value = _value;
-        ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(tempVar);
-
-        // if (Type.TryParse(value.value, out Type _value)) { }
-        BlockSyntax ifBlock           = Block().AddStatements(fieldAssign.AsStatement());
-        IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
-
-        // Add namespace if the type isn't builtin
-        context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
-        if (!field.Type.IsBuiltin)
+        if (field.Type.IsBuiltin || field.Type.IsEnum || SupportedTypes.Contains(field.Type.FullName))
         {
-            context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+            return GenerateTryParseValueLoad(value, ParseUtils, field, context);
         }
 
-        return Block().AddStatements(ifStatement);
+        // Unknown type
+        throw new InvalidOperationException($"Unknown value type to parse ({field.Type.FullName})");
     }
 
     /// <summary>
@@ -186,6 +104,50 @@ public static class LoadBuilder
         IfStatementSyntax ifStatement = IfStatement(isNotNullOrEmptyInvocation, ifBlock);
 
         // Add if statement and return
+        return Block().AddStatements(ifStatement);
+    }
+
+    /// <summary>
+    /// Generate the value load code implementation using <c>TryParse</c>
+    /// </summary>
+    /// <param name="value">Value expression</param>
+    /// <param name="parent">TryParse parent type</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The modified statement body</returns>
+    private static BlockSyntax GenerateTryParseValueLoad(ExpressionSyntax value, IdentifierNameSyntax parent, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
+        // Temporary variable
+        IdentifierNameSyntax tempVar = field.FieldName.Prefix("_");
+
+        // out Type _value
+        ArgumentSyntax outVar = tempVar.Declaration(field.Type.Identifier)
+                                       .AsArgument()
+                                       .WithOut();
+
+        // ParseOptions.Defaults
+        ArgumentSyntax options = ParseOptions.Access(Defaults).AsArgument();
+
+        // Type.TryParse(value.value, out Type _value, options)
+        ExpressionSyntax tryParse = parent.Access(TryParse);
+        ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar, options);
+
+        // this.value = _value;
+        ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(tempVar);
+
+        // if (Type.TryParse(value.value, out Type _value, options)) { }
+        BlockSyntax ifBlock           = Block().AddStatements(fieldAssign.AsStatement());
+        IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
+
+        // Add namespace if the type isn't builtin
+        context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
+        if (!field.Type.IsBuiltin)
+        {
+            context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+        }
+
         return Block().AddStatements(ifStatement);
     }
     #endregion

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -19,19 +20,32 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 public static class SaveBuilder
 {
     /// <summary>
-    /// Types that have a direct AddValue implementation
+    /// ConfigLoader write utils namespace
     /// </summary>
-    private static readonly HashSet<string> AddValueTypes =
+    private static readonly string UtilsNamespace = typeof(WriteUtils).Namespace!;
+    /// <summary>
+    /// Write method identifier
+    /// </summary>
+    private static readonly IdentifierNameSyntax Write = nameof(ConfigLoader.Utils.WriteUtils.Write).AsIdentifier();
+    /// <summary>
+    /// WriteUtils class identifier
+    /// </summary>
+    private static readonly IdentifierNameSyntax WriteUtils = nameof(ConfigLoader.Utils.WriteUtils).AsIdentifier();
+    /// <summary>
+    /// WriteOptions struct identifier
+    /// </summary>
+    private static readonly IdentifierNameSyntax WriteOptions = nameof(ConfigLoader.Utils.WriteOptions).AsIdentifier();
+    /// <summary>
+    /// WriteOptions defaults identifier
+    /// </summary>
+    private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.WriteOptions.Defaults).AsIdentifier();
+
+    /// <summary>
+    /// Types that can be directly assigned with AddValue
+    /// </summary>
+    private static readonly HashSet<string> AddableTypes =
     [
-        $"{UnityEngine}.Vector2",
-        $"{UnityEngine}.Vector3",
-        "Vector3d",
-        $"{UnityEngine}.Vector4",
-        $"{UnityEngine}.Quaternion",
-        "QuaternionD",
-        $"{UnityEngine}.Matrix4x4",
-        $"{UnityEngine}.Color",
-        $"{UnityEngine}.Color32",
+        typeof(string).FullName
     ];
 
     /// <summary>
@@ -46,9 +60,14 @@ public static class SaveBuilder
     /// <exception cref="InvalidOperationException">If the generator does not know how to save the given field type</exception>
     public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
-        if (field.Type.IsBuiltin || AddValueTypes.Contains(field.Type.FullName) || field.Type.IsEnum)
+        if (AddableTypes.Contains(field.Type.FullName))
         {
             return GenerateAddValueSave(body, name, value, field, context);
+        }
+
+        if (field.Type.IsBuiltin|| field.Type.IsEnum || SupportedTypes.Contains(field.Type.FullName))
+        {
+            return GenerateWriteValueSave(body, name, value, field, context);
         }
 
         if (field.Type.IsConfigNode)
@@ -77,8 +96,31 @@ public static class SaveBuilder
     {
         context.Token.ThrowIfCancellationRequested();
 
-        // node.AddValue("value", this.value);
+        // node.AddValue("value", WriteUtils.Write());
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), value.AsArgument());
+        return body.AddBodyStatements(addValueInvocation.AsStatement());
+    }
+
+    /// <summary>
+    /// Generate the field value save code implementation
+    /// </summary>
+    /// <param name="body">Save method declaration</param>
+    /// <param name="name">Name expression</param>
+    /// <param name="value">Value expression</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The edited save method declaration with the field value save code generated</returns>
+    public static MethodDeclarationSyntax GenerateWriteValueSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
+        // WriteOptions.Defaults
+        ArgumentSyntax options = WriteOptions.Access(Defaults).AsArgument();
+        // WriteUtils.Write(value, WriteOptions.Defaults)
+        ExpressionSyntax writeInvocation = WriteUtils.Access(Write).Invoke(value.AsArgument(), options);
+
+        // node.AddValue("value", WriteUtils.Write(value, WriteOptions.Defaults));
+        ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
         return body.AddBodyStatements(addValueInvocation.AsStatement());
     }
 
@@ -117,7 +159,7 @@ public static class SaveBuilder
     {
         context.Token.ThrowIfCancellationRequested();
 
-        // node.AddNode(this.value);
+        // node.AddNode("name", this.value);
         ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), value.AsArgument());
         return body.AddBodyStatements(addValueInvocation.AsStatement());
     }

@@ -98,13 +98,13 @@ namespace ConfigLoaderTest
         /// <param name="node"><see cref="ConfigNode"/> to save to</param>
         public void SaveToConfig(ConfigNode node)
         {
-            node.AddValue("intValue", this.intValue);
-            node.AddValue("floatValue", this.floatValue);
+            node.AddValue("intValue", WriteUtils.Write(this.intValue, WriteOptions.Defaults));
+            node.AddValue("floatValue", WriteUtils.Write(this.floatValue, WriteOptions.Defaults));
             node.AddValue("stringValue", this.stringValue);
-            node.AddValue("modifier", this.modifier);
+            node.AddValue("modifier", WriteUtils.Write(this.modifier, WriteOptions.Defaults));
             ((IConfigNode)this.floatCurve).Save(node.AddNode("floatCurve"));
             node.AddNode("configNode", this.configNode);
-            node.AddValue("OtherName", this.VectorProperty);
+            node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, WriteOptions.Defaults));
         }
 
 #region IConfigNode Implementation

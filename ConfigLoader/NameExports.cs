@@ -13,7 +13,15 @@ namespace ConfigLoader
 
     namespace Utils
     {
-        public partial class ParseUtils;
+        public partial class ParseUtils
+        {
+            public static partial bool TryParse(string? value, out byte result, in ParseOptions options);
+        }
+
+        public partial class WriteUtils
+        {
+            public static partial string Write(byte value, in WriteOptions options);
+        }
     }
 
     namespace Exceptions

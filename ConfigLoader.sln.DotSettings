@@ -1,4 +1,5 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:Boolean x:Key="/Default/CodeInspection/ExcludedFiles/FileMasksToSkip/=IsExternalInit_002Ecs/@EntryIndexedValue">True</s:Boolean>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=CF6E6BB8_002DBD8F_002D400D_002D89A8_002D3D3F3A69BB0C_002Fd_003AImported_002Ff_003ANameImport_002Ecs/@EntryIndexedValue">ExplicitlyExcluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=EBDD5A6C_002DA3BA_002D43DB_002DBC46_002D16179C957738_002Fd_003AProperties_002Ff_003AIsExternalInit_002Ecs/@EntryIndexedValue"></s:String>
 	<s:Boolean x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=EBDD5A6C_002DA3BA_002D43DB_002DBC46_002D16179C957738_002Fd_003AProperties_002Ff_003AIsExternalInit_002Ecs/@EntryIndexRemoved">True</s:Boolean></wpf:ResourceDictionary>

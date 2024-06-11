@@ -35,6 +35,7 @@
     <Compile Include="..\ConfigLoader\Attributes\ConfigFieldAttribute.cs" Link="Imported\ConfigFieldAttribute.cs" />
     <Compile Include="..\ConfigLoader\Attributes\ConfigObjectAttribute.cs" Link="Imported\ConfigObjectAttribute.cs" />
     <Compile Include="..\ConfigLoader\Utils\ParseOptions.cs" Link="Imported\ParseOptions.cs" />
+    <Compile Include="..\ConfigLoader\Utils\WriteOptions.cs" Link="Imported\WriteOptions.cs" />
     <Compile Include="..\ConfigLoader\Utils\EnumUtils.cs" Link="Imported\EnumUtils.cs" />
     <Compile Include="..\ConfigLoader\NameExports.cs" Link="Imported\NameExports.cs" />
   </ItemGroup>

@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -15,6 +17,31 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 /// </summary>
 public static class GenerationConstants
 {
+    #region Supported types
+    /// <summary>
+    /// Supported non-builtin types
+    /// </summary>
+    public static readonly HashSet<string> SupportedTypes =
+    [
+        typeof(Guid).FullName,
+        $"{UnityEngine}.Vector2",
+        "Vector2d",
+        $"{UnityEngine}.Vector2Int",
+        $"{UnityEngine}.Vector3",
+        "Vector3d",
+        $"{UnityEngine}.Vector3Int",
+        $"{UnityEngine}.Vector4",
+        $"{UnityEngine}.Vector4d",
+        $"{UnityEngine}.Quaternion",
+        "QuaternionD",
+        $"{UnityEngine}.Rect",
+        $"{UnityEngine}.Color",
+        $"{UnityEngine}.Color32",
+        $"{UnityEngine}.Matrix4x4",
+        "Matrix4x4D"
+    ];
+    #endregion
+
     #region Comments
     /// <summary>
     /// Generated file header

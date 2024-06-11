@@ -33,7 +33,7 @@ public static partial class ParseUtils
     /// <param name="result">Parse result output parameter</param>
     /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse(string? value, out byte result, in ParseOptions options)
+    public static partial bool TryParse(string? value, out byte result, in ParseOptions options)
     {
         return byte.TryParse(value, INTEGER_STYLES, CultureInfo.InvariantCulture, out result);
     }

@@ -31,7 +31,7 @@ public static partial class WriteUtils
     /// <param name="value">The value to write</param>
     /// <param name="options">Write options</param>
     /// <returns>The written value as a <see cref="string"/></returns>
-    public static string Write(byte value, in WriteOptions options)
+    public static partial string Write(byte value, in WriteOptions options)
     {
         return value.ToString(options.Format, CultureInfo.InvariantCulture);
     }
