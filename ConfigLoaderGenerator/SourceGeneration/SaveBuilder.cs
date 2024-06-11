@@ -140,7 +140,7 @@ public static class SaveBuilder
         // node.AddNode("value")
         ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument());
         // ((IConfigNode)this.value)
-        ExpressionSyntax fieldAsConfig = ParenthesizedExpression(value.Cast(IConfigNode));
+        ExpressionSyntax fieldAsConfig = value.Cast(IConfigNode);
         // ((IConfigNode)this.value).Save(node.AddNode("value"));
         ExpressionSyntax saveNode = fieldAsConfig.Access(Save).Invoke(addValueInvocation.AsArgument());
         return body.AddBodyStatements(saveNode.AsStatement());

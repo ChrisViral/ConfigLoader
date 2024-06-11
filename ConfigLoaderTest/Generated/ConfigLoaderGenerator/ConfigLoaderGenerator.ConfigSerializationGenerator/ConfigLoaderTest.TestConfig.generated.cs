@@ -14,7 +14,8 @@ namespace ConfigLoaderTest
         /// <param name="node"><see cref="ConfigNode"/> to load from</param>
         public void LoadFromConfig(ConfigNode node)
         {
-            for (int i = 0; i < node.CountValues; i++)
+            int valueCount = node.CountValues;
+            for (int i = 0; i < valueCount; i++)
             {
                 ConfigNode.Value value = node.values[i];
                 switch (value.name)
@@ -71,7 +72,8 @@ namespace ConfigLoaderTest
                 }
             }
 
-            for (int i = 0; i < node.CountNodes; i++)
+            int nodeCount = node.CountNodes;
+            for (int i = 0; i < nodeCount; i++)
             {
                 ConfigNode value = node.nodes[i];
                 switch (value.name)
@@ -102,9 +104,9 @@ namespace ConfigLoaderTest
             node.AddValue("floatValue", WriteUtils.Write(this.floatValue, WriteOptions.Defaults));
             node.AddValue("stringValue", this.stringValue);
             node.AddValue("modifier", WriteUtils.Write(this.modifier, WriteOptions.Defaults));
+            node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, WriteOptions.Defaults));
             ((IConfigNode)this.floatCurve).Save(node.AddNode("floatCurve"));
             node.AddNode("configNode", this.configNode);
-            node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, WriteOptions.Defaults));
         }
 
 #region IConfigNode Implementation

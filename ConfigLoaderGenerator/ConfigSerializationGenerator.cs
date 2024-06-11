@@ -23,8 +23,8 @@ namespace ConfigLoaderGenerator;
 /// <param name="Syntax">Syntax node to generate for</param>
 /// <param name="Type">Type to generate for</param>
 /// <param name="Attribute">ConfigObject attribute metadata</param>
-/// <param name="Fields">Valid fields attribute metadata</param>
-public record ConfigData(TypeDeclarationSyntax Syntax, INamedTypeSymbol Type, ConfigObjectMetadata Attribute, ReadOnlyCollection<ConfigFieldMetadata> Fields);
+/// <param name="ValueFields">Valid fields attribute metadata</param>
+public record ConfigData(TypeDeclarationSyntax Syntax, INamedTypeSymbol Type, ConfigObjectMetadata Attribute, ReadOnlyCollection<ConfigFieldMetadata> ValueFields, ReadOnlyCollection<ConfigFieldMetadata> NodeFields);
 
 /// <summary>
 /// ConfigNode serializer load/save generator
@@ -43,7 +43,7 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
                                                                           .ForAttributeWithMetadataName(typeof(ConfigObjectAttribute).FullName!,
                                                                                                         FilterConfigClasses,
                                                                                                         CreateConfigTemplate)
-                                                                          .Where(c => c.Fields.Count > 0);
+                                                                          .Where(c => c.ValueFields.Count > 0);
         context.RegisterSourceOutput(configDataProvider, GenerateConfigMethods);
     }
 
@@ -84,17 +84,25 @@ public class ConfigSerializationGenerator : IIncrementalGenerator
         ConfigObjectMetadata attribute   = new(context.Attributes.First(a => a.AttributeClass?.Name == nameof(ConfigObjectAttribute)));
 
         // Load parseable fields
-        List<ConfigFieldMetadata> fields = [];
+        List<ConfigFieldMetadata> values = [];
+        List<ConfigFieldMetadata> nodes  = [];
         foreach (ISymbol member in type.GetMembers().Where(FilterMembers))
         {
-            if (member.TryGetAttribute<ConfigFieldAttribute>(out AttributeData? attributeData))
+            if (!member.TryGetAttribute<ConfigFieldAttribute>(out AttributeData? attributeData)) continue;
+
+            ConfigFieldMetadata field = new(member, attributeData!);
+            if (field.IsConfigLoadable)
             {
-                fields.Add(new ConfigFieldMetadata(member, attributeData!));
+                nodes.Add(field);
+            }
+            else
+            {
+                values.Add(field);
             }
         }
 
         // Create data structure and return
-        return new ConfigData(syntax, type, attribute, fields.AsReadOnly());
+        return new ConfigData(syntax, type, attribute, values.AsReadOnly(), nodes.AsReadOnly());
     }
 
     /// <summary>

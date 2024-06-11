@@ -157,15 +157,15 @@ public static class SyntaxOperationExtensions
     }
 
     /// <summary>
-    /// Creates a cast expression to the given type for the given expression
+    /// Creates a cast expression to the given type for the given expression, then wraps it in parentheses
     /// </summary>
     /// <typeparam name="T">Expression type</typeparam>
     /// <param name="expression">Expression to cast</param>
     /// <param name="type">Type to cast to</param>
-    /// <returns>A cast expression to <paramref name="type"/> for <paramref name="expression"/></returns>
-    public static CastExpressionSyntax Cast<T>(this T expression, TypeSyntax type) where T : ExpressionSyntax
+    /// <returns>A cast wrapped expression to <paramref name="type"/> for <paramref name="expression"/></returns>
+    public static ParenthesizedExpressionSyntax Cast<T>(this T expression, TypeSyntax type) where T : ExpressionSyntax
     {
-        return CastExpression(type, expression);
+        return ParenthesizedExpression(CastExpression(type, expression));
     }
 
     /// <summary>
@@ -201,6 +201,18 @@ public static class SyntaxOperationExtensions
     {
         return VariableDeclaration(SyntaxKind.StringKeyword.AsType())
               .AddVariables(VariableDeclarator(name.Identifier).WithInitializer(EqualsValueClause(value.AsLiteral())));
+    }
+
+    /// <summary>
+    /// Declares an initialized variable for the specified name
+    /// </summary>
+    /// <param name="name">Variable name</param>
+    /// <param name="type">Variable type</param>
+    /// <param name="value">Variable initialization value</param>
+    /// <returns>The <see cref="VariableDeclarationSyntax"/> that declares the specified variable</returns>
+    public static VariableDeclarationSyntax DeclareVariable(this IdentifierNameSyntax name, SyntaxKind type, ExpressionSyntax value)
+    {
+        return VariableDeclaration(type.AsType()).AddVariables(VariableDeclarator(name.Identifier).WithInitializer(EqualsValueClause(value)));
     }
 
     /// <summary>

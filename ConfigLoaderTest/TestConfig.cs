@@ -1,5 +1,4 @@
 ﻿using ConfigLoader.Attributes;
-using ConfigLoader.Utils;
 using UnityEngine;
 
 namespace ConfigLoaderTest;
@@ -26,6 +25,5 @@ public partial class TestConfig
 
     public void Test(ConfigNode node)
     {
-        node.AddValue("intValue", WriteUtils.Write(this.intValue, WriteOptions.Defaults));
     }
 }

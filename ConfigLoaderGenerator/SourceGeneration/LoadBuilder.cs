@@ -195,7 +195,7 @@ public static class LoadBuilder
         ExpressionSyntax instantiation = fieldAccess.Assign(field.Type.Identifier.New());
 
         // ((IConfigNode)this.value)
-        ExpressionSyntax fieldAsConfig = ParenthesizedExpression(fieldAccess.Cast(IConfigNode));
+        ExpressionSyntax fieldAsConfig = fieldAccess.Cast(IConfigNode);
         // ((IConfigNode)this.value).Load(value)
         ExpressionSyntax loadConfig = fieldAsConfig.Access(Load).Invoke(value.AsArgument());
 

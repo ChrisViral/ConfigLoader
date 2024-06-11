@@ -133,8 +133,8 @@ public static class ConfigBuilder
         MethodDeclarationSyntax saveMethod = objectData.SaveMethod.DeclareMethod(SyntaxKind.VoidKeyword, objectData.SaveAccessModifier, nodeParam);
 
         // Generate load and save method code
-        loadMethod = GenerateLoadMethodBody(loadMethod, data.Fields, context);
-        saveMethod = GenerateSaveMethodBody(saveMethod, data.Fields, context);
+        loadMethod = GenerateLoadMethodBody(loadMethod, data, context);
+        saveMethod = GenerateSaveMethodBody(saveMethod, data, context);
 
         // Add documentation comments
         loadMethod = loadMethod.AddLeadingTrivia(LoadMethodDoc);
@@ -198,16 +198,16 @@ public static class ConfigBuilder
     /// Generates a load method for the given type
     /// </summary>
     /// <param name="method">Load method declaration</param>
-    /// <param name="fields">List of fields to generate load code for</param>
+    /// <param name="data">Generation data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited load method declaration with the load code generated</returns>
-    private static MethodDeclarationSyntax GenerateLoadMethodBody(MethodDeclarationSyntax method, IReadOnlyList<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateLoadMethodBody(MethodDeclarationSyntax method, ConfigData data, in ConfigBuilderContext context)
     {
         // Simple fields loop
-        method = GenerateNodeLoop(method, CountValues, Values, ConfigNodeValue, Value.Access(Value), fields.Where(f => !f.IsConfigLoadable), LoadBuilder.GenerateValueLoad, context);
+        method = GenerateNodeLoop(method, ValueCount, CountValues, Values, ConfigNodeValue, Value.Access(Value), data.ValueFields, LoadBuilder.GenerateValueLoad, context);
 
         // Config fields loop
-        method = GenerateNodeLoop(method, CountNodes, Nodes, ConfigNode, Value, fields.Where(f => f.IsConfigLoadable), LoadBuilder.GenerateNodeLoad, context);
+        method = GenerateNodeLoop(method, NodeCount, CountNodes, Nodes, ConfigNode, Value, data.NodeFields, LoadBuilder.GenerateNodeLoad, context);
 
         return method;
     }
@@ -224,13 +224,15 @@ public static class ConfigBuilder
     /// <param name="fields">List of fields to generate load code for</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited load method declaration with the load code generated</returns>
-    private static MethodDeclarationSyntax GenerateNodeLoop(MethodDeclarationSyntax method, IdentifierNameSyntax count, IdentifierNameSyntax values, TypeSyntax valueType, ExpressionSyntax value,
-                                                            IEnumerable<ConfigFieldMetadata> fields, LoadSectionGenerator generateSection, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateNodeLoop(MethodDeclarationSyntax method, IdentifierNameSyntax countName, IdentifierNameSyntax count, IdentifierNameSyntax values, TypeSyntax valueType,
+                                                            ExpressionSyntax value, IEnumerable<ConfigFieldMetadata> fields, LoadSectionGenerator generateSection, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
-        // for (int i = 0; i < node.count; i++)
-        ForStatementSyntax forStatement = IncrementingForLoop(Index, MakeLiteral(0), Node.Access(count));
+        // int count = node.count;
+        VariableDeclarationSyntax countVariable = countName.DeclareVariable(SyntaxKind.IntKeyword, Node.Access(count));
+        // for (int i = 0; i < count; i++)
+        ForStatementSyntax forStatement = IncrementingForLoop(Index, MakeLiteral(0), countName);
 
         // node.values[i]
         ExpressionSyntax currentValue = Node.Access(values).ElementAccess(Index.AsArgument());
@@ -261,7 +263,7 @@ public static class ConfigBuilder
         forStatement = forStatement.WithStatement(forBody);
 
         // Add loop to method and return
-        return method.AddBodyStatements(forStatement);
+        return method.AddBodyStatements(countVariable.AsLocalDeclaration(), forStatement);
     }
     #endregion
 
@@ -270,15 +272,22 @@ public static class ConfigBuilder
     /// Generates a save method for the given type
     /// </summary>
     /// <param name="method">Save method declaration</param>
-    /// <param name="fields">List of fields to generate save code for</param>
+    /// <param name="data">Generation data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the save code generated</returns>
-    private static MethodDeclarationSyntax GenerateSaveMethodBody(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateSaveMethodBody(MethodDeclarationSyntax method, ConfigData data, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
         // ReSharper disable once LoopCanBeConvertedToQuery
-        foreach (ConfigFieldMetadata field in fields)
+        foreach (ConfigFieldMetadata field in data.ValueFields)
+        {
+            // Add save for every field
+            method = GenerateFieldSave(method, field, context);
+        }
+
+        // ReSharper disable once LoopCanBeConvertedToQuery
+        foreach (ConfigFieldMetadata field in data.NodeFields)
         {
             // Add save for every field
             method = GenerateFieldSave(method, field, context);
