@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
@@ -35,6 +36,16 @@ public readonly record struct ConfigBuilderContext(NamespaceSet UsedNamespaces, 
 public static class ConfigBuilder
 {
     /// <summary>
+    /// Value load implementation delegate
+    /// </summary>
+    /// <param name="value">Value to load</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>A block containing the value load code</returns>
+    private delegate BlockSyntax LoadSectionGenerator(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context);
+
+    #region Generation
+    /// <summary>
     /// Generate the source file for the given template
     /// </summary>
     /// <returns>A tuple containing the generated file name and full file source</returns>
@@ -59,29 +70,14 @@ public static class ConfigBuilder
         // Add IGeneratedConfigNode implementation
         type = (TypeDeclarationSyntax)type.AddBaseListTypes(nameof(IGeneratedConfigNode).AsBaseType());
 
-        // Generate methods
-        ConfigObjectMetadata objectData = data.Attribute;
-        ParameterSyntax nodeParam       = Node.AsParameter(ConfigNode);
-        MethodDeclarationSyntax loadMethod = objectData.LoadMethod.DeclareMethod(SyntaxKind.VoidKeyword, objectData.LoadAccessModifier, nodeParam);
-        MethodDeclarationSyntax saveMethod = objectData.SaveMethod.DeclareMethod(SyntaxKind.VoidKeyword, objectData.SaveAccessModifier, nodeParam);
+        // Method parameter
+        ParameterSyntax nodeParam = Node.AsParameter(ConfigNode);
 
-        // Generate load and save method code
-        loadMethod = GenerateLoadMethodBody(loadMethod, data.Fields, context);
-        saveMethod = GenerateSaveMethodBody(saveMethod, data.Fields, context);
-
-        // Add documentation comments
-        loadMethod = loadMethod.AddLeadingTrivia(LoadMethodDoc);
-        saveMethod = saveMethod.AddLeadingTrivia(SaveMethodDoc);
-
-        // Wrap in region
-        loadMethod = loadMethod.AddRegionStart(GeneratedRegion);
-        saveMethod = saveMethod.AddRegionEnd();
-
-        // Add methods to type
-        type = type.AddMembers(loadMethod, saveMethod);
+        // Generate base save/load implementation
+        type = GenerateImplementation(type, data, nodeParam, context);
 
         // Add IConfigNode implementation
-        type = GenerateInterfaceImplementation(type, data.Attribute, nodeParam);
+        type = GenerateInterfaceImplementation(type, data.Attribute, nodeParam, context);
 
         // Add namespace if needed
         MemberDeclarationSyntax rootDeclaration = type;
@@ -93,9 +89,9 @@ public static class ConfigBuilder
                                   .AddMembers(type);
         }
 
-        // Add usings
         if (context.UsedNamespaces.Count > 0)
         {
+            // Add usings
             UsingDirectiveSyntax[] usingDirectives = context.UsedNamespaces
                                                             .GetUsings()
                                                             .ToArray();
@@ -116,12 +112,36 @@ public static class ConfigBuilder
         // This should get the EOL string from the user settings
         string lineFeed = CarriageReturnLineFeed.ToFullString();
 
-        root = root.NormalizeWhitespace(eol: lineFeed, elasticTrivia: true);
+        root = root.NormalizeWhitespace(eol: lineFeed);
         return ($"{data.Type.FullName()}.generated.cs", root.ToFullString() + lineFeed);
     }
 
-    public static TypeDeclarationSyntax GenerateInterfaceImplementation(TypeDeclarationSyntax type, in ConfigObjectMetadata data, ParameterSyntax nodeParameter)
+    public static TypeDeclarationSyntax GenerateImplementation(TypeDeclarationSyntax type, ConfigData data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
     {
+        // Generate methods
+        ConfigObjectMetadata objectData = data.Attribute;
+        MethodDeclarationSyntax loadMethod = objectData.LoadMethod.DeclareMethod(SyntaxKind.VoidKeyword, objectData.LoadAccessModifier, nodeParam);
+        MethodDeclarationSyntax saveMethod = objectData.SaveMethod.DeclareMethod(SyntaxKind.VoidKeyword, objectData.SaveAccessModifier, nodeParam);
+
+        // Generate load and save method code
+        loadMethod = GenerateLoadMethodBody(loadMethod, data.Fields, context);
+        saveMethod = GenerateSaveMethodBody(saveMethod, data.Fields, context);
+
+        // Add documentation comments
+        loadMethod = loadMethod.AddLeadingTrivia(LoadMethodDoc);
+        saveMethod = saveMethod.AddLeadingTrivia(SaveMethodDoc);
+
+        // Wrap in region
+        loadMethod = loadMethod.AddRegionStart(GeneratedRegion);
+        saveMethod = saveMethod.AddRegionEnd();
+
+        return type.AddMembers(loadMethod, saveMethod);
+    }
+
+    public static TypeDeclarationSyntax GenerateInterfaceImplementation(TypeDeclarationSyntax type, in ConfigObjectMetadata data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
         MethodDeclarationSyntax load, save;
         switch (data.Implementation)
         {
@@ -132,14 +152,14 @@ public static class ConfigBuilder
 
             // Create methods as explicit implementations
             case InterfaceImplementation.Explicit:
-                load = ConfigNodeLoad.DeclareExplicitInterfaceMethod(SyntaxKind.VoidKeyword, IConfigNode.AsExplicitInterface(), nodeParameter);
-                save = ConfigNodeSave.DeclareExplicitInterfaceMethod(SyntaxKind.VoidKeyword, IConfigNode.AsExplicitInterface(), nodeParameter);
+                load = ConfigNodeLoad.DeclareExplicitInterfaceMethod(SyntaxKind.VoidKeyword, IConfigNode.AsExplicitInterface(), nodeParam);
+                save = ConfigNodeSave.DeclareExplicitInterfaceMethod(SyntaxKind.VoidKeyword, IConfigNode.AsExplicitInterface(), nodeParam);
                 break;
 
             // Create methods publicly
             case InterfaceImplementation.Public:
-                load = ConfigNodeLoad.DeclareMethod(SyntaxKind.VoidKeyword, SyntaxKind.PublicKeyword, nodeParameter);
-                save = ConfigNodeSave.DeclareMethod(SyntaxKind.VoidKeyword, SyntaxKind.PublicKeyword, nodeParameter);
+                load = ConfigNodeLoad.DeclareMethod(SyntaxKind.VoidKeyword, SyntaxKind.PublicKeyword, nodeParam);
+                save = ConfigNodeSave.DeclareMethod(SyntaxKind.VoidKeyword, SyntaxKind.PublicKeyword, nodeParam);
                 break;
 
             default:
@@ -156,6 +176,7 @@ public static class ConfigBuilder
 
         return type.AddMembers(load, save);
     }
+    #endregion
 
     #region Load
     /// <summary>
@@ -165,25 +186,59 @@ public static class ConfigBuilder
     /// <param name="fields">List of fields to generate load code for</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited load method declaration with the load code generated</returns>
-    private static MethodDeclarationSyntax GenerateLoadMethodBody(MethodDeclarationSyntax method, IEnumerable<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateLoadMethodBody(MethodDeclarationSyntax method, IReadOnlyList<ConfigFieldMetadata> fields, in ConfigBuilderContext context)
+    {
+        // Simple fields loop
+        method = GenerateNodeLoop(method, CountValues, Values, ConfigNodeValue, Value.Access(Value), fields.Where(f => !f.IsConfigLoadable), LoadBuilder.GenerateValueLoad, context);
+
+        // Config fields loop
+        method = GenerateNodeLoop(method, CountNodes, Nodes, ConfigNode, Value, fields.Where(f => f.IsConfigLoadable), LoadBuilder.GenerateNodeLoad, context);
+
+        return method;
+    }
+
+    /// <summary>
+    /// Generates a section of code which iterates over a set of values from the ConfigNode and switches over their name
+    /// </summary>
+    /// <param name="method">Load method declaration</param>
+    /// <param name="count">Count variable name</param>
+    /// <param name="values">Values to access name</param>
+    /// <param name="valueType">Type of values being accessed</param>
+    /// <param name="value">Value to load expression</param>
+    /// <param name="generateSection">Function which generates a load section for each field</param>
+    /// <param name="fields">List of fields to generate load code for</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The edited load method declaration with the load code generated</returns>
+    private static MethodDeclarationSyntax GenerateNodeLoop(MethodDeclarationSyntax method, IdentifierNameSyntax count, IdentifierNameSyntax values, TypeSyntax valueType, ExpressionSyntax value,
+                                                            IEnumerable<ConfigFieldMetadata> fields, LoadSectionGenerator generateSection, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
-        // for (int i = 0; i < node.ValueCount; i++)
-        ForStatementSyntax forStatement = IncrementingForLoop(Index, MakeLiteral(0), Node.Access(Count));
+        // for (int i = 0; i < node.count; i++)
+        ForStatementSyntax forStatement = IncrementingForLoop(Index, MakeLiteral(0), Node.Access(count));
 
         // node.values[i]
-        ExpressionSyntax currentValue = Node.Access(Values).ElementAccess(Index.AsArgument());
-        // ConfigNode.Value value = nodes.value[i];
-        VariableDeclarationSyntax valueDeclaration = Value.DeclareVariable(ConfigNodeValue, currentValue);
+        ExpressionSyntax currentValue = Node.Access(values).ElementAccess(Index.AsArgument());
+        // Type value = node.values[i];
+        VariableDeclarationSyntax valueDeclaration = Value.DeclareVariable(valueType, currentValue);
 
         // switch (value.name)
         SwitchStatementSyntax nameSwitchStatement = Value.Access(Name).AsSwitchStatement();
         // ReSharper disable once LoopCanBeConvertedToQuery
         foreach (ConfigFieldMetadata field in fields)
         {
-            // Add sections for every field
-            nameSwitchStatement = nameSwitchStatement.AddSections(GenerateFieldSwitchSection(field, context));
+            // case "name":
+            SwitchLabelSyntax label = field.SerializedName.AsLiteral().AsSwitchLabel();
+
+            // Value parsing implementation
+            BlockSyntax body = generateSection(value, field, context);
+
+            // Add break statement, then Create section with label and body
+            body = body.AddStatements(BreakStatement());
+            SwitchSectionSyntax section = SwitchSection(label.AsList(), body.AsList<StatementSyntax>());
+
+            // Add sections for the field
+            nameSwitchStatement = nameSwitchStatement.AddSections(section);
         }
 
         // Add statements to loop body
@@ -192,26 +247,6 @@ public static class ConfigBuilder
 
         // Add loop to method and return
         return method.AddBodyStatements(forStatement);
-    }
-
-    /// <summary>
-    /// Generates a switch section for the given field
-    /// </summary>
-    /// <param name="field">Field to generate the switch section for</param>
-    /// <param name="context">Generation context</param>
-    /// <returns>The generated switch section</returns>
-    private static SwitchSectionSyntax GenerateFieldSwitchSection(ConfigFieldMetadata field, in ConfigBuilderContext context)
-    {
-        context.Token.ThrowIfCancellationRequested();
-
-        // case "name":
-        SwitchLabelSyntax label = field.SerializedName.AsLiteral().AsSwitchLabel();
-        // Value parsing implementation
-        BlockSyntax body = LoadBuilder.GenerateFieldLoad(Value.Access(Value), field, context);
-
-        // Add break statement, then Create section with label and body
-        body = body.AddStatements(BreakStatement());
-        return SwitchSection(label.AsList(), body.AsList<StatementSyntax>());
     }
     #endregion
 

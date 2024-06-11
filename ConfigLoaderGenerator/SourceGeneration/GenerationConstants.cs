@@ -91,9 +91,13 @@ public static class GenerationConstants
     /// </summary>
     public static readonly IdentifierNameSyntax Node   = IdentifierName("node");
     /// <summary>
-    /// ConfigNode value count
+    /// ConfigNode nodes
     /// </summary>
-    public static readonly IdentifierNameSyntax Count  = IdentifierName("CountValues");
+    public static readonly IdentifierNameSyntax Nodes   = IdentifierName("nodes");
+    /// <summary>
+    /// ConfigNode node count
+    /// </summary>
+    public static readonly IdentifierNameSyntax CountNodes  = IdentifierName("CountNodes");
     /// <summary>
     /// ConfigNode value
     /// </summary>
@@ -103,7 +107,11 @@ public static class GenerationConstants
     /// </summary>
     public static readonly IdentifierNameSyntax Values = IdentifierName("values");
     /// <summary>
-    /// ConfigNode value name
+    /// ConfigNode value count
+    /// </summary>
+    public static readonly IdentifierNameSyntax CountValues  = IdentifierName("CountValues");
+    /// <summary>
+    /// ConfigNode name
     /// </summary>
     public static readonly IdentifierNameSyntax Name   = IdentifierName("name");
     #endregion

@@ -4,7 +4,7 @@ using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using UnityEngine;
 
-namespace ConfigLoaderTest.Test
+namespace ConfigLoaderTest
 {
     public partial class TestConfig : IGeneratedConfigNode
     {
@@ -67,6 +67,26 @@ namespace ConfigLoaderTest.Test
                             this.VectorProperty = _VectorProperty;
                         }
 
+                        break;
+                    }
+                }
+            }
+
+            for (int i = 0; i < node.CountNodes; i++)
+            {
+                ConfigNode value = node.nodes[i];
+                switch (value.name)
+                {
+                    case "floatCurve":
+                    {
+                        this.floatCurve = new FloatCurve();
+                        ((IConfigNode)this.floatCurve).Load(value);
+                        break;
+                    }
+
+                    case "configNode":
+                    {
+                        this.configNode = value;
                         break;
                     }
                 }

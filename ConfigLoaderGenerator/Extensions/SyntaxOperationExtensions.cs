@@ -16,13 +16,34 @@ namespace ConfigLoaderGenerator.Extensions;
 public static class SyntaxOperationExtensions
 {
     /// <summary>
+    /// Creates a parameterless object instantiation expression for the given type
+    /// </summary>
+    /// <param name="type">Type to create an instantiation for</param>
+    /// <returns>An instantiation expression for <paramref name="type"/></returns>
+    public static ObjectCreationExpressionSyntax New(this TypeSyntax type)
+    {
+        return ObjectCreationExpression(type).WithArgumentList(ArgumentList());
+    }
+
+    /// <summary>
+    /// Creates a parameterized object instantiation expression for the given type
+    /// </summary>
+    /// <param name="type">Type to create an instantiation for</param>
+    /// <param name="arguments">Constructor arguments</param>
+    /// <returns>An instantiation expression for <paramref name="type"/></returns>
+    public static ObjectCreationExpressionSyntax New(this TypeSyntax type, params ArgumentSyntax[] arguments)
+    {
+        return ObjectCreationExpression(type).AddArgumentListArguments(arguments);
+    }
+
+    /// <summary>
     /// Creates a simple access expression from the current expression and a given name
     /// </summary>
     /// <typeparam name="T">Expression syntax type</typeparam>
     /// <param name="element">Element to access</param>
     /// <param name="name">Name of the value to access on the element</param>
     /// <returns>An access expression under the form <c><paramref name="element"/>.<paramref name="name"></paramref></c></returns>
-    public static MemberAccessExpressionSyntax Access<T>(this T element, SimpleNameSyntax name) where T : ExpressionSyntax
+    public static MemberAccessExpressionSyntax Access<T>(this T element, IdentifierNameSyntax name) where T : ExpressionSyntax
     {
         return MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, element, name);
     }
@@ -133,6 +154,18 @@ public static class SyntaxOperationExtensions
     public static AssignmentExpressionSyntax Assign<T>(this T element, ExpressionSyntax value) where T : ExpressionSyntax
     {
         return AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, element, value);
+    }
+
+    /// <summary>
+    /// Creates a cast expression to the given type for the given expression
+    /// </summary>
+    /// <typeparam name="T">Expression type</typeparam>
+    /// <param name="expression">Expression to cast</param>
+    /// <param name="type">Type to cast to</param>
+    /// <returns>A cast expression to <paramref name="type"/> for <paramref name="expression"/></returns>
+    public static CastExpressionSyntax Cast<T>(this T expression, TypeSyntax type) where T : ExpressionSyntax
+    {
+        return CastExpression(type, expression);
     }
 
     /// <summary>

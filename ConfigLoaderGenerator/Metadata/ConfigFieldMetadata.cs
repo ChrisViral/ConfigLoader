@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ConfigLoader.Attributes;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -44,6 +46,14 @@ public readonly struct ConfigFieldMetadata
         /// </summary>
         public bool IsEnum { get; }
         /// <summary>
+        /// If this is an IConfigNode implementation
+        /// </summary>
+        public bool IsConfigNode { get; }
+        /// <summary>
+        /// If this is a ConfigNode object
+        /// </summary>
+        public bool IsNodeObject { get; }
+        /// <summary>
         /// Type identifier
         /// </summary>
         public IdentifierNameSyntax Identifier { get; }
@@ -54,12 +64,14 @@ public readonly struct ConfigFieldMetadata
         /// <param name="symbol">Symbol to make the info container for</param>
         public TypeInfo(ITypeSymbol symbol)
         {
-            this.Symbol     = (INamedTypeSymbol)symbol;
-            this.FullName   = this.Symbol.FullName();
-            this.Namespace  = this.Symbol.ContainingNamespace;
-            this.IsBuiltin  = BuiltinTypes.Contains(this.FullName);
-            this.IsEnum     = this.Symbol.IsEnum();
-            this.Identifier = IdentifierName(this.Symbol.DisplayName());
+            this.Symbol       = (INamedTypeSymbol)symbol;
+            this.FullName     = this.Symbol.FullName();
+            this.Namespace    = this.Symbol.ContainingNamespace;
+            this.IsBuiltin    = BuiltinTypes.Contains(this.FullName);
+            this.IsEnum       = this.Symbol.IsEnum();
+            this.Identifier   = IdentifierName(this.Symbol.DisplayName());
+            this.IsConfigNode = this.Symbol.AllInterfaces.Any(i => i.FullName() == IConfigNode.AsRaw());
+            this.IsNodeObject = this.FullName == ConfigNode.AsRaw();
         }
     }
 
@@ -97,6 +109,10 @@ public readonly struct ConfigFieldMetadata
     /// Type of this field
     /// </summary>
     public TypeInfo Type { get; }
+    /// <summary>
+    /// If this object must be loaded as a ConfigNode
+    /// </summary>
+    public bool IsConfigLoadable => this.Type.IsConfigNode || this.Type.IsNodeObject;
     /// <summary>
     /// If this field targets a property
     /// </summary>

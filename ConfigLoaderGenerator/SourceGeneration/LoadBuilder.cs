@@ -93,41 +93,41 @@ public static class LoadBuilder
         typeof(object).FullName
     ];
 
+    #region Values
     /// <summary>
-    /// Generate the field load code implementation
+    /// Generate the value load code implementation
     /// </summary>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
     /// <exception cref="InvalidOperationException">If the generator does not know how to load the given field type</exception>
-    public static BlockSyntax GenerateFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    public static BlockSyntax GenerateValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save option
         if (TryParseTypes.Contains(field.Type.FullName) || field.Type.IsEnum)
         {
-            context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
-            return GenerateTryParseFieldLoad(value, ParseUtils, field, context);
+            return GenerateTryParseValueLoad(value, ParseUtils, field, context);
         }
 
         if (AssignableTypes.Contains(field.Type.FullName))
         {
-            return GenerateAssignFieldLoad(value, field, context);
+            return GenerateAssignValueLoad(value, field, context);
         }
 
         // Unknown type
-        throw new InvalidOperationException($"Unknown type to parse ({field.Type.FullName})");
+        throw new InvalidOperationException($"Unknown value type to parse ({field.Type.FullName})");
     }
 
     /// <summary>
-    /// Generate the field load code implementation using <c>TryParse</c>
+    /// Generate the value load code implementation using <c>TryParse</c>
     /// </summary>
     /// <param name="value">Value expression</param>
     /// <param name="parent">TryParse parent type</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateTryParseFieldLoad(ExpressionSyntax value, IdentifierNameSyntax parent, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateTryParseValueLoad(ExpressionSyntax value, IdentifierNameSyntax parent, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -154,6 +154,7 @@ public static class LoadBuilder
         IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
 
         // Add namespace if the type isn't builtin
+        context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
         if (!field.Type.IsBuiltin)
         {
             context.UsedNamespaces.AddNamespace(field.Type.Namespace);
@@ -163,13 +164,13 @@ public static class LoadBuilder
     }
 
     /// <summary>
-    /// Generate the field load code implementation using assignment
+    /// Generate the value load code implementation using assignment
     /// </summary>
     /// <param name="value">Value expression</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateAssignFieldLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateAssignValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -187,4 +188,75 @@ public static class LoadBuilder
         // Add if statement and return
         return Block().AddStatements(ifStatement);
     }
+    #endregion
+
+    #region Nodes
+    /// <summary>
+    /// Generate the node load code implementation
+    /// </summary>
+    /// <param name="value">Value expression</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The modified statement body</returns>
+    /// <exception cref="InvalidOperationException">If the generator does not know how to load the given field type</exception>
+    public static BlockSyntax GenerateNodeLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // Find best save option
+        if (field.Type.IsConfigNode)
+        {
+            return GenerateInterfaceNodeLoad(value, field, context);
+        }
+
+        if (field.Type.IsNodeObject)
+        {
+            return GenerateNodeAssignLoad(value, field, context);
+        }
+
+        // Unknown type
+        throw new InvalidOperationException($"Unknown node type to parse ({field.Type.FullName})");
+    }
+
+    /// <summary>
+    /// Generate the IConfigNode node load code implementation
+    /// </summary>
+    /// <param name="value">Value expression</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The modified statement body</returns>
+    public static BlockSyntax GenerateInterfaceNodeLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
+        // this.value
+        ExpressionSyntax fieldAccess = ThisExpression().Access(field.FieldName);
+        // this.value = new Type();
+        ExpressionSyntax instantiation = fieldAccess.Assign(field.Type.Identifier.New());
+
+        // ((IConfigNode)this.value)
+        ExpressionSyntax fieldAsConfig = ParenthesizedExpression(fieldAccess.Cast(IConfigNode));
+        // ((IConfigNode)this.value).Load(value)
+        ExpressionSyntax loadConfig = fieldAsConfig.Access(ConfigNodeLoad).Invoke(value.AsArgument());
+
+        // Add statements and return
+        return Block().AddStatements(instantiation.AsStatement(), loadConfig.AsStatement());
+    }
+
+    /// <summary>
+    /// Generate the ConfigNode assign node load code implementation
+    /// </summary>
+    /// <param name="value">Value expression</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The modified statement body</returns>
+    public static BlockSyntax GenerateNodeAssignLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
+        // this.value = value;
+        ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(value);
+
+        // Add statements and return
+        return Block().AddStatements(fieldAssign.AsStatement());
+    }
+    #endregion
 }

@@ -57,6 +57,16 @@ public static class SaveBuilder
             return GenerateAddValueSave(body, name, value, field, context);
         }
 
+        if (field.Type.IsConfigNode)
+        {
+            return body;
+        }
+
+        if (field.Type.IsNodeObject)
+        {
+            return body;
+        }
+
         throw new InvalidOperationException($"Unknown type to save {field.Type.FullName}");
     }
 
