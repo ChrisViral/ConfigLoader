@@ -12,9 +12,11 @@ namespace ConfigLoader.Utils;
 /// </summary>
 /// <param name="SplitOptions">String splitting options, defaults to <see cref="ExtendedSplitOptions.TrimAndRemoveEmptyEntries"/></param>
 /// <param name="Separators">String splitting separators, if left <see langword="null"/>, the default separators, a single comma, will be used</param>
+/// <param name="EnumHandling">Enum values handling, defaults to <see cref="EnumHandling.String"/></param>
 [PublicAPI]
 public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ExtendedSplitOptions.TrimAndRemoveEmptyEntries,
-                                           char[]? Separators = null)
+                                           char[]? Separators = null,
+                                           EnumHandling EnumHandling = EnumHandling.String)
 {
     /// <summary>
     /// Default parse options

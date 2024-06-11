@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using ConfigLoader.Attributes;
 using JetBrains.Annotations;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -12,6 +14,10 @@ namespace ConfigLoader.Utils;
 /// <summary>
 /// Fast <see cref="Enum"/> parsing and writing utility class
 /// </summary>
+/// <remarks>
+/// Some of the functionality of this class, especially when it comes to flags and integer value handling, still relies on base slow <see cref="Enum"/> methods<br/>
+/// Rewriting these in a fast way at some point in the future could be interesting
+/// </remarks>
 [PublicAPI]
 public static class EnumUtils
 {
@@ -59,48 +65,81 @@ public static class EnumUtils
     }
 
     /// <summary>
-    /// Parses an <typeparamref name="T"/> value from its <paramref name="name"/> <see cref="string"/>
+    /// Parses an <typeparamref name="T"/> value from its <paramref name="value"/> <see cref="string"/>
     /// </summary>
     /// <typeparam name="T">Enum type</typeparam>
-    /// <param name="name">Value name</param>
-    /// <param name="ignoreCase">Whether the parse should be case-insensitive</param>
+    /// <param name="value">Enum value</param>
+    /// <param name="handling">Enum parse handling, defaults to <see cref="EnumHandling.String"/></param>
     /// <returns>The parsed <typeparamref name="T"/> value</returns>
-    /// <exception cref="ArgumentNullException">If <paramref name="name"/> is null</exception>
-    /// <exception cref="ArgumentException">If <paramref name="name"/> is empty, whitespace, or not a valid <typeparamref name="T"/> member</exception>
-    public static T Parse<T>(string name, bool ignoreCase = false) where T : struct, Enum
+    /// <exception cref="ArgumentNullException">If <paramref name="value"/> is null</exception>
+    /// <exception cref="ArgumentException">If <paramref name="value"/> is empty, whitespace, or not a valid <typeparamref name="T"/> member</exception>
+    public static T Parse<T>(string value, EnumHandling handling = EnumHandling.String) where T : struct, Enum
     {
-        if (name is null) throw new ArgumentNullException(nameof(name), "Enum name to parse cannot be null");
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Enum name to parse cannot be empty or whitespace", nameof(name));
+        if (value is null) throw new ArgumentNullException(nameof(value), "Enum name to parse cannot be null");
+        if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException("Enum name to parse cannot be empty or whitespace", nameof(value));
 
         try
         {
-            return ignoreCase ? EnumData<T>.NameToValueIgnoreCase[name]
-                              : EnumData<T>.NameToValue[name];
+            // ReSharper disable once ConvertSwitchStatementToSwitchExpression
+            switch (handling)
+            {
+                case EnumHandling.String:
+                    return EnumData<T>.NameToValue[value];
+
+                case EnumHandling.CaseInsensitiveString:
+                    return EnumData<T>.NameToValueIgnoreCase[value];
+
+                case EnumHandling.Flags:
+                case EnumHandling.CaseInsensitiveFlags:
+                case EnumHandling.Integer:
+                case EnumHandling.Hexadecimal:
+                    return (T)Enum.Parse(typeof(T), value, handling is EnumHandling.CaseInsensitiveFlags);
+
+                default:
+                    throw new InvalidEnumArgumentException(nameof(handling), (int)handling, typeof(EnumHandling));
+            }
         }
         catch (KeyNotFoundException e)
         {
-            throw new ArgumentException($"Unknown enum value ({name})", nameof(name), e);
+            throw new ArgumentException($"Unknown enum value ({value})", nameof(value), e);
         }
     }
 
     /// <summary>
-    /// Tries to parse an <typeparamref name="T"/> <paramref name="value"/> from its <paramref name="name"/> <see cref="string"/>
+    /// Tries to parse an <typeparamref name="T"/> <paramref name="result"/> from its <paramref name="value"/> <see cref="string"/>
     /// </summary>
     /// <typeparam name="T">Enum type</typeparam>
-    /// <param name="name">Value name</param>
-    /// <param name="value">Value output parameter</param>
-    /// <param name="ignoreCase">Whether the parse should be case-insensitive</param>
+    /// <param name="value">Value name</param>
+    /// <param name="result">Parse result parameter</param>
+    /// <param name="handling">Enum parse handling, defaults to <see cref="EnumHandling.String"/></param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse<T>(string? name, out T value, bool ignoreCase = false) where T : struct, Enum
+    public static bool TryParse<T>(string? value, out T result, EnumHandling handling = EnumHandling.String) where T : struct, Enum
     {
-        if (!string.IsNullOrWhiteSpace(name))
+        // ReSharper disable once InvertIf
+        if (string.IsNullOrEmpty(value))
         {
-            return ignoreCase ? EnumData<T>.NameToValueIgnoreCase.TryGetValue(name!, out value)
-                              : EnumData<T>.NameToValue.TryGetValue(name!, out value);
+            result = default;
+            return false;
         }
 
-        value = default;
-        return false;
+        // ReSharper disable once ConvertSwitchStatementToSwitchExpression
+        switch (handling)
+        {
+            case EnumHandling.String:
+                return EnumData<T>.NameToValue.TryGetValue(value!, out result);
+
+            case EnumHandling.CaseInsensitiveString:
+                return EnumData<T>.NameToValueIgnoreCase.TryGetValue(value!, out result);
+
+            case EnumHandling.Flags:
+            case EnumHandling.CaseInsensitiveFlags:
+            case EnumHandling.Integer:
+            case EnumHandling.Hexadecimal:
+                return Enum.TryParse(value, handling is EnumHandling.CaseInsensitiveFlags, out result);
+
+            default:
+                throw new InvalidEnumArgumentException(nameof(handling), (int)handling, typeof(EnumHandling));
+        }
     }
 
     /// <summary>
@@ -108,10 +147,29 @@ public static class EnumUtils
     /// </summary>
     /// <typeparam name="T">Enum type</typeparam>
     /// <param name="value">Value to convert</param>
+    /// <param name="handling">Enum parse handling, defaults to <see cref="EnumHandling.String"/></param>
     /// <returns>The <see cref="string"/> representation of this <typeparamref name="T"/> <paramref name="value"/>, or <see cref="string.Empty"/> if the <paramref name="value"/> is invalid</returns>
-    public static string ToString<T>(T value) where T : struct, Enum
+    public static string ToString<T>(T value, EnumHandling handling = EnumHandling.String) where T : struct, Enum
     {
-        return EnumData<T>.ValueToName.TryGetValue(value, out string name) ? name : string.Empty;
+        switch (handling)
+        {
+            case EnumHandling.String:
+            case EnumHandling.CaseInsensitiveString:
+                return EnumData<T>.ValueToName.TryGetValue(value, out string name) ? name : string.Empty;
+
+            case EnumHandling.Flags:
+            case EnumHandling.CaseInsensitiveFlags:
+                return value.ToString("F");
+
+            case EnumHandling.Integer:
+                return value.ToString("D");
+
+            case EnumHandling.Hexadecimal:
+                return value.ToString("X");
+
+            default:
+                goto case EnumHandling.String;
+        }
     }
 
     /// <summary>

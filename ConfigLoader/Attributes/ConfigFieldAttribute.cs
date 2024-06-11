@@ -16,7 +16,10 @@ public enum EnumHandling
 {
     String,
     CaseInsensitiveString,
-    Integer
+    Flags,
+    CaseInsensitiveFlags,
+    Integer,
+    Hexadecimal
 }
 
 /// <summary>

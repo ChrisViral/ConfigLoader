@@ -208,7 +208,7 @@ public static partial class ParseUtils
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public static bool TryParse<T>(string? value, out T result, in ParseOptions options) where T : struct, Enum
     {
-        return EnumUtils.TryParse(value, out result);
+        return EnumUtils.TryParse(value, out result, options.EnumHandling);
     }
     #endregion
 }

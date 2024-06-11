@@ -91,7 +91,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Vector2 result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Vector2.zero;
             return false;
@@ -121,7 +121,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Vector2d result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Vector2d.zero;
             return false;
@@ -151,7 +151,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Vector2Int result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Vector2Int.zero;
             return false;
@@ -181,7 +181,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Vector3 result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Vector3.zero;
             return false;
@@ -212,7 +212,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Vector3d result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Vector3d.zero;
             return false;
@@ -243,7 +243,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Vector3Int result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Vector3Int.zero;
             return false;
@@ -274,7 +274,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Vector4 result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Vector4.zero;
             return false;
@@ -306,7 +306,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Vector4d result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Vector4d.zero;
             return false;
@@ -340,7 +340,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Quaternion result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Quaternion.identity;
             return false;
@@ -372,7 +372,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out QuaternionD result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = QuaternionD.identity;
             return false;
@@ -406,7 +406,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Rect result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Rect.zero;
             return false;
@@ -440,7 +440,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Color result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Color.white;
             return false;
@@ -493,7 +493,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Color32 result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = DefaultColor32;
             return false;
@@ -555,7 +555,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Matrix4x4 result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Matrix4x4.identity;
             return false;
@@ -599,7 +599,7 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out Matrix4x4D result, in ParseOptions options)
     {
         // If empty, return now
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrEmpty(value))
         {
             result = Matrix4x4D.Identity();
             return false;
