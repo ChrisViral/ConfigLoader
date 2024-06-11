@@ -166,14 +166,14 @@ public static class ConfigBuilder
 
             // Create methods as explicit implementations
             case InterfaceImplementation.Explicit:
-                load = ConfigNodeLoad.DeclareExplicitInterfaceMethod(SyntaxKind.VoidKeyword, IConfigNode.AsExplicitInterface(), nodeParam);
-                save = ConfigNodeSave.DeclareExplicitInterfaceMethod(SyntaxKind.VoidKeyword, IConfigNode.AsExplicitInterface(), nodeParam);
+                load = Load.DeclareExplicitInterfaceMethod(SyntaxKind.VoidKeyword, IConfigNode.AsExplicitInterface(), nodeParam);
+                save = Save.DeclareExplicitInterfaceMethod(SyntaxKind.VoidKeyword, IConfigNode.AsExplicitInterface(), nodeParam);
                 break;
 
             // Create methods publicly
             case InterfaceImplementation.Public:
-                load = ConfigNodeLoad.DeclareMethod(SyntaxKind.VoidKeyword, SyntaxKind.PublicKeyword, nodeParam);
-                save = ConfigNodeSave.DeclareMethod(SyntaxKind.VoidKeyword, SyntaxKind.PublicKeyword, nodeParam);
+                load = Load.DeclareMethod(SyntaxKind.VoidKeyword, SyntaxKind.PublicKeyword, nodeParam);
+                save = Save.DeclareMethod(SyntaxKind.VoidKeyword, SyntaxKind.PublicKeyword, nodeParam);
                 break;
 
             default:
@@ -299,7 +299,7 @@ public static class ConfigBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // Variables
-        ExpressionSyntax name = field.SerializedName.AsLiteral();
+        LiteralExpressionSyntax name = field.SerializedName.AsLiteral();
         ExpressionSyntax value = ThisExpression().Access(field.FieldName);
 
         // Value saving implementation

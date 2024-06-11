@@ -102,6 +102,8 @@ namespace ConfigLoaderTest
             node.AddValue("floatValue", this.floatValue);
             node.AddValue("stringValue", this.stringValue);
             node.AddValue("modifier", this.modifier);
+            ((IConfigNode)this.floatCurve).Save(node.AddNode("floatCurve"));
+            node.AddNode("configNode", this.configNode);
             node.AddValue("OtherName", this.VectorProperty);
         }
 

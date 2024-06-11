@@ -235,7 +235,7 @@ public static class LoadBuilder
         // ((IConfigNode)this.value)
         ExpressionSyntax fieldAsConfig = ParenthesizedExpression(fieldAccess.Cast(IConfigNode));
         // ((IConfigNode)this.value).Load(value)
-        ExpressionSyntax loadConfig = fieldAsConfig.Access(ConfigNodeLoad).Invoke(value.AsArgument());
+        ExpressionSyntax loadConfig = fieldAsConfig.Access(Load).Invoke(value.AsArgument());
 
         // Add statements and return
         return Block().AddStatements(instantiation.AsStatement(), loadConfig.AsStatement());

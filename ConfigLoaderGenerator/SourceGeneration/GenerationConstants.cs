@@ -66,19 +66,23 @@ public static class GenerationConstants
     /// <summary>
     /// IConfigNode region
     /// </summary>
-    public static readonly SyntaxTrivia GeneratedRegion = PreprocessingMessage("Auto-generated Save/Load");
-    /// <summary>
-    /// IConfigNode region
-    /// </summary>
     public static readonly SyntaxTrivia InterfaceRegion = PreprocessingMessage("IConfigNode Implementation");
     /// <summary>
     /// IConfigNode Load method name
     /// </summary>
-    public static readonly IdentifierNameSyntax ConfigNodeLoad = IdentifierName("Load");
+    public static readonly IdentifierNameSyntax Load = IdentifierName("Load");
     /// <summary>
     /// IConfigNode Save method name
     /// </summary>
-    public static readonly IdentifierNameSyntax ConfigNodeSave = IdentifierName("Save");
+    public static readonly IdentifierNameSyntax Save = IdentifierName("Save");
+    /// <summary>
+    /// AddValue method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax AddValue = IdentifierName("AddValue");
+    /// <summary>
+    /// AddNode method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax AddNode = IdentifierName("AddNode");
     #endregion
 
     #region Variables

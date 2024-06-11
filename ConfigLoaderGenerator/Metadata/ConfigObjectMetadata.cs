@@ -97,11 +97,11 @@ public readonly struct ConfigObjectMetadata
         {
             case InterfaceImplementation.Public:
                 // Ensure public implementation does not overlap with IConfigNode
-                if (this.LoadMethod.AsRaw() == ConfigNodeLoad.AsRaw())
+                if (this.LoadMethod.AsRaw() == Load.AsRaw())
                 {
                     this.LoadMethod = DefaultLoadMethod;
                 }
-                else if (this.SaveMethod.AsRaw() == ConfigNodeSave.AsRaw())
+                else if (this.SaveMethod.AsRaw() == Save.AsRaw())
                 {
                     this.SaveMethod = DefaultSaveMethod;
                 }
@@ -112,8 +112,8 @@ public readonly struct ConfigObjectMetadata
                 // Make implementation match IConfigNode
                 this.LoadAccessModifier = AccessModifier.Public.AsKeyword();
                 this.SaveAccessModifier = AccessModifier.Public.AsKeyword();
-                this.LoadMethod         = ConfigNodeLoad;
-                this.SaveMethod         = ConfigNodeSave;
+                this.LoadMethod         = Load;
+                this.SaveMethod         = Save;
                 break;
 
             case InterfaceImplementation.None:
