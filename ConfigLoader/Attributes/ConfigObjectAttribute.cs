@@ -38,8 +38,8 @@ public enum InterfaceImplementation
     /// </summary>
     Public,
     /// <summary>
-    /// The <see cref="IConfigNode"/> implementation will be implemented directly through the generated methods<br/>
-    /// This means that the other settings controlling method accessibility and naming will be ignored
+    /// The <see cref="IConfigNode"/> implementation will be implemented directly through the generated load/save methods<br/>
+    /// This means that other settings controlling method accessibility and naming will be ignored in order to match <see cref="IConfigNode"/> implementation
     /// </summary>
     UseGenerated
 }

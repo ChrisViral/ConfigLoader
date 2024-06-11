@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
@@ -48,6 +47,8 @@ public static class ConfigBuilder
     /// <summary>
     /// Generate the source file for the given template
     /// </summary>
+    /// <param name="data">Generation data</param>
+    /// <param name="token">The generator-provided cancellation token</param>
     /// <returns>A tuple containing the generated file name and full file source</returns>
     public static (string fileName, string source) GenerateSource(ConfigData data, CancellationToken token)
     {
@@ -116,6 +117,14 @@ public static class ConfigBuilder
         return ($"{data.Type.FullName()}.generated.cs", root.ToFullString() + lineFeed);
     }
 
+    /// <summary>
+    /// Generates the load/save implementation
+    /// </summary>
+    /// <param name="type">Type declaration</param>
+    /// <param name="data">Generation data</param>
+    /// <param name="nodeParam">The ConfigNode parameter</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The modified type declaration with the generated methods added</returns>
     public static TypeDeclarationSyntax GenerateImplementation(TypeDeclarationSyntax type, ConfigData data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
     {
         // Generate methods
@@ -131,13 +140,18 @@ public static class ConfigBuilder
         loadMethod = loadMethod.AddLeadingTrivia(LoadMethodDoc);
         saveMethod = saveMethod.AddLeadingTrivia(SaveMethodDoc);
 
-        // Wrap in region
-        loadMethod = loadMethod.AddRegionStart(GeneratedRegion);
-        saveMethod = saveMethod.AddRegionEnd();
-
         return type.AddMembers(loadMethod, saveMethod);
     }
 
+    /// <summary>
+    /// Generates the IConfigNode implementation
+    /// </summary>
+    /// <param name="type">Type declaration</param>
+    /// <param name="data">Generation data</param>
+    /// <param name="nodeParam">The ConfigNode parameter</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The modifier type declaration with the methods added</returns>
+    /// <exception cref="InvalidEnumArgumentException">If the implementation type enum value is invalid</exception>
     public static TypeDeclarationSyntax GenerateInterfaceImplementation(TypeDeclarationSyntax type, in ConfigObjectMetadata data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
@@ -174,6 +188,7 @@ public static class ConfigBuilder
         load = load.AddRegionStart(InterfaceRegion);
         save = save.AddRegionEnd();
 
+        // Add members and return
         return type.AddMembers(load, save);
     }
     #endregion

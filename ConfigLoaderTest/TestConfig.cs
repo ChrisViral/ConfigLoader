@@ -26,24 +26,5 @@ public partial class TestConfig
 
     public void Test(ConfigNode node)
     {
-        for (int i = 0; i < node.CountNodes; i++)
-        {
-            ConfigNode value = node.nodes[i];
-            switch (value.name)
-            {
-                case "floatCurve":
-                {
-                    this.floatCurve = new FloatCurve();
-                    ((IConfigNode)this.floatCurve).Load(value);
-                    break;
-                }
-
-                case "configNode":
-                {
-                    this.configNode = value;
-                    break;
-                }
-            }
-        }
     }
 }

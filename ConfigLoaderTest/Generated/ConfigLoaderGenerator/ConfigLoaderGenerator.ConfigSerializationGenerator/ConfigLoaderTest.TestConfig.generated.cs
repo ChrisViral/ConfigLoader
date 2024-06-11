@@ -8,7 +8,6 @@ namespace ConfigLoaderTest
 {
     public partial class TestConfig : IGeneratedConfigNode
     {
-#region Auto-generated Save/Load
         /// <summary>
         /// Auto-generated <see cref="ConfigNode"/> load
         /// </summary>
@@ -105,7 +104,6 @@ namespace ConfigLoaderTest
             node.AddValue("modifier", this.modifier);
             node.AddValue("OtherName", this.VectorProperty);
         }
-#endregion
 
 #region IConfigNode Implementation
         void IConfigNode.Load(ConfigNode node)
