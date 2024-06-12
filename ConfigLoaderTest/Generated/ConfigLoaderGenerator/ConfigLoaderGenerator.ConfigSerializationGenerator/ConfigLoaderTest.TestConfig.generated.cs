@@ -60,6 +60,16 @@ namespace ConfigLoaderTest
                         break;
                     }
 
+                    case "intArray":
+                    {
+                        if (ParseUtils.TryParse(value.value, out int[] _intArray, ParseUtils.TryParse, ParseOptions.Defaults))
+                        {
+                            this.intArray = _intArray;
+                        }
+
+                        break;
+                    }
+
                     case "OtherName":
                     {
                         if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, ParseOptions.Defaults))

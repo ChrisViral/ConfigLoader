@@ -47,8 +47,27 @@ internal static class SyntaxConversionExtensions
     /// </summary>
     /// <param name="keyword">Type keyword</param>
     /// <returns>The type syntax associated to the given keyword</returns>
-    /// <exception cref="ArgumentException">If <paramref name="keyword"/> is not a type keyword</exception>
-    public static TypeSyntax AsType(this SyntaxKind keyword) => PredefinedType(Token(keyword));
+    public static PredefinedTypeSyntax AsType(this SyntaxKind keyword) => PredefinedType(Token(keyword));
+
+    /// <summary>
+    /// Creates an array type from the specified predefined type token
+    /// </summary>
+    /// <param name="type">Predefined type to make an array for</param>
+    /// <returns>The created array type</returns>
+    public static ArrayTypeSyntax AsArrayType(this SyntaxKind type)
+    {
+        return ArrayType(PredefinedType(Token(type))).AddRankSpecifiers(ArrayRankSpecifier());
+    }
+
+    /// <summary>
+    /// Creates an array type from the specified type
+    /// </summary>
+    /// <param name="type">Type to make an array for</param>
+    /// <returns>The created array type</returns>
+    public static ArrayTypeSyntax AsArrayType(this TypeSyntax type)
+    {
+        return ArrayType(type).AddRankSpecifiers(ArrayRankSpecifier());
+    }
 
     /// <summary>
     /// Gets the raw <see cref="string"/> value of this <see cref="IdentifierNameSyntax"/>

@@ -41,10 +41,6 @@ public static class LoadBuilder
     /// ParseOptions defaults identifier
     /// </summary>
     private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.ParseOptions.Defaults).AsIdentifier();
-    /// <summary>
-    /// IsNullOrEmpty method identifier
-    /// </summary>
-    private static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsIdentifier();
 
     /// <summary>
     /// Types that can be directly assigned to the field
@@ -72,9 +68,9 @@ public static class LoadBuilder
             return GenerateAssignValueLoad(value, field, context);
         }
 
-        if (field.Type.IsBuiltin || field.Type.IsEnum || SupportedTypes.Contains(field.Type.FullName))
+        if (field.Type.IsBuiltin || field.Type.IsEnum || field.Type.IsArray || SupportedTypes.Contains(field.Type.FullName))
         {
-            return GenerateTryParseValueLoad(value, ParseUtils, field, context);
+            return GenerateTryParseValueLoad(value, field, context);
         }
 
         // Unknown type
@@ -115,7 +111,7 @@ public static class LoadBuilder
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateTryParseValueLoad(ExpressionSyntax value, IdentifierNameSyntax parent, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateTryParseValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -130,14 +126,16 @@ public static class LoadBuilder
         // ParseOptions.Defaults
         ArgumentSyntax options = ParseOptions.Access(Defaults).AsArgument();
 
-        // Type.TryParse(value.value, out Type _value, options)
-        ExpressionSyntax tryParse = parent.Access(TryParse);
-        ExpressionSyntax tryParseInvocation = tryParse.Invoke(value.AsArgument(), outVar, options);
+        // ParseUtils.TryParse(value.value, out Type _value, options)
+        ExpressionSyntax tryParse = ParseUtils.Access(TryParse);
+        ExpressionSyntax tryParseInvocation = field.Type.IsArray
+                                                  ? tryParse.Invoke(value.AsArgument(), outVar, tryParse.AsArgument(), options)
+                                                  : tryParse.Invoke(value.AsArgument(), outVar, options);
 
         // this.value = _value;
         ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(tempVar);
 
-        // if (Type.TryParse(value.value, out Type _value, options)) { }
+        // if (ParseUtils.TryParse(value.value, out Type _value, options)) { }
         BlockSyntax ifBlock           = Block().AddStatements(fieldAssign.AsStatement());
         IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
 

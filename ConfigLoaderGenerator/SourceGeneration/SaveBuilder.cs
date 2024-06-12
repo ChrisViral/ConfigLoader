@@ -5,7 +5,6 @@ using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -78,6 +77,11 @@ public static class SaveBuilder
         if (field.Type.IsNodeObject)
         {
             return GenerateAddNodeSave(body, name, value, field, context);
+        }
+
+        if (field.Type.IsArray)
+        {
+            return body;
         }
 
         throw new InvalidOperationException($"Unknown type to save {field.Type.FullName}");

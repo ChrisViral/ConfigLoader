@@ -75,6 +75,12 @@ public static class SyntaxLiteralExtensions
 
     #region Static methods
     /// <summary>
+    /// <see langword="null"/> literal expression
+    /// </summary>
+    /// <returns>A <see langword="null"/> literal expression</returns>
+    public static LiteralExpressionSyntax NullExpression() => LiteralExpression(SyntaxKind.NullLiteralExpression);
+
+    /// <summary>
     /// <see langword="true"/> literal expression
     /// </summary>
     /// <returns>A <see langword="true"/> literal expression</returns>

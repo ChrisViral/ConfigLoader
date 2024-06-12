@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -18,6 +19,28 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 public static class GenerationConstants
 {
     #region Supported types
+    /// <summary>
+    /// C# builtin types
+    /// </summary>
+    public static readonly HashSet<string> BuiltinTypes =
+    [
+        typeof(byte).FullName,
+        typeof(sbyte).FullName,
+        typeof(short).FullName,
+        typeof(ushort).FullName,
+        typeof(int).FullName,
+        typeof(uint).FullName,
+        typeof(long).FullName,
+        typeof(ulong).FullName,
+        typeof(float).FullName,
+        typeof(double).FullName,
+        typeof(decimal).FullName,
+        typeof(bool).FullName,
+        typeof(char).FullName,
+        typeof(string).FullName,
+        typeof(object).FullName
+    ];
+
     /// <summary>
     /// Supported non-builtin types
     /// </summary>
@@ -110,6 +133,10 @@ public static class GenerationConstants
     /// AddNode method identifier
     /// </summary>
     public static readonly IdentifierNameSyntax AddNode = IdentifierName("AddNode");
+    /// <summary>
+    /// IsNullOrEmpty method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsIdentifier();
     #endregion
 
     #region Variables

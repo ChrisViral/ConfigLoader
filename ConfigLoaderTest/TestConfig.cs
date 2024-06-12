@@ -1,4 +1,5 @@
-﻿using ConfigLoader.Attributes;
+using ConfigLoader.Attributes;
+using ConfigLoader.Utils;
 using UnityEngine;
 
 namespace ConfigLoaderTest;
@@ -19,6 +20,8 @@ public partial class TestConfig
     public FloatCurve floatCurve;
     [ConfigField]
     public ConfigNode configNode;
+    [ConfigField]
+    public int[] intArray;
 
     [ConfigField(Name = "OtherName")]
     public Vector3 VectorProperty { get; set; }
