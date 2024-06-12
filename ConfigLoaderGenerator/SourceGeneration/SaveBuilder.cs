@@ -5,6 +5,7 @@ using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -141,12 +142,25 @@ public static class SaveBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // node.AddNode("value")
-        ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument());
-        // ((IConfigNode)this.value)
-        ExpressionSyntax fieldAsConfig = value.Cast(IConfigNode);
-        // ((IConfigNode)this.value).Save(node.AddNode("value"));
-        ExpressionSyntax saveNode = fieldAsConfig.Access(Save).Invoke(addValueInvocation.AsArgument());
-        return body.AddBodyStatements(saveNode.AsStatement());
+        ExpressionSyntax addNodeInvocation = Node.Access(AddNode).Invoke(name.AsArgument());
+
+        // Check if interface implementation is explicit or not
+        if (field.Type.Symbol.IsInterfaceImplementationExplicit(IConfigNode.AsRaw(), Save.AsRaw()))
+        {
+            // ((IConfigNode)this.value)
+            value = value.Cast(IConfigNode);
+        }
+
+        // this.value?.Save(node.AddNode("value"));
+        ExpressionSyntax saveNode = field.Type.Symbol.IsReferenceType
+                                        ? value.ConditionalAccess(Save) // this.value?.Save
+                                        : value.Access(Save);           // this.value.Save
+
+        // this.value?.Save(node.AddNode("value"));
+        ExpressionSyntax saveNodeInvoke = saveNode.Invoke(addNodeInvocation.AsArgument());
+
+        // Add statements to body and return
+        return body.AddBodyStatements(saveNodeInvoke.AsStatement());
     }
 
     /// <summary>
@@ -162,8 +176,10 @@ public static class SaveBuilder
     {
         context.Token.ThrowIfCancellationRequested();
 
+
         // node.AddNode("name", this.value);
         ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), value.AsArgument());
-        return body.AddBodyStatements(addValueInvocation.AsStatement());
+        IfStatementSyntax ifNotNull = IfStatement(value.IsNotNull(), Block().AddStatements(addValueInvocation.AsStatement()));
+        return body.AddBodyStatements(ifNotNull);
     }
 }

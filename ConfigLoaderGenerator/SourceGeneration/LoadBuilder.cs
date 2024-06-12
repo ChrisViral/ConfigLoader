@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
@@ -93,7 +94,7 @@ public static class LoadBuilder
         ExpressionSyntax isNotNullOrEmptyInvocation = Not(isNullOrEmpty.Invoke(value.AsArgument()));
 
         // this.value = value.value;
-        ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(value);
+        ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(value);
 
         // if(!string.IsNullOrEmpty(value.value))
         BlockSyntax ifBlock = Block().AddStatements(fieldAssign.AsStatement());
@@ -133,7 +134,7 @@ public static class LoadBuilder
                                                   : tryParse.Invoke(value.AsArgument(), outVar, options);
 
         // this.value = _value;
-        ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(tempVar);
+        ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(tempVar);
 
         // if (ParseUtils.TryParse(value.value, out Type _value, options)) { }
         BlockSyntax ifBlock           = Block().AddStatements(fieldAssign.AsStatement());
@@ -188,14 +189,19 @@ public static class LoadBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // this.value
-        ExpressionSyntax fieldAccess = ThisExpression().Access(field.FieldName);
+        ExpressionSyntax fieldAccess = This().Access(field.FieldName);
         // this.value = new Type();
         ExpressionSyntax instantiation = fieldAccess.Assign(field.Type.Identifier.New());
 
-        // ((IConfigNode)this.value)
-        ExpressionSyntax fieldAsConfig = fieldAccess.Cast(IConfigNode);
-        // ((IConfigNode)this.value).Load(value)
-        ExpressionSyntax loadConfig = fieldAsConfig.Access(Load).Invoke(value.AsArgument());
+        // Check if method implementation is explicit
+        if (field.Type.Symbol.IsInterfaceImplementationExplicit(IConfigNode.AsRaw(), Load.AsRaw()))
+        {
+            // ((IConfigNode)this.value)
+            fieldAccess = fieldAccess.Cast(IConfigNode);
+        }
+
+        // this.value.Load(value)
+        ExpressionSyntax loadConfig = fieldAccess.Access(Load).Invoke(value.AsArgument());
 
         // Add statements and return
         return Block().AddStatements(instantiation.AsStatement(), loadConfig.AsStatement());
@@ -213,7 +219,7 @@ public static class LoadBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // this.value = value;
-        ExpressionSyntax fieldAssign = ThisExpression().Access(field.FieldName).Assign(value);
+        ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(value);
 
         // Add statements and return
         return Block().AddStatements(fieldAssign.AsStatement());

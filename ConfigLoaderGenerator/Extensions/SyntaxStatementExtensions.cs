@@ -15,6 +15,7 @@ namespace ConfigLoaderGenerator.Extensions;
 /// ReSharper disable UnusedMember.Global
 public static class SyntaxStatementExtensions
 {
+    #region Extensions
     /// <summary>
     /// Creates a <see cref="LocalDeclarationStatementSyntax"/> for the given variable declaration
     /// </summary>
@@ -37,4 +38,25 @@ public static class SyntaxStatementExtensions
     /// <param name="expression">The expression to create a statement for</param>
     /// <returns>The created <see cref="ExpressionStatementSyntax"/></returns>
     public static ExpressionStatementSyntax AsStatement<T>(this T expression) where T : ExpressionSyntax => ExpressionStatement(expression);
+    #endregion
+
+    #region Static methods
+    /// <summary>
+    /// <see langword="return"/> statement
+    /// </summary>
+    /// <returns>A <see langword="return"/> statement</returns>
+    public static ReturnStatementSyntax Return() => ReturnStatement();
+
+    /// <summary>
+    /// <see langword="break"/> statement
+    /// </summary>
+    /// <returns>A <see langword="break"/> statement</returns>
+    public static BreakStatementSyntax Break() => BreakStatement();
+
+    /// <summary>
+    /// <see langword="continue"/> statement
+    /// </summary>
+    /// <returns>A <see langword="continue"/> statement</returns>
+    public static ContinueStatementSyntax Continue() => ContinueStatement();
+    #endregion
 }

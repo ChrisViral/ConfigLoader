@@ -49,6 +49,18 @@ public static class SyntaxOperationExtensions
     }
 
     /// <summary>
+    /// Creates a conditional access expression from the current expression and a given name
+    /// </summary>
+    /// <typeparam name="T">Expression syntax type</typeparam>
+    /// <param name="element">Element to access</param>
+    /// <param name="name">Name of the value to access on the element</param>
+    /// <returns>A conditional access expression under the form <c><paramref name="element"/>?.<paramref name="name"></paramref></c></returns>
+    public static ConditionalAccessExpressionSyntax ConditionalAccess<T>(this T element, IdentifierNameSyntax name) where T : ExpressionSyntax
+    {
+        return ConditionalAccessExpression(element, MemberBindingExpression(name));
+    }
+
+    /// <summary>
     /// Creates an indexer access expression from the given expression and a given argument
     /// </summary>
     /// <typeparam name="T">Expression syntax type</typeparam>

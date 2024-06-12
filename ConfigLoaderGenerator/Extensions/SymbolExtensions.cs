@@ -78,5 +78,22 @@ internal static class SymbolExtensions
     /// <param name="interfaceName">Full name of the interface to find</param>
     /// <returns><see langword="true"/> if <paramref name="type"/> implements an interface matching <paramref name="interfaceName"/>, otherwise <see langword="false"/></returns>
     public static bool Implements(this ITypeSymbol type, string interfaceName) => type.AllInterfaces.Any(i => i.FullName() == interfaceName);
+
+    /// <summary>
+    /// Checks if a given type implements an interface method explicitly
+    /// </summary>
+    /// <param name="type">Type to check</param>
+    /// <param name="interfaceName">Interface name</param>
+    /// <param name="methodName">Interface method</param>
+    /// <returns><see langword="true"/> if <paramref name="type"/> implements the specified interface method explicitly, otherwise <see langword="false"/></returns>
+    public static bool IsInterfaceImplementationExplicit(this ITypeSymbol type, string interfaceName, string methodName)
+    {
+        INamedTypeSymbol? interfaceSymbol = type.AllInterfaces.FirstOrDefault(i => i.FullName() == interfaceName);
+        IMethodSymbol? member = (IMethodSymbol?)interfaceSymbol?.GetMembers(methodName).FirstOrDefault(m => m is IMethodSymbol);
+        if (member is null) return false;
+
+        IMethodSymbol? implementation = (IMethodSymbol?)type.FindImplementationForInterfaceMember(member);
+        return implementation?.ExplicitInterfaceImplementations.Contains(member) ?? false;
+    }
     #endregion
 }

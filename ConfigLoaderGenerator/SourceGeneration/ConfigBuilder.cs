@@ -12,8 +12,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using static ConfigLoaderGenerator.Extensions.SyntaxOperationExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
+using static ConfigLoaderGenerator.Extensions.SyntaxOperationExtensions;
+using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -191,6 +192,16 @@ public static class ConfigBuilder
         // Add members and return
         return type.AddMembers(load, save);
     }
+
+    /// <summary>
+    /// Generates a guard statement that ensures the node value is not null
+    /// </summary>
+    /// <returns>The generated if statement</returns>
+    public static IfStatementSyntax GenerateNodeGuard()
+    {
+        // if (node == null) return;
+        return IfStatement(Node.IsNull(), Block(Return()));
+    }
     #endregion
 
     #region Load
@@ -203,6 +214,11 @@ public static class ConfigBuilder
     /// <returns>The edited load method declaration with the load code generated</returns>
     private static MethodDeclarationSyntax GenerateLoadMethodBody(MethodDeclarationSyntax method, ConfigData data, in ConfigBuilderContext context)
     {
+        context.Token.ThrowIfCancellationRequested();
+
+        // Make sure node is not null
+        method = method.AddBodyStatements(GenerateNodeGuard());
+
         // Simple fields loop
         method = GenerateNodeLoop(method, ValueCount, CountValues, Values, ConfigNodeValue, Value.Access(Value), data.ValueFields, LoadBuilder.GenerateValueLoad, context);
 
@@ -255,7 +271,7 @@ public static class ConfigBuilder
             BlockSyntax body = generateSection(value, field, context);
 
             // Add break statement, then Create section with label and body
-            body = body.AddStatements(BreakStatement());
+            body = body.AddStatements(Break());
             SwitchSectionSyntax section = SwitchSection(label.AsList(), body.AsList<StatementSyntax>());
 
             // Add sections for the field
@@ -282,6 +298,9 @@ public static class ConfigBuilder
     private static MethodDeclarationSyntax GenerateSaveMethodBody(MethodDeclarationSyntax method, ConfigData data, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
+
+        // Make sure node is not null
+        method = method.AddBodyStatements(GenerateNodeGuard());
 
         // ReSharper disable once LoopCanBeConvertedToQuery
         foreach (ConfigFieldMetadata field in data.ValueFields)
@@ -313,7 +332,7 @@ public static class ConfigBuilder
 
         // Variables
         LiteralExpressionSyntax name = field.SerializedName.AsLiteral();
-        ExpressionSyntax value = ThisExpression().Access(field.FieldName);
+        ExpressionSyntax value = This().Access(field.FieldName);
 
         // Value saving implementation
         return SaveBuilder.GenerateFieldSave(method, name, value, field, context);

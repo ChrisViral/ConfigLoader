@@ -14,6 +14,11 @@ namespace ConfigLoaderTest
         /// <param name="node"><see cref="ConfigNode"/> to load from</param>
         public void LoadFromConfig(ConfigNode node)
         {
+            if (node == null)
+            {
+                return;
+            }
+
             int valueCount = node.CountValues;
             for (int i = 0; i < valueCount; i++)
             {
@@ -91,7 +96,14 @@ namespace ConfigLoaderTest
                     case "floatCurve":
                     {
                         this.floatCurve = new FloatCurve();
-                        ((IConfigNode)this.floatCurve).Load(value);
+                        this.floatCurve.Load(value);
+                        break;
+                    }
+
+                    case "explicitImplementation":
+                    {
+                        this.explicitImplementation = new ConfigTest();
+                        ((IConfigNode)this.explicitImplementation).Load(value);
                         break;
                     }
 
@@ -110,14 +122,23 @@ namespace ConfigLoaderTest
         /// <param name="node"><see cref="ConfigNode"/> to save to</param>
         public void SaveToConfig(ConfigNode node)
         {
+            if (node == null)
+            {
+                return;
+            }
+
             node.AddValue("intValue", WriteUtils.Write(this.intValue, WriteOptions.Defaults));
             node.AddValue("floatValue", WriteUtils.Write(this.floatValue, WriteOptions.Defaults));
             node.AddValue("stringValue", this.stringValue);
             node.AddValue("modifier", WriteUtils.Write(this.modifier, WriteOptions.Defaults));
             node.AddValue("intArray", WriteUtils.Write(this.intArray, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, WriteOptions.Defaults));
-            ((IConfigNode)this.floatCurve).Save(node.AddNode("floatCurve"));
-            node.AddNode("configNode", this.configNode);
+            this.floatCurve?.Save(node.AddNode("floatCurve"));
+            ((IConfigNode)this.explicitImplementation).Save(node.AddNode("explicitImplementation"));
+            if (this.configNode != null)
+            {
+                node.AddNode("configNode", this.configNode);
+            }
         }
 
 #region IConfigNode Implementation

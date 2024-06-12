@@ -1,8 +1,20 @@
-using ConfigLoader.Attributes;
+﻿using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace ConfigLoaderTest;
+
+public struct ConfigTest : IConfigNode
+{
+    #region Implementation of IConfigNode
+    /// <inheritdoc />
+    void IConfigNode.Load(ConfigNode node) { }
+
+    /// <inheritdoc />
+    void IConfigNode.Save(ConfigNode node) { }
+    #endregion
+}
 
 [ConfigObject(LoadMethodAccess = AccessModifier.Public, SaveMethodAccess = AccessModifier.Public)]
 public partial class TestConfig
@@ -19,6 +31,8 @@ public partial class TestConfig
     [ConfigField]
     public FloatCurve floatCurve;
     [ConfigField]
+    public ConfigTest explicitImplementation;
+    [ConfigField]
     public ConfigNode configNode;
     [ConfigField]
     public int[] intArray;
@@ -26,7 +40,7 @@ public partial class TestConfig
     [ConfigField(Name = "OtherName")]
     public Vector3 VectorProperty { get; set; }
 
-    public void Test(ConfigNode node)
+    public void Test([CanBeNull] ConfigNode node)
     {
     }
 }

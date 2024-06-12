@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -15,7 +16,7 @@ namespace ConfigLoaderGenerator.Extensions;
 /// ReSharper disable UnusedMember.Global
 public static class SyntaxBinaryExpressionExtensions
 {
-    #region Binary expressions extensions
+    #region Relation expressions
     /// <summary>
     /// Less than expression
     /// </summary>
@@ -63,7 +64,9 @@ public static class SyntaxBinaryExpressionExtensions
     {
         return BinaryExpression(SyntaxKind.GreaterThanOrEqualExpression, left, right);
     }
+    #endregion
 
+    #region Equality expressions
     /// <summary>
     /// Equals expression
     /// </summary>
@@ -74,6 +77,17 @@ public static class SyntaxBinaryExpressionExtensions
     public static BinaryExpressionSyntax IsEqual<T>(this T left, ExpressionSyntax right) where T : ExpressionSyntax
     {
         return BinaryExpression(SyntaxKind.EqualsExpression, left, right);
+    }
+
+    /// <summary>
+    /// Equals to <see langword="null"/> expression
+    /// </summary>
+    /// <typeparam name="T">Expression type</typeparam>
+    /// <param name="left">Left operator</param>
+    /// <returns>A <see cref="BinaryExpressionSyntax"/> under the form <c><paramref name="left"/> == <see langword="null"/></c></returns>
+    public static BinaryExpressionSyntax IsNull<T>(this T left) where T : ExpressionSyntax
+    {
+        return BinaryExpression(SyntaxKind.EqualsExpression, left, Null());
     }
 
     /// <summary>
@@ -88,6 +102,31 @@ public static class SyntaxBinaryExpressionExtensions
         return BinaryExpression(SyntaxKind.NotEqualsExpression, left, right);
     }
 
+    /// <summary>
+    /// Not equals to <see langword="null"/> expression
+    /// </summary>
+    /// <typeparam name="T">Expression type</typeparam>
+    /// <param name="left">Left operator</param>
+    /// <returns>A <see cref="BinaryExpressionSyntax"/> under the form <c><paramref name="left"/> != <see langword="null"/></c></returns>
+    public static BinaryExpressionSyntax IsNotNull<T>(this T left) where T : ExpressionSyntax
+    {
+        return BinaryExpression(SyntaxKind.NotEqualsExpression, left, Null());
+    }
+
+    /// <summary>
+    /// Coalesce expression
+    /// </summary>
+    /// <typeparam name="T">Expression type</typeparam>
+    /// <param name="left">Left operator</param>
+    /// <param name="right">Right operator</param>
+    /// <returns>A <see cref="BinaryExpressionSyntax"/> under the form <c><paramref name="left"/> ?? <paramref name="right"/></c></returns>
+    public static BinaryExpressionSyntax Coalesce<T>(this T left, ExpressionSyntax right) where T : ExpressionSyntax
+    {
+        return BinaryExpression(SyntaxKind.CoalesceExpression, left, right);
+    }
+    #endregion
+
+    #region Logical expressions
     /// <summary>
     /// And expression
     /// </summary>
@@ -111,7 +150,9 @@ public static class SyntaxBinaryExpressionExtensions
     {
         return BinaryExpression(SyntaxKind.LogicalOrExpression, left, right);
     }
+    #endregion
 
+    #region Mathematical expressions
     /// <summary>
     /// Add expression
     /// </summary>
@@ -170,6 +211,32 @@ public static class SyntaxBinaryExpressionExtensions
     public static BinaryExpressionSyntax Modulo<T>(this T left, ExpressionSyntax right) where T : ExpressionSyntax
     {
         return BinaryExpression(SyntaxKind.ModuloExpression, left, right);
+    }
+    #endregion
+
+    #region Cast expressions
+    /// <summary>
+    /// Is expression
+    /// </summary>
+    /// <typeparam name="T">Expression type</typeparam>
+    /// <param name="left">Left operator</param>
+    /// <param name="right">Right operator</param>
+    /// <returns>A <see cref="BinaryExpressionSyntax"/> under the form <c><paramref name="left"/> is <paramref name="right"/></c></returns>
+    public static BinaryExpressionSyntax Is<T>(this T left, ExpressionSyntax right) where T : ExpressionSyntax
+    {
+        return BinaryExpression(SyntaxKind.IsExpression, left, right);
+    }
+
+    /// <summary>
+    /// As expression
+    /// </summary>
+    /// <typeparam name="T">Expression type</typeparam>
+    /// <param name="left">Left operator</param>
+    /// <param name="right">Right operator</param>
+    /// <returns>A <see cref="BinaryExpressionSyntax"/> under the form <c><paramref name="left"/> as <paramref name="right"/></c></returns>
+    public static BinaryExpressionSyntax As<T>(this T left, ExpressionSyntax right) where T : ExpressionSyntax
+    {
+        return BinaryExpression(SyntaxKind.AsExpression, left, right);
     }
     #endregion
 }
