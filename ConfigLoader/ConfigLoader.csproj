@@ -52,6 +52,7 @@
     <Compile Include="Properties\IsExternalInit.cs" />
     <Compile Include="Utils\ParseUtilsSimpleTypes.cs" />
     <Compile Include="Utils\WriteOptions.cs" />
+    <Compile Include="Utils\WriteUtilsCollections.cs" />
     <Compile Include="Utils\WriteUtilsSimpleTypes.cs" />
     <Compile Include="Utils\WriteUtilsComplexTypes.cs" />
   </ItemGroup>

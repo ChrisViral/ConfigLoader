@@ -64,7 +64,7 @@ public static class SaveBuilder
             return GenerateAddValueSave(body, name, value, field, context);
         }
 
-        if (field.Type.IsBuiltin|| field.Type.IsEnum || SupportedTypes.Contains(field.Type.FullName))
+        if (field.Type.IsBuiltin|| field.Type.IsEnum || field.Type.IsArray || SupportedTypes.Contains(field.Type.FullName))
         {
             return GenerateWriteValueSave(body, name, value, field, context);
         }
@@ -77,11 +77,6 @@ public static class SaveBuilder
         if (field.Type.IsNodeObject)
         {
             return GenerateAddNodeSave(body, name, value, field, context);
-        }
-
-        if (field.Type.IsArray)
-        {
-            return body;
         }
 
         throw new InvalidOperationException($"Unknown type to save {field.Type.FullName}");
@@ -120,8 +115,12 @@ public static class SaveBuilder
 
         // WriteOptions.Defaults
         ArgumentSyntax options = WriteOptions.Access(Defaults).AsArgument();
+        // WriteUtils.Write
+        ExpressionSyntax write = WriteUtils.Access(Write);
         // WriteUtils.Write(value, WriteOptions.Defaults)
-        ExpressionSyntax writeInvocation = WriteUtils.Access(Write).Invoke(value.AsArgument(), options);
+        ExpressionSyntax writeInvocation = field.Type.IsArray
+                                               ? WriteUtils.Access(Write).Invoke(value.AsArgument(), write.AsArgument(), options)
+                                               : WriteUtils.Access(Write).Invoke(value.AsArgument(), options);
 
         // node.AddValue("value", WriteUtils.Write(value, WriteOptions.Defaults));
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
