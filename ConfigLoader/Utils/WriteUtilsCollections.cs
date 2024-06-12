@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using JetBrains.Annotations;
 
@@ -19,13 +20,6 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public delegate string WriteFunc<in T>(T? value, in WriteOptions options);
 
-    #region Defaults
-    /// <summary>
-    /// Collection item buffer
-    /// </summary>
-    private const int COLLECTION_BUFFER = 20;
-    #endregion
-
     #region Utility
     /// <summary>
     /// Checks if a given collection is null or empty
@@ -37,7 +31,7 @@ public static partial class WriteUtils
     private static bool IsNullOrEmptyCollection<T>(ICollection<T>? collection) => collection is not { Count: > 0 };
     #endregion
 
-    #region Lists
+    #region Collections
     /// <summary>
     /// Writes a <see cref="IList{T}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
     /// </summary>
@@ -52,16 +46,104 @@ public static partial class WriteUtils
 
         // Get StringBuilder and separator
         string separator = options.Separator ?? DEFAULT_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_BUFFER + separator.Length) * value!.Count);
+        StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * value!.Count);
 
         // Append values
-        builder.Append(value[0]);
+        builder.Append(write(value[0], options));
         for (int i = 1; i < value.Count; i++)
         {
-            builder.Append(separator).Append(value[i]);
+            builder.Append(separator).Append(write(value[i], options));
         }
 
         // Write and release
+        return builder.ToStringAndRelease();
+    }
+
+    /// <summary>
+    /// Writes a <see cref="ICollection{T}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
+    /// </summary>
+    /// <param name="value">The value to write</param>
+    /// <param name="write">Write function delegate</param>
+    /// <param name="options">Write options</param>
+    /// <returns>The written value as a <see cref="string"/></returns>
+    public static string Write<T>(ICollection<T>? value, WriteFunc<T> write, in WriteOptions options)
+    {
+        // Check if the collection is null or empty
+        if (IsNullOrEmptyCollection(value)) return string.Empty;
+
+        // Get StringBuilder and separator
+        string separator = options.Separator ?? DEFAULT_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * value!.Count);
+
+        // Get values enumerator
+        using IEnumerator<T> enumerator = value.GetEnumerator();
+        enumerator.MoveNext(); // We've already validated the collection is not empty
+
+        // Append first element as is
+        builder.Append(write(enumerator.Current, options));
+        // Append further elements with separator
+        while (enumerator.MoveNext())
+        {
+            builder.Append(separator).Append(write(enumerator.Current, options));
+        }
+
+        // Write and release
+        return builder.ToStringAndRelease();
+    }
+
+    /// <summary>
+    /// Writes a <see cref="IEnumerable{T}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
+    /// </summary>
+    /// <param name="value">The value to write</param>
+    /// <param name="write">Write function delegate</param>
+    /// <param name="options">Write options</param>
+    /// <returns>The written value as a <see cref="string"/></returns>
+    public static string Write<T>(IEnumerable<T>? value, WriteFunc<T> write, in WriteOptions options)
+    {
+        // Make sure the enumerable is not null
+        if (value is null) return string.Empty;
+
+        string separator;
+        StringBuilder builder;
+        IEnumerator<T> enumerator;
+
+        // Check if it's a collection
+        if (value is ICollection collection)
+        {
+            // If it is, make sure it's not empty
+            if (collection.Count is 0) return string.Empty;
+
+            // Create StringBuilder and enumerator
+            separator  = options.Separator ?? DEFAULT_SEPARATOR;
+            builder    = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * collection.Count);
+            enumerator = value.GetEnumerator();
+        }
+        else
+        {
+            // Create enumerator and check if empty
+            enumerator = value.GetEnumerator();
+            if (!enumerator.MoveNext())
+            {
+                enumerator.Dispose();
+                return string.Empty;
+            }
+
+            // Create StringBuilder
+            separator = options.Separator ?? DEFAULT_SEPARATOR;
+            builder   = StringBuilderCache.Acquire();
+        }
+
+
+        // Append first element as is
+        builder.Append(write(enumerator.Current, options));
+        // Append further elements with separator
+        while (enumerator.MoveNext())
+        {
+            builder.Append(separator).Append(write(enumerator.Current, options));
+        }
+
+        // Write and release
+        enumerator.Dispose();
         return builder.ToStringAndRelease();
     }
     #endregion

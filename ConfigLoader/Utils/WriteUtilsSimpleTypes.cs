@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -170,6 +170,17 @@ public static partial class WriteUtils
     public static string Write(char value, in WriteOptions options)
     {
         return value.ToString(CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// Writes a <see cref="string"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
+    /// </summary>
+    /// <param name="value">The value to write</param>
+    /// <param name="options">Write options</param>
+    /// <returns>The written value as a <see cref="string"/></returns>
+    public static string Write(string? value, in WriteOptions options)
+    {
+        return value ?? string.Empty;
     }
 
     /// <summary>

@@ -75,7 +75,7 @@ public static partial class ParseUtils
     }
 
     /// <summary>
-    /// Tries to parse the given <paramref name="value"/> as a <see cref="int"/>
+    /// Tries to parse the given <paramref name="value"/> as an <see cref="int"/>
     /// </summary>
     /// <param name="value">String value to parse</param>
     /// <param name="result">Parse result output parameter</param>
@@ -184,6 +184,44 @@ public static partial class ParseUtils
     public static bool TryParse(string? value, out char result, in ParseOptions options)
     {
         return char.TryParse(value, out result);
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as a <see cref="string"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out string result, in ParseOptions options)
+    {
+        if (value is not null)
+        {
+            result = value;
+            return true;
+        }
+
+        result = string.Empty;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to parse the given <paramref name="value"/> as an <see cref="object"/>
+    /// </summary>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse(string? value, out object result, in ParseOptions options)
+    {
+        if (value is not null)
+        {
+            result = value;
+            return true;
+        }
+
+        result = string.Empty;
+        return false;
     }
 
     /// <summary>

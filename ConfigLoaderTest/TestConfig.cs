@@ -1,6 +1,6 @@
-﻿using ConfigLoader.Attributes;
+﻿using System.Collections.Generic;
+using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
-using JetBrains.Annotations;
 using UnityEngine;
 
 namespace ConfigLoaderTest;
@@ -36,11 +36,18 @@ public partial class TestConfig
     public ConfigNode configNode;
     [ConfigField]
     public int[] intArray;
+    [ConfigField]
+    public List<int> intList;
+    [ConfigField]
+    public HashSet<string> stringHashSet;
+    [ConfigField]
+    public LinkedList<long> longLinkedList;
 
     [ConfigField(Name = "OtherName")]
     public Vector3 VectorProperty { get; set; }
 
-    public void Test([CanBeNull] ConfigNode node)
+    public void Test(ConfigNode node)
     {
+        node.AddValue("intList", WriteUtils.Write(this.intList, WriteUtils.Write, WriteOptions.Defaults));
     }
 }

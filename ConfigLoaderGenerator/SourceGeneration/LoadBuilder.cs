@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -23,26 +24,38 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 public static class LoadBuilder
 {
     /// <summary>
+    /// TryParse invocation generator delegate
+    /// </summary>
+    /// <param name="tryParse">TryParse member access</param>
+    /// <param name="value">Value to parse</param>
+    /// <param name="outVar">Output variable</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to parse into</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>TryParse</c> invocation</returns>
+    public delegate InvocationExpressionSyntax TryParseInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                  ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context);
+
+    /// <summary>
     /// ConfigLoader parse utils namespace
     /// </summary>
     private static readonly string UtilsNamespace = typeof(ParseUtils).Namespace!;
     /// <summary>
     /// TryParse method identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax TryParse = nameof(ConfigLoader.Utils.ParseUtils.TryParse).AsIdentifier();
+    private static readonly IdentifierNameSyntax TryParse = nameof(ConfigLoader.Utils.ParseUtils.TryParse).AsName();
     /// <summary>
     /// ParseUtils class identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax ParseUtils = nameof(ConfigLoader.Utils.ParseUtils).AsIdentifier();
+    private static readonly IdentifierNameSyntax ParseUtils = nameof(ConfigLoader.Utils.ParseUtils).AsName();
     /// <summary>
     /// ParseOptions struct identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax ParseOptions = nameof(ConfigLoader.Utils.ParseOptions).AsIdentifier();
+    private static readonly IdentifierNameSyntax ParseOptions = nameof(ConfigLoader.Utils.ParseOptions).AsName();
     /// <summary>
     /// ParseOptions defaults identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.ParseOptions.Defaults).AsIdentifier();
-
+    private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.ParseOptions.Defaults).AsName();
     /// <summary>
     /// Types that can be directly assigned to the field
     /// </summary>
@@ -63,15 +76,25 @@ public static class LoadBuilder
     /// <exception cref="InvalidOperationException">If the generator does not know how to load the given field type</exception>
     public static BlockSyntax GenerateValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
-        // Find best save option
+        // Find best load option
         if (AssignableTypes.Contains(field.Type.FullName))
         {
             return GenerateAssignValueLoad(value, field, context);
         }
 
-        if (field.Type.IsBuiltin || field.Type.IsEnum || field.Type.IsArray || SupportedTypes.Contains(field.Type.FullName))
+        if (field.Type.IsBuiltin || field.Type.IsEnum || SupportedTypes.Contains(field.Type.FullName))
         {
-            return GenerateTryParseValueLoad(value, field, context);
+            return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context);
+        }
+
+        if (field.Type.IsArray)
+        {
+            return GenerateTryParseValueLoad(value, GenerateTryParseArrayInvocation, field, context);
+        }
+
+        if (field.Type.IsCollection)
+        {
+            return GenerateTryParseValueLoad(value, GenerateTryParseCollectionInvocation, field, context);
         }
 
         // Unknown type
@@ -108,11 +131,11 @@ public static class LoadBuilder
     /// Generate the value load code implementation using <c>TryParse</c>
     /// </summary>
     /// <param name="value">Value expression</param>
-    /// <param name="parent">TryParse parent type</param>
+    /// <param name="createTryParse">Delegate which creates the generated TryParse invocation</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateTryParseValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateTryParseValueLoad(ExpressionSyntax value, TryParseInvocation createTryParse, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -127,11 +150,10 @@ public static class LoadBuilder
         // ParseOptions.Defaults
         ArgumentSyntax options = ParseOptions.Access(Defaults).AsArgument();
 
-        // ParseUtils.TryParse(value.value, out Type _value, options)
-        ExpressionSyntax tryParse = ParseUtils.Access(TryParse);
-        ExpressionSyntax tryParseInvocation = field.Type.IsArray
-                                                  ? tryParse.Invoke(value.AsArgument(), outVar, tryParse.AsArgument(), options)
-                                                  : tryParse.Invoke(value.AsArgument(), outVar, options);
+        // ParseUtils.TryParse
+        MemberAccessExpressionSyntax tryParse = ParseUtils.Access(TryParse);
+        // Full TryParse invocation
+        ExpressionSyntax tryParseInvocation = createTryParse(tryParse, value, outVar, options, field, context);
 
         // this.value = _value;
         ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(tempVar);
@@ -148,6 +170,68 @@ public static class LoadBuilder
         }
 
         return Block().AddStatements(ifStatement);
+    }
+
+    /// <summary>
+    /// Creates a TryParse invocation for simple values
+    /// </summary>
+    /// <param name="tryParse">TryParse member access</param>
+    /// <param name="value">Value to parse</param>
+    /// <param name="outVar">Output variable</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to parse into</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>TryParse</c> invocation</returns>
+    private static InvocationExpressionSyntax GenerateTryParseValueInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                              ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // ParseUtils.TryParse(value.value, out T result, options);
+        return tryParse.Invoke(value.AsArgument(), outVar, options);
+    }
+
+    /// <summary>
+    /// Creates a TryParse invocation for arrays
+    /// </summary>
+    /// <param name="tryParse">TryParse member access</param>
+    /// <param name="value">Value to parse</param>
+    /// <param name="outVar">Output variable</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to parse into</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>TryParse</c> invocation</returns>
+    private static InvocationExpressionSyntax GenerateTryParseArrayInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                              ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // ParseUtils.TryParse(value.value, out T[] result, ParseUtils.TryParse, options);
+        return tryParse.Invoke(value.AsArgument(), outVar, tryParse.AsArgument(), options);
+    }
+
+    /// <summary>
+    /// Creates a TryParse invocation for <see cref="ICollection{T}"/> implementations
+    /// </summary>
+    /// <param name="tryParse">TryParse member access</param>
+    /// <param name="value">Value to parse</param>
+    /// <param name="outVar">Output variable</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to parse into</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>TryParse</c> invocation</returns>
+    private static InvocationExpressionSyntax GenerateTryParseCollectionInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                                   ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // Get collection element type
+        field.Type.Symbol.TryGetInterface(typeof(ICollection<>), out INamedTypeSymbol? collectionInterface);
+        ITypeSymbol collectionElement = collectionInterface!.TypeArguments[0];
+
+        // ParseUtils.TryParse<TCollection, TElement>
+        GenericNameSyntax tryParseGenericName = TryParse.AsGenericName(field.Type.Identifier, collectionElement.DisplayName().AsName());
+        ExpressionSyntax tryParseGeneric = tryParse.WithName(tryParseGenericName);
+
+        // Add element namespace
+        context.UsedNamespaces.AddNamespace(collectionElement.ContainingNamespace);
+
+        // ParseUtils.TryParse<TCollection, TElement>(value.value, out TCollection result, ParseUtils.TryParse, options);
+        return tryParseGeneric.Invoke(value.AsArgument(), outVar, tryParse.AsArgument(), options);
     }
     #endregion
 

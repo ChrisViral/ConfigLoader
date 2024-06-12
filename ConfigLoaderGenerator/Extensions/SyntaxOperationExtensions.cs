@@ -43,7 +43,7 @@ public static class SyntaxOperationExtensions
     /// <param name="element">Element to access</param>
     /// <param name="name">Name of the value to access on the element</param>
     /// <returns>An access expression under the form <c><paramref name="element"/>.<paramref name="name"></paramref></c></returns>
-    public static MemberAccessExpressionSyntax Access<T>(this T element, IdentifierNameSyntax name) where T : ExpressionSyntax
+    public static MemberAccessExpressionSyntax Access<T>(this T element, SimpleNameSyntax name) where T : ExpressionSyntax
     {
         return MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, element, name);
     }

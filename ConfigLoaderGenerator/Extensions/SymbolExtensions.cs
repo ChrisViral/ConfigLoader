@@ -22,7 +22,7 @@ internal static class SymbolExtensions
                                                                                     .WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted)
                                                                                     .RemoveMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
 
-    #region Attribute extensions
+    #region Extensions
     /// <summary>
     /// Tries to get the first attribute of type <typeparamref name="T"/> attached to the <paramref name="symbol"/>
     /// </summary>
@@ -72,12 +72,92 @@ internal static class SymbolExtensions
     public static bool IsBuiltin(this ITypeSymbol type) => BuiltinTypes.Contains(type.FullName());
 
     /// <summary>
+    /// Checks if a given type implements <typeparamref name="T"/>
+    /// </summary>
+    /// <typeparam name="T">Interface type</typeparam>
+    /// <param name="typeSymbol">Type to check</param>
+    /// <returns><see langword="true"/> if <paramref name="typeSymbol"/> implements the interface <typeparamref name="T"/>, otherwise <see langword="false"/></returns>
+    public static bool Implements<T>(this ITypeSymbol typeSymbol) => Implements(typeSymbol, typeof(T));
+
+    /// <summary>
+    /// Checks if a given type implements <paramref name="interfaceType"/>
+    /// </summary>
+    /// <param name="typeSymbol">Type to check</param>
+    /// <param name="interfaceType">Type to check</param>
+    /// <returns><see langword="true"/> if <paramref name="typeSymbol"/> implements the interface <paramref name="interfaceType"/>, otherwise <see langword="false"/></returns>
+    public static bool Implements(this ITypeSymbol typeSymbol, Type interfaceType)
+    {
+        // If not an interface, cannot be implemented
+        if (!interfaceType.IsInterface) return false;
+
+        // Get display name
+        string interfaceName = interfaceType.GetDisplayName();
+        // If an unbound generic type, validate against unbound symbols only
+        return interfaceType.IsGenericTypeDefinition
+                   ? typeSymbol.AllInterfaces.Where(i => i.IsGenericType).Any(i => i.ConstructUnboundGenericType().FullName() == interfaceName)
+                   : typeSymbol.AllInterfaces.Any(i => i.FullName() == interfaceName);
+    }
+
+    /// <summary>
     /// Checks if a given type implements a specified interface
     /// </summary>
-    /// <param name="type">Type to check</param>
+    /// <param name="typeSymbol">Type to check</param>
     /// <param name="interfaceName">Full name of the interface to find</param>
-    /// <returns><see langword="true"/> if <paramref name="type"/> implements an interface matching <paramref name="interfaceName"/>, otherwise <see langword="false"/></returns>
-    public static bool Implements(this ITypeSymbol type, string interfaceName) => type.AllInterfaces.Any(i => i.FullName() == interfaceName);
+    /// <returns><see langword="true"/> if <paramref name="typeSymbol"/> implements an interface matching <paramref name="interfaceName"/>, otherwise <see langword="false"/></returns>
+    public static bool Implements(this ITypeSymbol typeSymbol, string interfaceName)
+    {
+        return typeSymbol.AllInterfaces.Any(i => i.FullName() == interfaceName);
+    }
+
+    public static bool TryGetInterface<T>(this ITypeSymbol typeSymbol, out INamedTypeSymbol? foundInterface)
+    {
+        return TryGetInterface(typeSymbol, typeof(T), out foundInterface);
+    }
+
+    /// <summary>
+    /// Tries to find a specific interface in the symbol, and return it
+    /// </summary>
+    /// <param name="typeSymbol">Type to find the interface on</param>
+    /// <param name="interfaceType">Interface type to find</param>
+    /// <param name="foundInterface">The found interface, if any</param>
+    /// <returns><see langword="true"/> if the interface was found, otherwise <see langword="false"/></returns>
+    public static bool TryGetInterface(this ITypeSymbol typeSymbol, Type interfaceType, out INamedTypeSymbol? foundInterface)
+    {
+        // If not an interface, cannot be found
+        if (!interfaceType.IsInterface)
+        {
+            foundInterface = default;
+            return false;
+        }
+
+        // Get display name
+        string interfaceName = interfaceType.GetDisplayName();
+        if (interfaceType.IsGenericTypeDefinition)
+        {
+            // If an unbound generic type, validate against unbound symbols only
+            foreach (INamedTypeSymbol interfaceSymbol in typeSymbol.AllInterfaces.Where(i => i.IsGenericType))
+            {
+                if (interfaceSymbol.ConstructUnboundGenericType().FullName() != interfaceName) continue;
+
+                foundInterface = interfaceSymbol;
+                return true;
+            }
+        }
+        else
+        {
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (INamedTypeSymbol interfaceSymbol in typeSymbol.AllInterfaces)
+            {
+                if (interfaceSymbol.FullName() != interfaceName) continue;
+
+                foundInterface = interfaceSymbol;
+                return true;
+            }
+        }
+
+        foundInterface = default;
+        return false;
+    }
 
     /// <summary>
     /// Checks if a given type implements an interface method explicitly

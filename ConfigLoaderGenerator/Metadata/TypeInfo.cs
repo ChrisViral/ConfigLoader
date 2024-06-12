@@ -1,6 +1,11 @@
-﻿using ConfigLoaderGenerator.Extensions;
+﻿using System.Collections.Generic;
+using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
+
+/* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
+ * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
+\* and explicitly credited, that you do not use this material to a commercial use, and that you distribute it under the same license.     */
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
@@ -52,7 +57,7 @@ public readonly struct TypeInfo
     /// <summary>
     /// If this is a builtin type
     /// </summary>
-    public bool IsBuiltin => BuiltinTypes.Contains(this.FullName);
+    public bool IsBuiltin => this.Symbol.IsBuiltin();
     /// <summary>
     /// If this is an enum type
     /// </summary>
@@ -64,7 +69,7 @@ public readonly struct TypeInfo
     /// <summary>
     /// If this type is generic
     /// </summary>
-    public bool IsGeneric => this.NamedSymbol is { IsGenericType: true };
+    public bool IsCollection => this.Symbol.Implements(typeof(ICollection<>));
 
     /// <summary>
     /// Creates a new TypeInfo based on a given type symbol

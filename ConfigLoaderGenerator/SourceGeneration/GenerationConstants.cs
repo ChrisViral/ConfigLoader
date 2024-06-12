@@ -136,7 +136,7 @@ public static class GenerationConstants
     /// <summary>
     /// IsNullOrEmpty method identifier
     /// </summary>
-    public static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsIdentifier();
+    public static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsName();
     #endregion
 
     #region Variables
