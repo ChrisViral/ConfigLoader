@@ -14,10 +14,10 @@ namespace ConfigLoader.Utils;
 /// <param name="EnumHandling">Enum values handling, defaults to <see cref="EnumHandling.String"/></param>
 /// <param name="Separator">String splitting separator, if left empty, the default separator, a comma, will be used</param>
 /// <param name="CollectionSeparator">String splitting separator for collections, if left empty, the default collection separator, a comma, will be used</param>
-/// <param name="DictionarySeparator">String splitting separator for dictionaries, if left empty, the default dictionary separator, a pipe character, will be used</param>
+/// <param name="DictionarySeparator">String splitting separator for dictionaries, if left empty, the default dictionary separator, a colon, will be used</param>
 [PublicAPI]
-public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ExtendedSplitOptions.TrimAndRemoveEmptyEntries,
-                                           EnumHandling EnumHandling = EnumHandling.String,
+public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ConfigFieldAttribute.DefaultSplitOptions,
+                                           EnumHandling EnumHandling = ConfigFieldAttribute.DefaultEnumHandling,
                                            char Separator = default,
                                            char CollectionSeparator = default,
                                            char DictionarySeparator = default)

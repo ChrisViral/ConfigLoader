@@ -41,7 +41,7 @@ public static partial class ParseUtils
     private static string[] SplitCollectionInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[] separators = !options.Separator.IsNull() ? MakeBuffer(options.CollectionSeparator) : DefaultCollectionSeparators;
+        char[] separators = !options.CollectionSeparator.IsNull() ? MakeBuffer(options.CollectionSeparator) : DefaultCollectionSeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);
@@ -56,7 +56,7 @@ public static partial class ParseUtils
     private static string[] SplitDictionaryInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[] separators = !options.Separator.IsNull() ? MakeBuffer(options.DictionarySeparator) : DefaultDictionarySeparators;
+        char[] separators = !options.DictionarySeparator.IsNull() ? MakeBuffer(options.DictionarySeparator) : DefaultDictionarySeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);
@@ -403,7 +403,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitDictionaryInternal(value!, options);
         if (splits.Length is 2
          && keyTryParse(splits[0], out TKey? key, options)
          && valueTryParse(splits[1], out TValue? val, options))
@@ -438,7 +438,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = [];
         if (result.IsReadOnly)
         {
@@ -481,7 +481,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new Dictionary<TKey, TValue>(splits.Length);
         return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
     }
@@ -506,7 +506,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = [];
         return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
     }
@@ -531,7 +531,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new SortedList<TKey, TValue>(splits.Length);
         return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
     }
@@ -556,7 +556,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         Dictionary<TKey, TValue> dict = new(splits.Length);
         if (TryParseDictionaryInternal(splits, ref dict, keyTryParse, valueTryParse, in options))
         {

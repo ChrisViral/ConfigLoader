@@ -52,7 +52,11 @@ public sealed class ConfigFieldAttribute : Attribute
     /// <summary>
     /// Enum handling default value
     /// </summary>
-    public const EnumHandling DefaultEnumHandling = ConfigLoader.Attributes.EnumHandling.String;
+    public const EnumHandling DefaultEnumHandling = EnumHandling.String;
+    /// <summary>
+    /// Parse value split options default value
+    /// </summary>
+    public const ExtendedSplitOptions DefaultSplitOptions = ExtendedSplitOptions.TrimAndRemoveEmptyEntries;
     #endregion
 
     #region Properties
@@ -67,12 +71,32 @@ public sealed class ConfigFieldAttribute : Attribute
     /// </summary>
     public bool IsRequired { get; init; } = DefaultIsRequired;
     /// <summary>
-    /// Name value of the node to use to load this field
-    /// </summary>
-    public string? NodeNameValue { get; init; }
-    /// <summary>
     /// Enum serialization method
     /// </summary>
     public EnumHandling EnumHandling { get; init; } = DefaultEnumHandling;
+    /// <summary>
+    /// Write format string
+    /// </summary>
+    public string? Format { get; init; }
+    /// <summary>
+    /// Parse value split options
+    /// </summary>
+    public ExtendedSplitOptions SplitOptions { get; init; } = DefaultSplitOptions;
+    /// <summary>
+    /// Character that separates values within complex values (Vectors, etc.)
+    /// </summary>
+    public char Separator { get; init; }
+    /// <summary>
+    /// Character that separates values within collections (arrays, etc.)
+    /// </summary>
+    public char CollectionSeparator { get; init; }
+    /// <summary>
+    /// character that separates key/value pairs in dictionaries
+    /// </summary>
+    public char DictionarySeparator { get; init; }
+    /// <summary>
+    /// Name value of the node to use to load this field
+    /// </summary>
+    public string? NodeNameValue { get; init; }
     #endregion
 }

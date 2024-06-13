@@ -29,7 +29,7 @@ public static partial class WriteUtils
     /// <summary>
     /// Default dictionary separator
     /// </summary>
-    internal const char DEFAULT_DICT_SEPARATOR = '|';
+    internal const char DEFAULT_DICT_SEPARATOR = ':';
     /// <summary>
     /// Default dictionary separator
     /// </summary>
@@ -181,7 +181,7 @@ public static partial class WriteUtils
     public static string Write<TKey, TValue>(KeyValuePair<TKey, TValue> value, WriteFunc<TKey> writeKey, WriteFunc<TValue> writeValue, in WriteOptions options)
     {
         // Get StringBuilder and separator
-        char separator = !options.CollectionSeparator.IsNull() ? options.CollectionSeparator : DEFAULT_COLLECTION_SEPARATOR;
+        char separator = !options.DictionarySeparator.IsNull() ? options.DictionarySeparator : DEFAULT_DICT_SEPARATOR;
         StringBuilder builder = StringBuilderCache.Acquire(COLLECTION_ALLOCATION * 2);
         builder.Append(writeKey(value.Key, options)).Append(separator);
         builder.Append(writeValue(value.Value, options));
@@ -206,7 +206,7 @@ public static partial class WriteUtils
         if (IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
-        char separator = !options.CollectionSeparator.IsNull() ? options.CollectionSeparator : DEFAULT_DICT_SEPARATOR;
+        char separator = !options.CollectionSeparator.IsNull() ? options.CollectionSeparator : DEFAULT_COLLECTION_SEPARATOR;
         StringBuilder builder = StringBuilderCache.Acquire(COLLECTION_ALLOCATION * value!.Count);
 
         // Get values enumerator
