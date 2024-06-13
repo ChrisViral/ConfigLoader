@@ -16,7 +16,8 @@ namespace ConfigLoader.Utils;
 [PublicAPI]
 public readonly record struct WriteOptions(string? Format = null,
                                            EnumHandling EnumHandling = EnumHandling.String,
-                                           string? Separator = null)
+                                           string? Separator = null,
+                                           string? CollectionSeparator = null)
 {
     /// <summary>
     /// Default write options

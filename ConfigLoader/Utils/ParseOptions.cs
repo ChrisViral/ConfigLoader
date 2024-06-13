@@ -16,6 +16,7 @@ namespace ConfigLoader.Utils;
 [PublicAPI]
 public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ExtendedSplitOptions.TrimAndRemoveEmptyEntries,
                                            char[]? Separators = null,
+                                           char[]? CollectionSeparators = null,
                                            EnumHandling EnumHandling = EnumHandling.String)
 {
     /// <summary>

@@ -20,6 +20,13 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public delegate string WriteFunc<in T>(T? value, in WriteOptions options);
 
+    #region Defaults
+    /// <summary>
+    /// Default dictionary separator
+    /// </summary>
+    private const string DEFAULT_DICT_SEPARATOR = "|";
+    #endregion
+
     #region Utility
     /// <summary>
     /// Checks if a given collection is null or empty
@@ -35,6 +42,7 @@ public static partial class WriteUtils
     /// <summary>
     /// Writes a <see cref="IList{T}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
     /// </summary>
+    /// <typeparam name="T">Element type</typeparam>
     /// <param name="value">The value to write</param>
     /// <param name="write">Write function delegate</param>
     /// <param name="options">Write options</param>
@@ -45,7 +53,7 @@ public static partial class WriteUtils
         if (IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
-        string separator = options.Separator ?? DEFAULT_SEPARATOR;
+        string separator = options.CollectionSeparator ?? DEFAULT_SEPARATOR;
         StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * value!.Count);
 
         // Append values
@@ -62,6 +70,7 @@ public static partial class WriteUtils
     /// <summary>
     /// Writes a <see cref="ICollection{T}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
     /// </summary>
+    /// <typeparam name="T">Element type</typeparam>
     /// <param name="value">The value to write</param>
     /// <param name="write">Write function delegate</param>
     /// <param name="options">Write options</param>
@@ -72,7 +81,7 @@ public static partial class WriteUtils
         if (IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
-        string separator = options.Separator ?? DEFAULT_SEPARATOR;
+        string separator = options.CollectionSeparator ?? DEFAULT_SEPARATOR;
         StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * value!.Count);
 
         // Get values enumerator
@@ -94,6 +103,7 @@ public static partial class WriteUtils
     /// <summary>
     /// Writes a <see cref="IEnumerable{T}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
     /// </summary>
+    /// <typeparam name="T">Element type</typeparam>
     /// <param name="value">The value to write</param>
     /// <param name="write">Write function delegate</param>
     /// <param name="options">Write options</param>
@@ -114,7 +124,7 @@ public static partial class WriteUtils
             if (collection.Count is 0) return string.Empty;
 
             // Create StringBuilder and enumerator
-            separator  = options.Separator ?? DEFAULT_SEPARATOR;
+            separator  = options.CollectionSeparator ?? DEFAULT_SEPARATOR;
             builder    = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * collection.Count);
             enumerator = value.GetEnumerator();
         }
@@ -129,7 +139,7 @@ public static partial class WriteUtils
             }
 
             // Create StringBuilder
-            separator = options.Separator ?? DEFAULT_SEPARATOR;
+            separator = options.CollectionSeparator ?? DEFAULT_SEPARATOR;
             builder   = StringBuilderCache.Acquire();
         }
 
@@ -144,6 +154,65 @@ public static partial class WriteUtils
 
         // Write and release
         enumerator.Dispose();
+        return builder.ToStringAndRelease();
+    }
+    #endregion
+
+    #region Dictionaries
+    /// <summary>
+    /// Writes a <see cref="KeyValuePair{TKey,TValue}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="value">The value to write</param>
+    /// <param name="writeKey">Key write function delegate</param>
+    /// <param name="writeValue">Value write function delegate</param>
+    /// <param name="options">Write options</param>
+    /// <returns>The written value as a <see cref="string"/></returns>
+    public static string Write<TKey, TValue>(KeyValuePair<TKey, TValue> value, WriteFunc<TKey> writeKey, WriteFunc<TValue> writeValue, in WriteOptions options)
+    {
+        // Get StringBuilder and separator
+        string separator = options.Separator ?? DEFAULT_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * 2);
+        builder.Append(writeKey(value.Key, options)).Append(separator);
+        builder.Append(writeValue(value.Value, options));
+
+        // Write and release
+        return builder.ToStringAndRelease();
+    }
+
+    /// <summary>
+    /// Writes a <see cref="IDictionary{TKey,TValue}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="value">The value to write</param>
+    /// <param name="writeKey">Key write function delegate</param>
+    /// <param name="writeValue">Value write function delegate</param>
+    /// <param name="options">Write options</param>
+    /// <returns>The written value as a <see cref="string"/></returns>
+    public static string Write<TKey, TValue>(IDictionary<TKey, TValue>? value, WriteFunc<TKey> writeKey, WriteFunc<TValue> writeValue, in WriteOptions options)
+    {
+        // Check if the collection is null or empty
+        if (IsNullOrEmptyCollection(value)) return string.Empty;
+
+        // Get StringBuilder and separator
+        string separator = options.Separator ?? DEFAULT_DICT_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * value!.Count);
+
+        // Get values enumerator
+        using IEnumerator<KeyValuePair<TKey, TValue>> enumerator = value.GetEnumerator();
+        enumerator.MoveNext(); // We've already validated the collection is not empty
+
+        // Append first element as is
+        builder.Append(Write(enumerator.Current, writeKey, writeValue, options));
+        // Append further elements with separator
+        while (enumerator.MoveNext())
+        {
+            builder.Append(separator).Append(Write(enumerator.Current, writeKey, writeValue, options));
+        }
+
+        // Write and release
         return builder.ToStringAndRelease();
     }
     #endregion

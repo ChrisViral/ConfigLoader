@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ConfigLoader.Attributes;
 using UnityEngine;
@@ -18,7 +19,6 @@ public struct ConfigTest : IConfigNode
 
 [ConfigObject(LoadMethodAccess = AccessModifier.Public, SaveMethodAccess = AccessModifier.Public)]
 public partial class TestConfig
-
 {
     [ConfigField]
     public int intValue = 0;

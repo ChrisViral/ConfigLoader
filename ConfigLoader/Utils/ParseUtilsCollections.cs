@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using ConfigLoader.Extensions;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -18,6 +19,50 @@ public static partial class ParseUtils
     /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     public delegate bool TryParseFunc<T>(string? value, out T? result, in ParseOptions options);
+
+    #region Defaults
+    /// <summary>
+    /// Default collection separators
+    /// </summary>
+    internal static readonly char[] DefaultCollectionSeparators = [','];
+    /// <summary>
+    /// Default dictionary separators
+    /// </summary>
+    internal static readonly char[] DefaultDictionarySeparators = ['|'];
+    #endregion
+
+    #region Split
+    /// <summary>
+    /// Split the values in a string with the provided options
+    /// </summary>
+    /// <param name="value">Value to split</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns>The array of split values</returns>
+    private static string[] SplitCollectionInternal(string value, in ParseOptions options)
+    {
+        return SplitCollectionInternal(value, options, DefaultCollectionSeparators);
+    }
+
+    /// <summary>
+    /// Split the values in a string with the provided options
+    /// </summary>
+    /// <param name="value">Value to split</param>
+    /// <param name="options">Parsing options</param>
+    /// <param name="defaultSeparators">Default string separators if the provided separators are <see langword="null"/> or empty</param>
+    /// <returns>The array of split values</returns>
+    private static string[] SplitCollectionInternal(string value, in ParseOptions options, char[] defaultSeparators)
+    {
+        // Assign default separators if needed
+        char[]? separators = options.CollectionSeparators;
+        if (separators is not { Length: > 0 })
+        {
+            separators = defaultSeparators;
+        }
+
+        // Return splits
+        return value.Split(separators, options.SplitOptions);
+    }
+    #endregion
 
     #region Arrays
     /// <summary>
@@ -39,7 +84,7 @@ public static partial class ParseUtils
         }
 
         // Split values, then create result array
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new T[splits.Length];
         for (int i = 0; i < splits.Length; i++)
         {
@@ -77,7 +122,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = [];
         if (result.IsReadOnly)
         {
@@ -118,7 +163,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new List<T>(splits.Length);
         return TryParseCollectionInternal(splits, ref result, tryParse, options);
     }
@@ -141,7 +186,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new HashSet<T>(splits.Length);
         return TryParseCollectionInternal(splits, ref result, tryParse, options);
     }
@@ -192,7 +237,7 @@ public static partial class ParseUtils
         }
 
         // Split values, then create result array
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         T[] array = new T[splits.Length];
         for (int i = 0; i < splits.Length; i++)
         {
@@ -229,7 +274,7 @@ public static partial class ParseUtils
         }
 
         // Split values, then create result array
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new Queue<T>(splits.Length);
         foreach (string element in splits)
         {
@@ -265,7 +310,7 @@ public static partial class ParseUtils
         }
 
         // Split values, then create result array
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new Stack<T>(splits.Length);
         foreach (string element in splits)
         {
@@ -277,6 +322,86 @@ public static partial class ParseUtils
             }
 
             result.Push(parsed!);
+        }
+
+        return true;
+    }
+    #endregion
+
+    #region Dictionaries
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="KeyValuePair{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">TryParse function delegate for <typeparamref name="TKey"/></param>
+    /// <param name="valueTryParse">TryParse function delegate for <typeparamref name="TValue"/></param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(string? value, out KeyValuePair<TKey, TValue> result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // If empty, return now
+        if (string.IsNullOrEmpty(value))
+        {
+            result = new KeyValuePair<TKey, TValue>();
+            return false;
+        }
+
+        // Split values and try parsing
+        string[] splits = SplitValuesInternal(value!, options);
+        if (splits.Length is 2
+         && keyTryParse(splits[0], out TKey? key, options)
+         && valueTryParse(splits[1], out TValue? val, options))
+        {
+            result = new KeyValuePair<TKey, TValue>(key!, val!);
+            return true;
+        }
+
+        result = new KeyValuePair<TKey, TValue>();
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="KeyValuePair{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TDict">Dictionary type</typeparam>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">TryParse function delegate for <typeparamref name="TKey"/></param>
+    /// <param name="valueTryParse">TryParse function delegate for <typeparamref name="TValue"/></param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TDict, TKey, TValue>(string? value, out TDict? result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options) where TDict : IDictionary<TKey, TValue>, new()
+    {
+        // If empty, return now
+        if (string.IsNullOrEmpty(value))
+        {
+            result = default;
+            return false;
+        }
+
+        string[] splits = SplitCollectionInternal(value!, options, DefaultDictionarySeparators);
+        result = [];
+        if (result.IsReadOnly)
+        {
+            result = default;
+            return false;
+        }
+
+        foreach (string element in splits)
+        {
+            // If parse partially fails, return early
+            if (!TryParse(element, out KeyValuePair<TKey, TValue> parsed, keyTryParse, valueTryParse, in options))
+            {
+                result = default;
+                return false;
+            }
+
+            result.Add(parsed.Key, parsed.Value);
         }
 
         return true;
