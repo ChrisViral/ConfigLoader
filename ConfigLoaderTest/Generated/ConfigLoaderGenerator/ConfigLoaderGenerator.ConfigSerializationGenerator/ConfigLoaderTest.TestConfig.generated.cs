@@ -59,7 +59,7 @@ namespace ConfigLoaderTest
 
                     case "modifier":
                     {
-                        if (ParseUtils.TryParse(value.value, out AccessModifier _modifier, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out AccessModifier _modifier, new ParseOptions(EnumHandling: EnumHandling.Flags)))
                         {
                             this.modifier = _modifier;
                         }
@@ -79,7 +79,7 @@ namespace ConfigLoaderTest
 
                     case "intList":
                     {
-                        if (ParseUtils.TryParse(value.value, out List<int> _intList, ParseUtils.TryParse, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out List<int> _intList, ParseUtils.TryParse, new ParseOptions(CollectionSeparator: ',')))
                         {
                             this.intList = _intList;
                         }
@@ -139,7 +139,7 @@ namespace ConfigLoaderTest
 
                     case "stringDecimalDictionary":
                     {
-                        if (ParseUtils.TryParse(value.value, out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, new ParseOptions(KeyValueSeparator: '|')))
                         {
                             this.stringDecimalDictionary = _stringDecimalDictionary;
                         }
@@ -149,7 +149,7 @@ namespace ConfigLoaderTest
 
                     case "OtherName":
                     {
-                        if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, new ParseOptions(SplitOptions: ExtendedSplitOptions.RemoveEmptyEntries, Separator: ' ')))
                         {
                             this.VectorProperty = _VectorProperty;
                         }
@@ -202,16 +202,16 @@ namespace ConfigLoaderTest
             node.AddValue("intValue", WriteUtils.Write(this.intValue, WriteOptions.Defaults));
             node.AddValue("floatValue", WriteUtils.Write(this.floatValue, WriteOptions.Defaults));
             node.AddValue("stringValue", this.stringValue);
-            node.AddValue("modifier", WriteUtils.Write(this.modifier, WriteOptions.Defaults));
+            node.AddValue("modifier", WriteUtils.Write(this.modifier, new WriteOptions(EnumHandling: EnumHandling.Flags)));
             node.AddValue("intArray", WriteUtils.Write(this.intArray, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("intList", WriteUtils.Write(this.intList, WriteUtils.Write, WriteOptions.Defaults));
+            node.AddValue("intList", WriteUtils.Write(this.intList, WriteUtils.Write, new WriteOptions(CollectionSeparator: ',')));
             node.AddValue("stringHashSet", WriteUtils.Write(this.stringHashSet, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("longLinkedList", WriteUtils.Write(this.longLinkedList, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("objectQueue", WriteUtils.Write(this.objectQueue, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("charStack", WriteUtils.Write(this.charStack, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("doubleReadOnlyCollection", WriteUtils.Write(this.doubleReadOnlyCollection, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("stringDecimalDictionary", WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, WriteOptions.Defaults));
+            node.AddValue("stringDecimalDictionary", WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, new WriteOptions(KeyValueSeparator: '|')));
+            node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, new WriteOptions(Separator: ' ')));
             this.floatCurve?.Save(node.AddNode("floatCurve"));
             ((IConfigNode)this.explicitImplementation).Save(node.AddNode("explicitImplementation"));
             if (this.configNode != null)

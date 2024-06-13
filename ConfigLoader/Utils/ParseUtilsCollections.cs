@@ -56,7 +56,7 @@ public static partial class ParseUtils
     private static string[] SplitDictionaryInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[] separators = !options.DictionarySeparator.IsNull() ? MakeBuffer(options.DictionarySeparator) : DefaultDictionarySeparators;
+        char[] separators = !options.KeyValueSeparator.IsNull() ? MakeBuffer(options.KeyValueSeparator) : DefaultDictionarySeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);

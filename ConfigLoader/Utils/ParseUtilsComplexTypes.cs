@@ -27,10 +27,6 @@ public static partial class ParseUtils
     /// </summary>
     internal static readonly char[] DefaultSeparators = [WriteUtils.DEFAULT_SEPARATOR];
     /// <summary>
-    /// Default <see cref="Matrix4x4"/> separators
-    /// </summary>
-    internal static readonly char[] DefaultMatrixSeparators = [WriteUtils.DEFAULT_SEPARATOR, ' ', '\t'];
-    /// <summary>
     /// Default <see cref="Color32"/> return value (white)
     /// </summary>
     private static readonly Color32 DefaultColor32 = new(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
@@ -49,7 +45,7 @@ public static partial class ParseUtils
         // ReSharper disable once ConvertIfStatementToReturnStatement
         if (string.IsNullOrEmpty(value)) return [];
 
-        return SplitValuesInternal(value!, options, DefaultSeparators);
+        return SplitValuesInternal(value!, options);
     }
 
     /// <summary>
@@ -60,20 +56,8 @@ public static partial class ParseUtils
     /// <returns>The array of split values</returns>
     private static string[] SplitValuesInternal(string value, in ParseOptions options)
     {
-        return SplitValuesInternal(value, options, DefaultSeparators);
-    }
-
-    /// <summary>
-    /// Split the values in a string with the provided options
-    /// </summary>
-    /// <param name="value">Value to split</param>
-    /// <param name="options">Parsing options</param>
-    /// <param name="defaultSeparators">Default string separators if the provided separators are <see langword="null"/> or empty</param>
-    /// <returns>The array of split values</returns>
-    private static string[] SplitValuesInternal(string value, in ParseOptions options, char[] defaultSeparators)
-    {
         // Assign default separators if needed
-        char[] separators = !options.Separator.IsNull() ? MakeBuffer(options.Separator) : defaultSeparators;
+        char[] separators = !options.Separator.IsNull() ? MakeBuffer(options.Separator) : DefaultSeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);
@@ -573,7 +557,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValuesInternal(value!, options, DefaultMatrixSeparators);
+        string[] splits = SplitValuesInternal(value!, options);
         result = Matrix4x4.identity;
         if (splits.Length is 16
          && TryParse(splits[00], out result.m00, options)
@@ -617,7 +601,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValuesInternal(value!, options, DefaultMatrixSeparators);
+        string[] splits = SplitValuesInternal(value!, options);
         result = Matrix4x4D.Identity();
         if (splits.Length is 16
          && TryParse(splits[00], out result.m00, options)

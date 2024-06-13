@@ -27,7 +27,7 @@ public partial class TestConfig
     public float floatValue = 0f;
     [ConfigField]
     public string stringValue = string.Empty;
-    [ConfigField]
+    [ConfigField(EnumHandling = EnumHandling.Flags)]
     public AccessModifier modifier = AccessModifier.Public;
     [ConfigField]
     public FloatCurve floatCurve;
@@ -37,7 +37,7 @@ public partial class TestConfig
     public ConfigNode configNode;
     [ConfigField]
     public int[] intArray;
-    [ConfigField]
+    [ConfigField(CollectionSeparator = ',')]
     public List<int> intList;
     [ConfigField]
     public HashSet<string> stringHashSet;
@@ -49,14 +49,16 @@ public partial class TestConfig
     public Stack<char> charStack;
     [ConfigField]
     public ReadOnlyCollection<double> doubleReadOnlyCollection;
-    [ConfigField]
+    [ConfigField(KeyValueSeparator = '|')]
     public Dictionary<string, decimal> stringDecimalDictionary;
 
-    [ConfigField(Name = "OtherName")]
+    [ConfigField(Name = "OtherName", Separator = ' ', SplitOptions = ExtendedSplitOptions.RemoveEmptyEntries)]
     public Vector3 VectorProperty { get; set; }
 
     public void Test(ConfigNode node)
     {
+        ParseOptions options = new(SplitOptions: ExtendedSplitOptions.None);
+
         if (ParseUtils.TryParse("value.value", out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
         {
             this.stringDecimalDictionary = _stringDecimalDictionary;

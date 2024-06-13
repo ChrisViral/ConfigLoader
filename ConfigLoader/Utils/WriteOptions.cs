@@ -10,17 +10,17 @@ namespace ConfigLoader.Utils;
 /// <summary>
 /// Value write options
 /// </summary>
-/// <param name="Format">Format string</param>
 /// <param name="EnumHandling">Enum values handling, defaults to <see cref="EnumHandling.String"/></param>
+/// <param name="Format">Format string</param>
 /// <param name="Separator">Joined values separator character, if left to empty, the default separator, a comma, will be used</param>
 /// <param name="CollectionSeparator">Collection values separator character, if left to empty, the default collection separator, a comma, will be used</param>
-/// <param name="DictionarySeparator">Dictionary values separator character, if left to empty, the default dictionary separator, a colon, will be used</param>
+/// <param name="KeyValueSeparator">Key/Value values separator character, if left to empty, the default key/value separator, a colon, will be used</param>
 [PublicAPI]
-public readonly record struct WriteOptions(string? Format = null,
-                                           EnumHandling EnumHandling = ConfigFieldAttribute.DefaultEnumHandling,
+public readonly record struct WriteOptions(EnumHandling EnumHandling = ConfigFieldAttribute.DefaultEnumHandling,
+                                           string? Format = null,
                                            char Separator = default,
                                            char CollectionSeparator = default,
-                                           char DictionarySeparator = default)
+                                           char KeyValueSeparator = default)
 {
     /// <summary>
     /// Default write options
@@ -30,5 +30,5 @@ public readonly record struct WriteOptions(string? Format = null,
     /// <summary>
     /// Creates new write options with default parameters
     /// </summary>
-    public WriteOptions() : this(null) { }
+    public WriteOptions() : this(ConfigFieldAttribute.DefaultEnumHandling) { }
 }

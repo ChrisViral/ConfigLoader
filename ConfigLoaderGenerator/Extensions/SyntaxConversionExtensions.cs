@@ -106,12 +106,53 @@ internal static class SyntaxConversionExtensions
     }
 
     /// <summary>
-    /// Creates an <see cref="ArgumentSyntax"/> from the given <see cref="ExpressionSyntax"/>
+    /// Creates an <see cref="ArgumentSyntax"/> from the given <see cref="string"/>
+    /// </summary>
+    /// <param name="value">Identifier to create an argument for</param>
+    /// <returns>The value as an <see cref="ArgumentSyntax"/></returns>
+    public static ArgumentSyntax AsArgument(this string value) => Argument(IdentifierName(value));
+
+    /// <summary>
+    /// Creates an <see cref="ArgumentSyntax"/> from the given <see cref="string"/>
+    /// </summary>
+    /// <param name="value">Identifier to create an argument for</param>
+    /// <param name="name">Explicit name of the argument, specified with a colon</param>
+    /// <returns>The value as an <see cref="ArgumentSyntax"/></returns>
+    public static ArgumentSyntax AsArgument(this string value, string name) => Argument(IdentifierName(value)).WithNameColon(NameColon(name));
+
+    /// <summary>
+    /// Creates an <see cref="ArgumentSyntax"/> from the given <see cref="string"/>
+    /// </summary>
+    /// <param name="value">Identifier to create an argument for</param>
+    /// <param name="name">Explicit name of the argument, specified with a colon</param>
+    /// <returns>The value as an <see cref="ArgumentSyntax"/></returns>
+    public static ArgumentSyntax AsArgument(this string value, IdentifierNameSyntax name) => Argument(IdentifierName(value)).WithNameColon(NameColon(name));
+
+    /// <summary>
+    /// Creates an <see cref="ArgumentSyntax"/> from the given <typeparamref name="T"/>
     /// </summary>
     /// <typeparam name="T">Expression syntax type</typeparam>
-    /// <param name="name">Identifier to create an argument for</param>
+    /// <param name="value">Identifier to create an argument for</param>
     /// <returns>The value as an <see cref="ArgumentSyntax"/></returns>
-    public static ArgumentSyntax AsArgument<T>(this T name) where T : ExpressionSyntax => Argument(name);
+    public static ArgumentSyntax AsArgument<T>(this T value) where T : ExpressionSyntax => Argument(value);
+
+    /// <summary>
+    /// Creates an <see cref="ArgumentSyntax"/> from the given <typeparamref name="T"/>
+    /// </summary>
+    /// <typeparam name="T">Expression syntax type</typeparam>
+    /// <param name="value">Identifier to create an argument for</param>
+    /// <param name="name">Explicit name of the argument, specified with a colon</param>
+    /// <returns>The value as an <see cref="ArgumentSyntax"/></returns>
+    public static ArgumentSyntax AsArgument<T>(this T value, string name) where T : ExpressionSyntax => Argument(value).WithNameColon(NameColon(name));
+
+    /// <summary>
+    /// Creates an <see cref="ArgumentSyntax"/> from the given <typeparamref name="T"/>
+    /// </summary>
+    /// <typeparam name="T">Expression syntax type</typeparam>
+    /// <param name="value">Identifier to create an argument for</param>
+    /// <param name="name">Explicit name of the argument, specified with a colon</param>
+    /// <returns>The value as an <see cref="ArgumentSyntax"/></returns>
+    public static ArgumentSyntax AsArgument<T>(this T value, IdentifierNameSyntax name) where T : ExpressionSyntax => Argument(value).WithNameColon(NameColon(name));
 
     /// <summary>
     /// Creates a <see cref="ParameterSyntax"/> from the given name

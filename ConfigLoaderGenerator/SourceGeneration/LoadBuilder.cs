@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
@@ -57,6 +58,10 @@ public static class LoadBuilder
     /// ParseOptions defaults identifier
     /// </summary>
     private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.ParseOptions.Defaults).AsName();
+    /// <summary>
+    /// Default ParseOptions
+    /// </summary>
+    private static readonly ExpressionSyntax DefaultOptions = ParseOptions.Access(Defaults);
     /// <summary>
     /// Types that can be directly assigned to the field
     /// </summary>
@@ -157,8 +162,8 @@ public static class LoadBuilder
                                        .AsArgument()
                                        .WithOut();
 
-        // ParseOptions.Defaults
-        ArgumentSyntax options = ParseOptions.Access(Defaults).AsArgument();
+        // Create options from metadata
+        ArgumentSyntax options = CreateParseOptions(field).AsArgument();
 
         // ParseUtils.TryParse
         MemberAccessExpressionSyntax tryParse = ParseUtils.Access(TryParse);
@@ -365,6 +370,51 @@ public static class LoadBuilder
 
         // Add statements and return
         return Block().AddStatements(fieldAssign.AsStatement());
+    }
+    #endregion
+
+    #region Options
+    /// <summary>
+    /// Creates parse options for a specific field
+    /// </summary>
+    /// <param name="field">Field to create the parse options for</param>
+    /// <returns>The created parse options, or the default options if none were required</returns>
+    public static ExpressionSyntax CreateParseOptions(in ConfigFieldMetadata field)
+    {
+        List<ArgumentSyntax> options = new(5);
+
+        if (field.EnumHandling is not ConfigFieldAttribute.DefaultEnumHandling)
+        {
+            ExpressionSyntax value  = nameof(EnumHandling).Access(EnumUtils.ToString(field.EnumHandling));
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.EnumHandling));
+            options.Add(argument);
+        }
+        if (field.SplitOptions is not ConfigFieldAttribute.DefaultSplitOptions)
+        {
+            ExpressionSyntax value  = nameof(ExtendedSplitOptions).Access(EnumUtils.ToString(field.SplitOptions));
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.SplitOptions));
+            options.Add(argument);
+        }
+        if (field.Separator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.Separator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.Separator));
+            options.Add(argument);
+        }
+        if (field.CollectionSeparator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.CollectionSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.CollectionSeparator));
+            options.Add(argument);
+        }
+        if (field.KeyValueSeparator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.KeyValueSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.KeyValueSeparator));
+            options.Add(argument);
+        }
+
+        return options.Count is not 0 ? ParseOptions.New(options.ToArray()) : DefaultOptions;
     }
     #endregion
 }

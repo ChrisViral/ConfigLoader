@@ -10,17 +10,17 @@ namespace ConfigLoader.Utils;
 /// <summary>
 /// Value parse options
 /// </summary>
-/// <param name="SplitOptions">String splitting options, defaults to <see cref="ExtendedSplitOptions.TrimAndRemoveEmptyEntries"/></param>
 /// <param name="EnumHandling">Enum values handling, defaults to <see cref="EnumHandling.String"/></param>
+/// <param name="SplitOptions">String splitting options, defaults to <see cref="ExtendedSplitOptions.TrimAndRemoveEmptyEntries"/></param>
 /// <param name="Separator">String splitting separator, if left empty, the default separator, a comma, will be used</param>
 /// <param name="CollectionSeparator">String splitting separator for collections, if left empty, the default collection separator, a comma, will be used</param>
-/// <param name="DictionarySeparator">String splitting separator for dictionaries, if left empty, the default dictionary separator, a colon, will be used</param>
+/// <param name="KeyValueSeparator">String splitting separator for key/value pairs, if left empty, the default key/value separator, a colon, will be used</param>
 [PublicAPI]
-public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = ConfigFieldAttribute.DefaultSplitOptions,
-                                           EnumHandling EnumHandling = ConfigFieldAttribute.DefaultEnumHandling,
+public readonly record struct ParseOptions(EnumHandling EnumHandling = ConfigFieldAttribute.DefaultEnumHandling,
+                                           ExtendedSplitOptions SplitOptions = ConfigFieldAttribute.DefaultSplitOptions,
                                            char Separator = default,
                                            char CollectionSeparator = default,
-                                           char DictionarySeparator = default)
+                                           char KeyValueSeparator = default)
 {
     /// <summary>
     /// Default parse options
@@ -30,5 +30,5 @@ public readonly record struct ParseOptions(ExtendedSplitOptions SplitOptions = C
     /// <summary>
     /// Creates new parse options with default parameters
     /// </summary>
-    public ParseOptions() : this(ExtendedSplitOptions.TrimAndRemoveEmptyEntries) { }
+    public ParseOptions() : this(ConfigFieldAttribute.DefaultEnumHandling) { }
 }

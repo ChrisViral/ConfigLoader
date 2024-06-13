@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
@@ -51,6 +52,10 @@ public static class SaveBuilder
     /// WriteOptions defaults identifier
     /// </summary>
     private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.WriteOptions.Defaults).AsName();
+    /// <summary>
+    /// WriteOptions defaults identifier
+    /// </summary>
+    private static readonly ExpressionSyntax DefaultOptions = WriteOptions.Access(Defaults);
     /// <summary>
     /// Types that can be directly assigned with AddValue
     /// </summary>
@@ -99,7 +104,7 @@ public static class SaveBuilder
 
         if (field.Type.IsConfigNode)
         {
-            return GenerateConfigNodeSave(body, name, value, field, context);;
+            return GenerateConfigNodeSave(body, name, value, field, context);
         }
 
         if (field.Type.IsNodeObject)
@@ -145,7 +150,7 @@ public static class SaveBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // WriteOptions.Defaults
-        ArgumentSyntax options = WriteOptions.Access(Defaults).AsArgument();
+        ArgumentSyntax options = CreateWriteOptions(field).AsArgument();
         // WriteUtils.Write
         MemberAccessExpressionSyntax write = WriteUtils.Access(Write);
         // WriteUtils.Write(value, WriteOptions.Defaults)
@@ -261,5 +266,52 @@ public static class SaveBuilder
         IfStatementSyntax ifNotNull = If(value.IsNotNull(), addValueInvocation.AsStatement());
         return body.AddBodyStatements(ifNotNull);
     }
+    #endregion
+
+    #region Options
+        #region Options
+    /// <summary>
+    /// Creates parse options for a specific field
+    /// </summary>
+    /// <param name="field">Field to create the parse options for</param>
+    /// <returns>The created parse options, or the default options if none were required</returns>
+    public static ExpressionSyntax CreateWriteOptions(in ConfigFieldMetadata field)
+    {
+        List<ArgumentSyntax> options = new(5);
+
+        if (field.EnumHandling is not ConfigFieldAttribute.DefaultEnumHandling)
+        {
+            ExpressionSyntax value  = nameof(EnumHandling).Access(EnumUtils.ToString(field.EnumHandling));
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.EnumHandling));
+            options.Add(argument);
+        }
+        if (!string.IsNullOrEmpty(field.Format))
+        {
+            ExpressionSyntax value  = MakeLiteral(field.Format!);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.Format));
+            options.Add(argument);
+        }
+        if (field.Separator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.Separator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.Separator));
+            options.Add(argument);
+        }
+        if (field.CollectionSeparator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.CollectionSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.CollectionSeparator));
+            options.Add(argument);
+        }
+        if (field.KeyValueSeparator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.KeyValueSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.KeyValueSeparator));
+            options.Add(argument);
+        }
+
+        return options.Count is not 0 ? WriteOptions.New(options.ToArray()) : DefaultOptions;
+    }
+    #endregion
     #endregion
 }

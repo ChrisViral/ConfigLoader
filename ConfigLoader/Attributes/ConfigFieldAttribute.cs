@@ -93,7 +93,7 @@ public sealed class ConfigFieldAttribute : Attribute
     /// <summary>
     /// character that separates key/value pairs in dictionaries
     /// </summary>
-    public char DictionarySeparator { get; init; }
+    public char KeyValueSeparator { get; init; }
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
