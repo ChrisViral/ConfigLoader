@@ -47,8 +47,27 @@ internal static class SyntaxConversionExtensions
     /// </summary>
     /// <param name="keyword">Type keyword</param>
     /// <returns>The type syntax associated to the given keyword</returns>
-    /// <exception cref="ArgumentException">If <paramref name="keyword"/> is not a type keyword</exception>
-    public static TypeSyntax AsType(this SyntaxKind keyword) => PredefinedType(Token(keyword));
+    public static PredefinedTypeSyntax AsType(this SyntaxKind keyword) => PredefinedType(Token(keyword));
+
+    /// <summary>
+    /// Creates an array type from the specified predefined type token
+    /// </summary>
+    /// <param name="type">Predefined type to make an array for</param>
+    /// <returns>The created array type</returns>
+    public static ArrayTypeSyntax AsArrayType(this SyntaxKind type)
+    {
+        return ArrayType(PredefinedType(Token(type))).AddRankSpecifiers(ArrayRankSpecifier());
+    }
+
+    /// <summary>
+    /// Creates an array type from the specified type
+    /// </summary>
+    /// <param name="type">Type to make an array for</param>
+    /// <returns>The created array type</returns>
+    public static ArrayTypeSyntax AsArrayType(this TypeSyntax type)
+    {
+        return ArrayType(type).AddRankSpecifiers(ArrayRankSpecifier());
+    }
 
     /// <summary>
     /// Gets the raw <see cref="string"/> value of this <see cref="IdentifierNameSyntax"/>
@@ -62,7 +81,29 @@ internal static class SyntaxConversionExtensions
     /// </summary>
     /// <param name="name">Value to create an identifier for</param>
     /// <returns>The value as an <see cref="IdentifierNameSyntax"/></returns>
-    public static IdentifierNameSyntax AsIdentifier(this string name) => IdentifierName(name);
+    public static IdentifierNameSyntax AsName(this string name) => IdentifierName(name);
+
+    /// <summary>
+    /// Creates an <see cref="GenericNameSyntax"/> from the given <see cref="string"/> value
+    /// </summary>
+    /// <param name="name">Value to create the generic name for</param>
+    /// <param name="arguments">Generic type arguments</param>
+    /// <returns>The value as an <see cref="GenericNameSyntax"/>, with the specified <paramref name="arguments"/></returns>
+    public static GenericNameSyntax AsGenericName(this string name, params TypeSyntax[] arguments)
+    {
+        return GenericName(Identifier(name)).AddTypeArgumentListArguments(arguments);
+    }
+
+    /// <summary>
+    /// Creates an <see cref="GenericNameSyntax"/> from the given <see cref="IdentifierNameSyntax"/> value
+    /// </summary>
+    /// <param name="name">Identifier to create the generic name for</param>
+    /// <param name="arguments">Generic type arguments</param>
+    /// <returns>The value as an <see cref="GenericNameSyntax"/>, with the specified <paramref name="arguments"/></returns>
+    public static GenericNameSyntax AsGenericName(this IdentifierNameSyntax name, params TypeSyntax[] arguments)
+    {
+        return GenericName(name.Identifier).AddTypeArgumentListArguments(arguments);
+    }
 
     /// <summary>
     /// Creates an <see cref="ArgumentSyntax"/> from the given <see cref="ExpressionSyntax"/>

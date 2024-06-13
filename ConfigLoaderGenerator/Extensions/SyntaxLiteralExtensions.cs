@@ -75,16 +75,28 @@ public static class SyntaxLiteralExtensions
 
     #region Static methods
     /// <summary>
+    /// <see langword="null"/> literal expression
+    /// </summary>
+    /// <returns>A <see langword="null"/> literal expression</returns>
+    public static LiteralExpressionSyntax Null() => LiteralExpression(SyntaxKind.NullLiteralExpression);
+
+    /// <summary>
+    /// <see langword="this"/> literal expression
+    /// </summary>
+    /// <returns>A <see langword="this"/> literal expression</returns>
+    public static ThisExpressionSyntax This() => ThisExpression();
+
+    /// <summary>
     /// <see langword="true"/> literal expression
     /// </summary>
     /// <returns>A <see langword="true"/> literal expression</returns>
-    public static LiteralExpressionSyntax TrueExpression() => LiteralExpression(SyntaxKind.TrueLiteralExpression);
+    public static LiteralExpressionSyntax True() => LiteralExpression(SyntaxKind.TrueLiteralExpression);
 
     /// <summary>
     /// <see langword="false"/> literal expression
     /// </summary>
     /// <returns>A <see langword="false"/> literal expression</returns>
-    public static LiteralExpressionSyntax FalseExpression() => LiteralExpression(SyntaxKind.FalseLiteralExpression);
+    public static LiteralExpressionSyntax False() => LiteralExpression(SyntaxKind.FalseLiteralExpression);
 
     /// <summary>
     /// Creates a literal expression from the given boolean value

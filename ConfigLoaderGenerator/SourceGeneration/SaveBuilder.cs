@@ -6,6 +6,7 @@ using ConfigLoaderGenerator.Metadata;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -20,26 +21,36 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 public static class SaveBuilder
 {
     /// <summary>
+    /// Write invocation generator delegate
+    /// </summary>
+    /// <param name="write">Write member access</param>
+    /// <param name="value">Value to write</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to write from</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>Write</c> invocation</returns>
+    public delegate InvocationExpressionSyntax WriteInvocation(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context);
+
+    /// <summary>
     /// ConfigLoader write utils namespace
     /// </summary>
     private static readonly string UtilsNamespace = typeof(WriteUtils).Namespace!;
     /// <summary>
     /// Write method identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax Write = nameof(ConfigLoader.Utils.WriteUtils.Write).AsIdentifier();
+    private static readonly IdentifierNameSyntax Write = nameof(ConfigLoader.Utils.WriteUtils.Write).AsName();
     /// <summary>
     /// WriteUtils class identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax WriteUtils = nameof(ConfigLoader.Utils.WriteUtils).AsIdentifier();
+    private static readonly IdentifierNameSyntax WriteUtils = nameof(ConfigLoader.Utils.WriteUtils).AsName();
     /// <summary>
     /// WriteOptions struct identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax WriteOptions = nameof(ConfigLoader.Utils.WriteOptions).AsIdentifier();
+    private static readonly IdentifierNameSyntax WriteOptions = nameof(ConfigLoader.Utils.WriteOptions).AsName();
     /// <summary>
     /// WriteOptions defaults identifier
     /// </summary>
-    private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.WriteOptions.Defaults).AsIdentifier();
-
+    private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.WriteOptions.Defaults).AsName();
     /// <summary>
     /// Types that can be directly assigned with AddValue
     /// </summary>
@@ -60,14 +71,30 @@ public static class SaveBuilder
     /// <exception cref="InvalidOperationException">If the generator does not know how to save the given field type</exception>
     public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
+        // Find best save method
         if (AddableTypes.Contains(field.Type.FullName))
         {
             return GenerateAddValueSave(body, name, value, field, context);
         }
 
-        if (field.Type.IsBuiltin|| field.Type.IsEnum || SupportedTypes.Contains(field.Type.FullName))
+        if (field.Type.IsBuiltin|| field.Type.IsEnum || field.Type.IsSupportedType)
         {
-            return GenerateWriteValueSave(body, name, value, field, context);
+            return GenerateWriteValueSave(body, name, value, WriteValueSave, field, context);
+        }
+
+        if (field.Type.IsArray)
+        {
+            return GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
+        }
+
+        if (field.Type.IsSupportedDictionary || field.Type.IsDictionary)
+        {
+            return GenerateWriteValueSave(body, name, value, WriteDictionarySave, field, context);
+        }
+
+        if (field.Type.IsSupportedCollection || field.Type.IsCollection)
+        {
+            return GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
         if (field.Type.IsConfigNode)
@@ -80,9 +107,11 @@ public static class SaveBuilder
             return GenerateAddNodeSave(body, name, value, field, context);
         }
 
+        // Unknown type
         throw new InvalidOperationException($"Unknown type to save {field.Type.FullName}");
     }
 
+    #region Values
     /// <summary>
     /// Generate the field value save code implementation
     /// </summary>
@@ -107,23 +136,77 @@ public static class SaveBuilder
     /// <param name="body">Save method declaration</param>
     /// <param name="name">Name expression</param>
     /// <param name="value">Value expression</param>
+    /// <param name="createWrite">Delegate which creates the generated Write invocation</param>
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field value save code generated</returns>
-    public static MethodDeclarationSyntax GenerateWriteValueSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    public static MethodDeclarationSyntax GenerateWriteValueSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, WriteInvocation createWrite, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
         // WriteOptions.Defaults
         ArgumentSyntax options = WriteOptions.Access(Defaults).AsArgument();
+        // WriteUtils.Write
+        MemberAccessExpressionSyntax write = WriteUtils.Access(Write);
         // WriteUtils.Write(value, WriteOptions.Defaults)
-        ExpressionSyntax writeInvocation = WriteUtils.Access(Write).Invoke(value.AsArgument(), options);
+        ExpressionSyntax writeInvocation = createWrite(write, value, options, field, context);
 
         // node.AddValue("value", WriteUtils.Write(value, WriteOptions.Defaults));
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
+
+        // Add namespace and return
+        context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
         return body.AddBodyStatements(addValueInvocation.AsStatement());
     }
 
+    /// <summary>
+    /// Creates a Write invocation for values
+    /// </summary>
+    /// <param name="write">Write member access</param>
+    /// <param name="value">Value to write</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to write from</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>Write</c> invocation</returns>
+    public static InvocationExpressionSyntax WriteValueSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // WriteUtils.Write(value, WriteOptions.Defaults)
+        return write.Invoke(value.AsArgument(), options);
+    }
+
+    /// <summary>
+    /// Creates a Write invocation for <see cref="IDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <param name="write">Write member access</param>
+    /// <param name="value">Value to write</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to write from</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>Write</c> invocation</returns>
+    public static InvocationExpressionSyntax WriteDictionarySave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // WriteUtils.Write(value, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults)
+        ArgumentSyntax writeArgument = write.AsArgument();
+        return write.Invoke(value.AsArgument(), writeArgument, writeArgument, options);
+    }
+
+    /// <summary>
+    /// Creates a Write invocation for <see cref="ICollection{T}"/>
+    /// </summary>
+    /// <param name="write">Write member access</param>
+    /// <param name="value">Value to write</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to write from</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>Write</c> invocation</returns>
+    public static InvocationExpressionSyntax WriteCollectionSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // WriteUtils.Write(value, WriteUtils.Write, WriteOptions.Defaults)
+        return write.Invoke(value.AsArgument(), write.AsArgument(), options);
+    }
+    #endregion
+
+    #region Nodes
     /// <summary>
     /// Generate the field IConfigNode save code implementation
     /// </summary>
@@ -138,12 +221,25 @@ public static class SaveBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // node.AddNode("value")
-        ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument());
-        // ((IConfigNode)this.value)
-        ExpressionSyntax fieldAsConfig = value.Cast(IConfigNode);
-        // ((IConfigNode)this.value).Save(node.AddNode("value"));
-        ExpressionSyntax saveNode = fieldAsConfig.Access(Save).Invoke(addValueInvocation.AsArgument());
-        return body.AddBodyStatements(saveNode.AsStatement());
+        ExpressionSyntax addNodeInvocation = Node.Access(AddNode).Invoke(name.AsArgument());
+
+        // Check if interface implementation is explicit or not
+        if (field.Type.Symbol.IsInterfaceImplementationExplicit(IConfigNode.AsRaw(), Save.AsRaw()))
+        {
+            // ((IConfigNode)this.value)
+            value = value.Cast(IConfigNode);
+        }
+
+        // this.value?.Save(node.AddNode("value"));
+        ExpressionSyntax saveNode = field.Type.Symbol.IsReferenceType
+                                        ? value.ConditionalAccess(Save) // this.value?.Save
+                                        : value.Access(Save);           // this.value.Save
+
+        // this.value?.Save(node.AddNode("value"));
+        ExpressionSyntax saveNodeInvoke = saveNode.Invoke(addNodeInvocation.AsArgument());
+
+        // Add statements to body and return
+        return body.AddBodyStatements(saveNodeInvoke.AsStatement());
     }
 
     /// <summary>
@@ -159,8 +255,11 @@ public static class SaveBuilder
     {
         context.Token.ThrowIfCancellationRequested();
 
+
         // node.AddNode("name", this.value);
         ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), value.AsArgument());
-        return body.AddBodyStatements(addValueInvocation.AsStatement());
+        IfStatementSyntax ifNotNull = If(value.IsNotNull(), addValueInvocation.AsStatement());
+        return body.AddBodyStatements(ifNotNull);
     }
+    #endregion
 }

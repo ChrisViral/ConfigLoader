@@ -94,7 +94,7 @@ public class NamespaceSet : ISet<string>
     /// </summary>
     /// <param name="name">Name to create the using directive for</param>
     /// <returns>The created using directive</returns>
-    private static UsingDirectiveSyntax CreateUsingDirective(string name) => UsingDirective(name.AsIdentifier());
+    private static UsingDirectiveSyntax CreateUsingDirective(string name) => UsingDirective(name.AsName());
 
     #region Implementation of IEnumerable
     /// <inheritdoc />

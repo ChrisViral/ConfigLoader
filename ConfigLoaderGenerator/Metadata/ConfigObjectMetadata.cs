@@ -25,11 +25,11 @@ public readonly struct ConfigObjectMetadata
     /// <summary>
     /// Default load method name
     /// </summary>
-    private static readonly IdentifierNameSyntax DefaultLoadMethod = ConfigObjectAttribute.DefaultLoadName.AsIdentifier();
+    private static readonly IdentifierNameSyntax DefaultLoadMethod = ConfigObjectAttribute.DefaultLoadName.AsName();
     /// <summary>
     /// Default save method name
     /// </summary>
-    private static readonly IdentifierNameSyntax DefaultSaveMethod = ConfigObjectAttribute.DefaultSaveName.AsIdentifier();
+    private static readonly IdentifierNameSyntax DefaultSaveMethod = ConfigObjectAttribute.DefaultSaveName.AsName();
 
     /// <summary>
     /// Access modifier of the load method
@@ -73,11 +73,11 @@ public readonly struct ConfigObjectMetadata
                     break;
 
                 case nameof(ConfigObjectAttribute.LoadMethodName):
-                    this.LoadMethod = ((string)value.Value).AsIdentifier();
+                    this.LoadMethod = ((string)value.Value).AsName();
                     break;
 
                 case nameof(ConfigObjectAttribute.SaveMethodName):
-                    this.SaveMethod = ((string)value.Value).AsIdentifier();
+                    this.SaveMethod = ((string)value.Value).AsName();
                     break;
 
                 case nameof(ConfigObjectAttribute.Implementation):

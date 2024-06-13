@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -173,21 +173,29 @@ public static partial class WriteUtils
     }
 
     /// <summary>
+    /// Writes a <see cref="string"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
+    /// </summary>
+    /// <param name="value">The value to write</param>
+    /// <param name="options">Write options</param>
+    /// <returns>The written value as a <see cref="string"/></returns>
+    public static string Write(string? value, in WriteOptions options)
+    {
+        return value ?? string.Empty;
+    }
+
+    /// <summary>
     /// Writes a <see cref="object"/> value as a <see cref="object"/> using the provided <paramref name="options"/>
     /// </summary>
     /// <param name="value">The value to write</param>
     /// <param name="options">Write options</param>
     /// <returns>The written value as a <see cref="string"/></returns>
-    public static string Write(object? value, in WriteOptions options)
+    public static string Write(object? value, in WriteOptions options) => value switch
     {
-        return value switch
-        {
-            null                     => string.Empty,
-            IFormattable formattable => formattable.ToString(options.Format, CultureInfo.InvariantCulture),
-            IConvertible convertible => convertible.ToString(CultureInfo.InvariantCulture),
-            _                        => value.ToString()
-        };
-    }
+        null                     => string.Empty,
+        IFormattable formattable => formattable.ToString(options.Format, CultureInfo.InvariantCulture),
+        IConvertible convertible => convertible.ToString(CultureInfo.InvariantCulture),
+        _                        => value.ToString()
+    };
 
     /// <summary>
     /// Writes a <see cref="Guid"/> value as a <see cref="string"/> using the provided <paramref name="options"/>

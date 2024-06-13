@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -18,6 +20,27 @@ namespace ConfigLoaderGenerator.SourceGeneration;
 public static class GenerationConstants
 {
     #region Supported types
+    /// <summary>
+    /// C# builtin types
+    /// </summary>
+    public static readonly HashSet<string> BuiltinTypes =
+    [
+        typeof(byte).FullName,
+        typeof(sbyte).FullName,
+        typeof(short).FullName,
+        typeof(ushort).FullName,
+        typeof(int).FullName,
+        typeof(uint).FullName,
+        typeof(long).FullName,
+        typeof(ulong).FullName,
+        typeof(float).FullName,
+        typeof(double).FullName,
+        typeof(decimal).FullName,
+        typeof(bool).FullName,
+        typeof(char).FullName,
+        typeof(string).FullName,
+        typeof(object).FullName
+    ];
     /// <summary>
     /// Supported non-builtin types
     /// </summary>
@@ -39,6 +62,29 @@ public static class GenerationConstants
         $"{UnityEngine}.Color32",
         $"{UnityEngine}.Matrix4x4",
         "Matrix4x4D"
+    ];
+    /// <summary>
+    /// Directly supported <see cref="ICollection{T}"/> types
+    /// </summary>
+    public static readonly HashSet<string> SupportedCollections =
+    [
+        typeof(List<>).GetDisplayName(),
+        typeof(LinkedList<>).GetDisplayName(),
+        typeof(HashSet<>).GetDisplayName(),
+        typeof(SortedSet<>).GetDisplayName(),
+        typeof(ReadOnlyCollection<>).GetDisplayName(),
+        typeof(Queue<>).GetDisplayName(),
+        typeof(Stack<>).GetDisplayName()
+    ];
+    /// <summary>
+    /// Directly supported <see cref="IDictionary{TKey,TValue}"/> types
+    /// </summary>
+    public static readonly HashSet<string> SupportedDictionaries =
+    [
+        typeof(Dictionary<,>).GetDisplayName(),
+        typeof(SortedDictionary<,>).GetDisplayName(),
+        typeof(SortedList<,>).GetDisplayName(),
+        typeof(ReadOnlyDictionary<,>).GetDisplayName()
     ];
     #endregion
 
@@ -110,6 +156,10 @@ public static class GenerationConstants
     /// AddNode method identifier
     /// </summary>
     public static readonly IdentifierNameSyntax AddNode = IdentifierName("AddNode");
+    /// <summary>
+    /// IsNullOrEmpty method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsName();
     #endregion
 
     #region Variables
