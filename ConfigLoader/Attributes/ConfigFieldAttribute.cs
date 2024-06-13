@@ -27,7 +27,7 @@ public enum EnumHandling
 /// </summary>
 /// <remarks>
 /// This extended enum exists because <see cref="TrimEntries"/> is missing on .NET Framework<br/>
-/// Extension methods using these options are available in <see cref="Extensions.StringSplitExtensions"/>
+/// Extension methods using these options are available in <see cref="Extensions.StringExtensions"/>
 /// </remarks>
 [Flags, PublicAPI]
 public enum ExtendedSplitOptions
@@ -52,20 +52,20 @@ public sealed class ConfigFieldAttribute : Attribute
     /// <summary>
     /// Enum handling default value
     /// </summary>
-    public const EnumHandling DefaultEnumHandling = EnumHandling.String;
+    public const EnumHandling DefaultEnumHandling = ConfigLoader.Attributes.EnumHandling.String;
     #endregion
 
     #region Properties
-    /// <summary>
-    /// If this field is required <br/>
-    /// A <see cref="MissingRequiredConfigFieldException"/> will be thrown if it is missing or unavailable at serialization
-    /// </summary>
-    public bool IsRequired { get; init; } = DefaultIsRequired;
     /// <summary>
     /// Name under which to serialize this value<br/>
     /// Leaving this empty will use the name of the field it is attached to
     /// </summary>
     public string? Name { get; init; }
+    /// <summary>
+    /// If this field is required <br/>
+    /// A <see cref="MissingRequiredConfigFieldException"/> will be thrown if it is missing or unavailable at serialization
+    /// </summary>
+    public bool IsRequired { get; init; } = DefaultIsRequired;
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>

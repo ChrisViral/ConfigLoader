@@ -41,11 +41,7 @@ public static partial class ParseUtils
     private static string[] SplitCollectionInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[]? separators = options.CollectionSeparators;
-        if (separators is not { Length: > 0 })
-        {
-            separators = DefaultCollectionSeparators;
-        }
+        char[] separators = !options.Separator.IsNull() ? MakeBuffer(options.CollectionSeparator) : DefaultCollectionSeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);
@@ -60,11 +56,7 @@ public static partial class ParseUtils
     private static string[] SplitDictionaryInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[]? separators = options.DictionarySeparators;
-        if (separators is not { Length: > 0 })
-        {
-            separators = DefaultDictionarySeparators;
-        }
+        char[] separators = !options.Separator.IsNull() ? MakeBuffer(options.DictionarySeparator) : DefaultDictionarySeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);

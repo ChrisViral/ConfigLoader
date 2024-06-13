@@ -19,6 +19,10 @@ public static partial class ParseUtils
 {
     #region Defaults
     /// <summary>
+    /// Internal separator buffer
+    /// </summary>
+    internal static readonly char[] SeparatorBuffer = new char[1];
+    /// <summary>
     /// Default separators
     /// </summary>
     internal static readonly char[] DefaultSeparators = [','];
@@ -69,14 +73,21 @@ public static partial class ParseUtils
     private static string[] SplitValuesInternal(string value, in ParseOptions options, char[] defaultSeparators)
     {
         // Assign default separators if needed
-        char[]? separators = options.Separators;
-        if (separators is not { Length: > 0 })
-        {
-            separators = defaultSeparators;
-        }
+        char[] separators = !options.Separator.IsNull() ? MakeBuffer(options.Separator) : defaultSeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);
+    }
+
+    /// <summary>
+    /// Populates the separator buffer with the provided character and returns it
+    /// </summary>
+    /// <param name="character">Character to put into the buffer</param>
+    /// <returns>The populated separator buffer</returns>
+    private static char[] MakeBuffer(char character)
+    {
+        SeparatorBuffer[0] = character;
+        return SeparatorBuffer;
     }
     #endregion
 

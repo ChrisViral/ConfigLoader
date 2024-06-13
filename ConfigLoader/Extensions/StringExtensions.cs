@@ -11,8 +11,18 @@ namespace ConfigLoader.Extensions;
 /// String splitting extensions using <see cref="ExtendedSplitOptions"/>
 /// </summary>
 [PublicAPI]
-public static class StringSplitExtensions
+public static class StringExtensions
 {
+    #region Char
+    /// <summary>
+    /// Checks if this character is equal to the null character <c>0x00</c>
+    /// </summary>
+    /// <param name="character">Character to check</param>
+    /// <returns><see langword="true"/> if <paramref name="character"/> is equal to the null character, otherwise <see langword="false"/></returns>
+    public static bool IsNull(this char character) => character == default;
+    #endregion
+
+    #region Split
     /// <summary>
     /// Splits a string into substrings based on specified delimiting characters and options
     /// </summary>
@@ -115,4 +125,5 @@ public static class StringSplitExtensions
         }
         return validSplits;
     }
+    #endregion
 }
