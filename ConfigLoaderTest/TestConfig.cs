@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using ConfigLoader.Attributes;
-using ConfigLoader.Utils;
 using UnityEngine;
 
 namespace ConfigLoaderTest;
@@ -42,12 +42,17 @@ public partial class TestConfig
     public HashSet<string> stringHashSet;
     [ConfigField]
     public LinkedList<long> longLinkedList;
+    [ConfigField]
+    public Queue<object> objectQueue;
+    [ConfigField]
+    public Stack<char> charStack;
+    [ConfigField]
+    public ReadOnlyCollection<double> doubleReadOnlyCollection;
 
     [ConfigField(Name = "OtherName")]
     public Vector3 VectorProperty { get; set; }
 
     public void Test(ConfigNode node)
     {
-        node.AddValue("intList", WriteUtils.Write(this.intList, WriteUtils.Write, WriteOptions.Defaults));
     }
 }

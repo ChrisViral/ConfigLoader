@@ -87,7 +87,7 @@ public static class LoadBuilder
             return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context);
         }
 
-        if (field.Type.IsArray)
+        if (field.Type.IsArray || field.Type.IsSupportedCollection)
         {
             return GenerateTryParseValueLoad(value, GenerateTryParseArrayInvocation, field, context);
         }

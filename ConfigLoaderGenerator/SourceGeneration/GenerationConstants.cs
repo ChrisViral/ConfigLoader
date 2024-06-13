@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
@@ -62,6 +63,18 @@ public static class GenerationConstants
         $"{UnityEngine}.Color32",
         $"{UnityEngine}.Matrix4x4",
         "Matrix4x4D"
+    ];
+
+    /// <summary>
+    /// Directly supported collection types
+    /// </summary>
+    public static readonly HashSet<string> SupportedCollections =
+    [
+        typeof(List<>).GetDisplayName(),
+        typeof(HashSet<>).GetDisplayName(),
+        typeof(ReadOnlyCollection<>).GetDisplayName(),
+        typeof(Queue<>).GetDisplayName(),
+        typeof(Stack<>).GetDisplayName()
     ];
     #endregion
 

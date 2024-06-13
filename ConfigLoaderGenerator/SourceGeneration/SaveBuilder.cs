@@ -50,7 +50,6 @@ public static class SaveBuilder
     /// WriteOptions defaults identifier
     /// </summary>
     private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.WriteOptions.Defaults).AsName();
-
     /// <summary>
     /// Types that can be directly assigned with AddValue
     /// </summary>
@@ -82,7 +81,7 @@ public static class SaveBuilder
             return GenerateWriteValueSave(body, name, value, WriteValueSave, field, context);
         }
 
-        if (field.Type.IsArray || field.Type.IsCollection)
+        if (field.Type.IsArray || field.Type.IsSupportedCollection || field.Type.IsCollection)
         {
             return GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }

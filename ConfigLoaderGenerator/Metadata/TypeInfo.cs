@@ -67,6 +67,10 @@ public readonly struct TypeInfo
     /// </summary>
     public bool IsArray => this.ArraySymbol is not null;
     /// <summary>
+    /// If this type is a supported generic collection
+    /// </summary>
+    public bool IsSupportedCollection => this.NamedSymbol is { IsGenericType: true } && SupportedCollections.Contains(this.NamedSymbol.ConstructUnboundGenericType().FullName());
+    /// <summary>
     /// If this type is generic
     /// </summary>
     public bool IsCollection => this.Symbol.Implements(typeof(ICollection<>));
