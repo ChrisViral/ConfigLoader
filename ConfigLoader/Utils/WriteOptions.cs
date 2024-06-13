@@ -12,12 +12,15 @@ namespace ConfigLoader.Utils;
 /// </summary>
 /// <param name="Format">Format string</param>
 /// <param name="EnumHandling">Enum values handling, defaults to <see cref="EnumHandling.String"/></param>
-/// <param name="Separator">Joined values separator string</param>
+/// <param name="Separator">Joined values separator string, if left to <see langword="null"/>, the default separators, a single comma, will be used</param>
+/// <param name="CollectionSeparator">Collection values separator string, if left to <see langword="null"/>, the default collection separators, a single comma, will be used</param>
+/// <param name="DictionarySeparator">Dictionary values separator string, if left to <see langword="null"/>, the default dictionary separators, a pipe character, will be used</param>
 [PublicAPI]
 public readonly record struct WriteOptions(string? Format = null,
                                            EnumHandling EnumHandling = EnumHandling.String,
                                            string? Separator = null,
-                                           string? CollectionSeparator = null)
+                                           string? CollectionSeparator = null,
+                                           string? DictionarySeparator = null)
 {
     /// <summary>
     /// Default write options

@@ -33,30 +33,37 @@ public static partial class ParseUtils
 
     #region Split
     /// <summary>
-    /// Split the values in a string with the provided options
+    /// Split the collection string with the provided options
     /// </summary>
     /// <param name="value">Value to split</param>
     /// <param name="options">Parsing options</param>
     /// <returns>The array of split values</returns>
     private static string[] SplitCollectionInternal(string value, in ParseOptions options)
     {
-        return SplitCollectionInternal(value, options, DefaultCollectionSeparators);
-    }
-
-    /// <summary>
-    /// Split the values in a string with the provided options
-    /// </summary>
-    /// <param name="value">Value to split</param>
-    /// <param name="options">Parsing options</param>
-    /// <param name="defaultSeparators">Default string separators if the provided separators are <see langword="null"/> or empty</param>
-    /// <returns>The array of split values</returns>
-    private static string[] SplitCollectionInternal(string value, in ParseOptions options, char[] defaultSeparators)
-    {
         // Assign default separators if needed
         char[]? separators = options.CollectionSeparators;
         if (separators is not { Length: > 0 })
         {
-            separators = defaultSeparators;
+            separators = DefaultCollectionSeparators;
+        }
+
+        // Return splits
+        return value.Split(separators, options.SplitOptions);
+    }
+
+    /// <summary>
+    /// Split the dictionary string with the provided options
+    /// </summary>
+    /// <param name="value">Value to split</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns>The array of split values</returns>
+    private static string[] SplitDictionaryInternal(string value, in ParseOptions options)
+    {
+        // Assign default separators if needed
+        char[]? separators = options.DictionarySeparators;
+        if (separators is not { Length: > 0 })
+        {
+            separators = DefaultDictionarySeparators;
         }
 
         // Return splits
@@ -375,7 +382,8 @@ public static partial class ParseUtils
     /// <param name="valueTryParse">TryParse function delegate for <typeparamref name="TValue"/></param>
     /// <param name="options">Parsing options</param>
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
-    public static bool TryParse<TDict, TKey, TValue>(string? value, out TDict? result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options) where TDict : IDictionary<TKey, TValue>, new()
+    public static bool TryParse<TDict, TKey, TValue>(string? value, out TDict? result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+        where TDict : IDictionary<TKey, TValue>, new()
     {
         // If empty, return now
         if (string.IsNullOrEmpty(value))
@@ -384,7 +392,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitCollectionInternal(value!, options, DefaultDictionarySeparators);
+        string[] splits = SplitDictionaryInternal(value!, options);
         result = [];
         if (result.IsReadOnly)
         {

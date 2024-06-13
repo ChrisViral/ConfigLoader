@@ -24,7 +24,15 @@ public static partial class WriteUtils
     /// <summary>
     /// Default dictionary separator
     /// </summary>
+    private const string DEFAULT_COLLECTION_SEPARATOR = ",";
+    /// <summary>
+    /// Default dictionary separator
+    /// </summary>
     private const string DEFAULT_DICT_SEPARATOR = "|";
+    /// <summary>
+    /// Default dictionary separator
+    /// </summary>
+    private const int COLLECTION_ALLOCATION = 25;
     #endregion
 
     #region Utility
@@ -53,8 +61,8 @@ public static partial class WriteUtils
         if (IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
-        string separator = options.CollectionSeparator ?? DEFAULT_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * value!.Count);
+        string separator = options.CollectionSeparator ?? DEFAULT_COLLECTION_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * value!.Count);
 
         // Append values
         builder.Append(write(value[0], options));
@@ -81,8 +89,8 @@ public static partial class WriteUtils
         if (IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
-        string separator = options.CollectionSeparator ?? DEFAULT_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * value!.Count);
+        string separator = options.CollectionSeparator ?? DEFAULT_COLLECTION_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * value!.Count);
 
         // Get values enumerator
         using IEnumerator<T> enumerator = value.GetEnumerator();
@@ -124,8 +132,8 @@ public static partial class WriteUtils
             if (collection.Count is 0) return string.Empty;
 
             // Create StringBuilder and enumerator
-            separator  = options.CollectionSeparator ?? DEFAULT_SEPARATOR;
-            builder    = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * collection.Count);
+            separator  = options.CollectionSeparator ?? DEFAULT_COLLECTION_SEPARATOR;
+            builder    = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * collection.Count);
             enumerator = value.GetEnumerator();
         }
         else
@@ -173,7 +181,7 @@ public static partial class WriteUtils
     {
         // Get StringBuilder and separator
         string separator = options.Separator ?? DEFAULT_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * 2);
+        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * 2);
         builder.Append(writeKey(value.Key, options)).Append(separator);
         builder.Append(writeValue(value.Value, options));
 
@@ -198,7 +206,7 @@ public static partial class WriteUtils
 
         // Get StringBuilder and separator
         string separator = options.Separator ?? DEFAULT_DICT_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((DOUBLE_ALLOCATION + separator.Length) * value!.Count);
+        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * value!.Count);
 
         // Get values enumerator
         using IEnumerator<KeyValuePair<TKey, TValue>> enumerator = value.GetEnumerator();
