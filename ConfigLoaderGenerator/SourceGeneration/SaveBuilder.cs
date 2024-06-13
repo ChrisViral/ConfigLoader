@@ -81,7 +81,17 @@ public static class SaveBuilder
             return GenerateWriteValueSave(body, name, value, WriteValueSave, field, context);
         }
 
-        if (field.Type.IsArray || field.Type.IsSupportedCollection || field.Type.IsCollection)
+        if (field.Type.IsArray)
+        {
+            return GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
+        }
+
+        if (field.Type.IsDictionary)
+        {
+            return GenerateWriteValueSave(body, name, value, WriteDictionarySave, field, context);
+        }
+
+        if (field.Type.IsSupportedCollection || field.Type.IsCollection)
         {
             return GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
@@ -164,7 +174,23 @@ public static class SaveBuilder
     }
 
     /// <summary>
-    /// Creates a Write invocation for collections
+    /// Creates a Write invocation for <see cref="IDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <param name="write">Write member access</param>
+    /// <param name="value">Value to write</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to write from</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>Write</c> invocation</returns>
+    public static InvocationExpressionSyntax WriteDictionarySave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // WriteUtils.Write(value, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults)
+        ArgumentSyntax writeArgument = write.AsArgument();
+        return write.Invoke(value.AsArgument(), writeArgument, writeArgument, options);
+    }
+
+    /// <summary>
+    /// Creates a Write invocation for <see cref="ICollection{T}"/>
     /// </summary>
     /// <param name="write">Write member access</param>
     /// <param name="value">Value to write</param>

@@ -92,6 +92,11 @@ public static class LoadBuilder
             return GenerateTryParseValueLoad(value, GenerateTryParseArrayInvocation, field, context);
         }
 
+        if (field.Type.IsDictionary)
+        {
+            return GenerateTryParseValueLoad(value, GenerateTryParseDictionaryInvocation, field, context);
+        }
+
         if (field.Type.IsCollection)
         {
             return GenerateTryParseValueLoad(value, GenerateTryParseCollectionInvocation, field, context);
@@ -207,6 +212,37 @@ public static class LoadBuilder
     }
 
     /// <summary>
+    /// Creates a TryParse invocation for <see cref="IDictionary{TKey,TValue}"/> implementations
+    /// </summary>
+    /// <param name="tryParse">TryParse member access</param>
+    /// <param name="value">Value to parse</param>
+    /// <param name="outVar">Output variable</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to parse into</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>TryParse</c> invocation</returns>
+    private static InvocationExpressionSyntax GenerateTryParseDictionaryInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                                   ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // Get dictionary element type
+        field.Type.Symbol.TryGetInterface(typeof(IDictionary<,>), out INamedTypeSymbol? dictionaryInterface);
+        ITypeSymbol keySymbol   = dictionaryInterface!.TypeArguments[0];
+        ITypeSymbol valueSymbol = dictionaryInterface.TypeArguments[1];
+
+        // ParseUtils.TryParse<TDict, TKey, TValue>
+        GenericNameSyntax tryParseGenericName = TryParse.AsGenericName(field.Type.Identifier, keySymbol.DisplayName().AsName(), valueSymbol.DisplayName().AsName());
+        ExpressionSyntax tryParseGeneric = tryParse.WithName(tryParseGenericName);
+
+        // Add key/value namespaces
+        context.UsedNamespaces.AddNamespace(keySymbol.ContainingNamespace);
+        context.UsedNamespaces.AddNamespace(valueSymbol.ContainingNamespace);
+
+        // ParseUtils.TryParse<TDict, TKey, TValue>(value.value, out TDict result, ParseUtils.TryParse, ParseUtils.TryParse, options);
+        ArgumentSyntax tryParseArgument = tryParse.AsArgument();
+        return tryParseGeneric.Invoke(value.AsArgument(), outVar, tryParseArgument, tryParseArgument, options);
+    }
+
+    /// <summary>
     /// Creates a TryParse invocation for <see cref="ICollection{T}"/> implementations
     /// </summary>
     /// <param name="tryParse">TryParse member access</param>
@@ -221,14 +257,14 @@ public static class LoadBuilder
     {
         // Get collection element type
         field.Type.Symbol.TryGetInterface(typeof(ICollection<>), out INamedTypeSymbol? collectionInterface);
-        ITypeSymbol collectionElement = collectionInterface!.TypeArguments[0];
+        ITypeSymbol elementSymbol = collectionInterface!.TypeArguments[0];
 
         // ParseUtils.TryParse<TCollection, TElement>
-        GenericNameSyntax tryParseGenericName = TryParse.AsGenericName(field.Type.Identifier, collectionElement.DisplayName().AsName());
+        GenericNameSyntax tryParseGenericName = TryParse.AsGenericName(field.Type.Identifier, elementSymbol.DisplayName().AsName());
         ExpressionSyntax tryParseGeneric = tryParse.WithName(tryParseGenericName);
 
         // Add element namespace
-        context.UsedNamespaces.AddNamespace(collectionElement.ContainingNamespace);
+        context.UsedNamespaces.AddNamespace(elementSymbol.ContainingNamespace);
 
         // ParseUtils.TryParse<TCollection, TElement>(value.value, out TCollection result, ParseUtils.TryParse, options);
         return tryParseGeneric.Invoke(value.AsArgument(), outVar, tryParse.AsArgument(), options);

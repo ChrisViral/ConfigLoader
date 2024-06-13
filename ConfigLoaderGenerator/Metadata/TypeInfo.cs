@@ -67,13 +67,21 @@ public readonly struct TypeInfo
     /// </summary>
     public bool IsArray => this.ArraySymbol is not null;
     /// <summary>
-    /// If this type is a supported generic collection
+    /// If this type is a base supported generic collection
     /// </summary>
     public bool IsSupportedCollection => this.NamedSymbol is { IsGenericType: true } && SupportedCollections.Contains(this.NamedSymbol.ConstructUnboundGenericType().FullName());
     /// <summary>
-    /// If this type is generic
+    /// If this type implements <see cref="ICollection{T}"/>
     /// </summary>
     public bool IsCollection => this.Symbol.Implements(typeof(ICollection<>));
+    /// <summary>
+    /// If this type is a base supported generic collection
+    /// </summary>
+    public bool IsSupportedDictionary => this.NamedSymbol is { IsGenericType: true } && SupportedCollections.Contains(this.NamedSymbol.ConstructUnboundGenericType().FullName());
+    /// <summary>
+    /// If this type implements <see cref="ICollection{T}"/>
+    /// </summary>
+    public bool IsDictionary => this.Symbol.Implements(typeof(IDictionary<,>));
 
     /// <summary>
     /// Creates a new TypeInfo based on a given type symbol

@@ -138,6 +138,16 @@ namespace ConfigLoaderTest
                         break;
                     }
 
+                    case "stringDecimalDictionary":
+                    {
+                        if (ParseUtils.TryParse<Dictionary<string, decimal>, string, decimal>(value.value, out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+                        {
+                            this.stringDecimalDictionary = _stringDecimalDictionary;
+                        }
+
+                        break;
+                    }
+
                     case "OtherName":
                     {
                         if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, ParseOptions.Defaults))
@@ -201,6 +211,7 @@ namespace ConfigLoaderTest
             node.AddValue("objectQueue", WriteUtils.Write(this.objectQueue, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("charStack", WriteUtils.Write(this.charStack, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("doubleReadOnlyCollection", WriteUtils.Write(this.doubleReadOnlyCollection, WriteUtils.Write, WriteOptions.Defaults));
+            node.AddValue("stringDecimalDictionary", WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, WriteOptions.Defaults));
             this.floatCurve?.Save(node.AddNode("floatCurve"));
             ((IConfigNode)this.explicitImplementation).Save(node.AddNode("explicitImplementation"));

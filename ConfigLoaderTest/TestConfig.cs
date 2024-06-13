@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ConfigLoader.Attributes;
+using ConfigLoader.Utils;
 using UnityEngine;
 
 namespace ConfigLoaderTest;
@@ -48,11 +49,19 @@ public partial class TestConfig
     public Stack<char> charStack;
     [ConfigField]
     public ReadOnlyCollection<double> doubleReadOnlyCollection;
+    [ConfigField]
+    public Dictionary<string, decimal> stringDecimalDictionary;
 
     [ConfigField(Name = "OtherName")]
     public Vector3 VectorProperty { get; set; }
 
     public void Test(ConfigNode node)
     {
+        if (ParseUtils.TryParse<Dictionary<string, decimal>, string, decimal>("", out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+        {
+
+        }
+
+        WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults);
     }
 }

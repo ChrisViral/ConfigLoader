@@ -66,7 +66,7 @@ public static class GenerationConstants
     ];
 
     /// <summary>
-    /// Directly supported collection types
+    /// Directly supported <see cref="ICollection{T}"/> types
     /// </summary>
     public static readonly HashSet<string> SupportedCollections =
     [
@@ -75,6 +75,12 @@ public static class GenerationConstants
         typeof(ReadOnlyCollection<>).GetDisplayName(),
         typeof(Queue<>).GetDisplayName(),
         typeof(Stack<>).GetDisplayName()
+    ];
+    /// <summary>
+    /// Directly supported <see cref="IDictionary{TKey,TValue}"/> types
+    /// </summary>
+    public static readonly HashSet<string> SupportedDictionaries =
+    [
     ];
     #endregion
 
