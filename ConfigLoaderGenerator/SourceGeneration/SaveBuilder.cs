@@ -77,7 +77,7 @@ public static class SaveBuilder
             return GenerateAddValueSave(body, name, value, field, context);
         }
 
-        if (field.Type.IsBuiltin|| field.Type.IsEnum || SupportedTypes.Contains(field.Type.FullName))
+        if (field.Type.IsBuiltin|| field.Type.IsEnum || field.Type.IsSupportedType)
         {
             return GenerateWriteValueSave(body, name, value, WriteValueSave, field, context);
         }
@@ -87,7 +87,7 @@ public static class SaveBuilder
             return GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
-        if (field.Type.IsDictionary)
+        if (field.Type.IsSupportedDictionary || field.Type.IsDictionary)
         {
             return GenerateWriteValueSave(body, name, value, WriteDictionarySave, field, context);
         }

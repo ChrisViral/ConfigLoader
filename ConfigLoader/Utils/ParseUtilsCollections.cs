@@ -190,6 +190,29 @@ public static partial class ParseUtils
     }
 
     /// <summary>
+    /// Tries to parse the given value as a <see cref="LinkedList{T}"/>
+    /// </summary>
+    /// <typeparam name="T">Type of element to parse</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="tryParse">TryParse function delegate</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<T>(string? value, out LinkedList<T>? result, TryParseFunc<T> tryParse, in ParseOptions options)
+    {
+        // Make sure the value and delegate are valid
+        if (string.IsNullOrEmpty(value))
+        {
+            result = null;
+            return false;
+        }
+
+        string[] splits = SplitCollectionInternal(value!, options);
+        result = [];
+        return TryParseCollectionInternal(splits, ref result, tryParse, options);
+    }
+
+    /// <summary>
     /// Tries to parse the given value as a <see cref="HashSet{T}"/>
     /// </summary>
     /// <typeparam name="T">Type of element to parse</typeparam>
@@ -209,6 +232,29 @@ public static partial class ParseUtils
 
         string[] splits = SplitCollectionInternal(value!, options);
         result = new HashSet<T>(splits.Length);
+        return TryParseCollectionInternal(splits, ref result, tryParse, options);
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="SortedSet{T}"/>
+    /// </summary>
+    /// <typeparam name="T">Type of element to parse</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="tryParse">TryParse function delegate</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<T>(string? value, out SortedSet<T>? result, TryParseFunc<T> tryParse, in ParseOptions options)
+    {
+        // Make sure the value and delegate are valid
+        if (string.IsNullOrEmpty(value))
+        {
+            result = null;
+            return false;
+        }
+
+        string[] splits = SplitCollectionInternal(value!, options);
+        result = [];
         return TryParseCollectionInternal(splits, ref result, tryParse, options);
     }
 
@@ -379,7 +425,7 @@ public static partial class ParseUtils
     }
 
     /// <summary>
-    /// Tries to parse the given value as a <see cref="KeyValuePair{TKey,TValue}"/>
+    /// Tries to parse the given value as a <see cref="IDictionary{TKey,TValue}"/>
     /// </summary>
     /// <typeparam name="TDict">Dictionary type</typeparam>
     /// <typeparam name="TKey">Key type</typeparam>
@@ -414,6 +460,143 @@ public static partial class ParseUtils
             if (!TryParse(element, out KeyValuePair<TKey, TValue> parsed, keyTryParse, valueTryParse, in options))
             {
                 result = default;
+                return false;
+            }
+
+            result.Add(parsed.Key, parsed.Value);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="Dictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">TryParse function delegate for <typeparamref name="TKey"/></param>
+    /// <param name="valueTryParse">TryParse function delegate for <typeparamref name="TValue"/></param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(string? value, out Dictionary<TKey, TValue>? result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // If empty, return now
+        if (string.IsNullOrEmpty(value))
+        {
+            result = default;
+            return false;
+        }
+
+        string[] splits = SplitDictionaryInternal(value!, options);
+        result = new Dictionary<TKey, TValue>(splits.Length);
+        return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="SortedDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">TryParse function delegate for <typeparamref name="TKey"/></param>
+    /// <param name="valueTryParse">TryParse function delegate for <typeparamref name="TValue"/></param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(string? value, out SortedDictionary<TKey, TValue>? result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // If empty, return now
+        if (string.IsNullOrEmpty(value))
+        {
+            result = default;
+            return false;
+        }
+
+        string[] splits = SplitDictionaryInternal(value!, options);
+        result = [];
+        return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="SortedList{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">TryParse function delegate for <typeparamref name="TKey"/></param>
+    /// <param name="valueTryParse">TryParse function delegate for <typeparamref name="TValue"/></param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(string? value, out SortedList<TKey, TValue>? result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // If empty, return now
+        if (string.IsNullOrEmpty(value))
+        {
+            result = default;
+            return false;
+        }
+
+        string[] splits = SplitDictionaryInternal(value!, options);
+        result = new SortedList<TKey, TValue>(splits.Length);
+        return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="ReadOnlyDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="value">String value to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">TryParse function delegate for <typeparamref name="TKey"/></param>
+    /// <param name="valueTryParse">TryParse function delegate for <typeparamref name="TValue"/></param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(string? value, out ReadOnlyDictionary<TKey, TValue>? result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // If empty, return now
+        if (string.IsNullOrEmpty(value))
+        {
+            result = default;
+            return false;
+        }
+
+        string[] splits = SplitDictionaryInternal(value!, options);
+        Dictionary<TKey, TValue> dict = new(splits.Length);
+        if (TryParseDictionaryInternal(splits, ref dict, keyTryParse, valueTryParse, in options))
+        {
+            result = new ReadOnlyDictionary<TKey, TValue>(dict);
+            return true;
+        }
+
+        result = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="IDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TDict">Dictionary type</typeparam>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="splits">String values to parse</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">TryParse function delegate for <typeparamref name="TKey"/></param>
+    /// <param name="valueTryParse">TryParse function delegate for <typeparamref name="TValue"/></param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParseDictionaryInternal<TDict, TKey, TValue>(string[] splits, ref TDict result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+        where TDict : IDictionary<TKey, TValue>
+    {
+        foreach (string element in splits)
+        {
+            // If parse partially fails, return early
+            if (!TryParse(element, out KeyValuePair<TKey, TValue> parsed, keyTryParse, valueTryParse, in options))
+            {
+                result = default!;
                 return false;
             }
 

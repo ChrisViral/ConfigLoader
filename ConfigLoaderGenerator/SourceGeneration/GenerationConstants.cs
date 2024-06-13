@@ -41,7 +41,6 @@ public static class GenerationConstants
         typeof(string).FullName,
         typeof(object).FullName
     ];
-
     /// <summary>
     /// Supported non-builtin types
     /// </summary>
@@ -64,14 +63,15 @@ public static class GenerationConstants
         $"{UnityEngine}.Matrix4x4",
         "Matrix4x4D"
     ];
-
     /// <summary>
     /// Directly supported <see cref="ICollection{T}"/> types
     /// </summary>
     public static readonly HashSet<string> SupportedCollections =
     [
         typeof(List<>).GetDisplayName(),
+        typeof(LinkedList<>).GetDisplayName(),
         typeof(HashSet<>).GetDisplayName(),
+        typeof(SortedSet<>).GetDisplayName(),
         typeof(ReadOnlyCollection<>).GetDisplayName(),
         typeof(Queue<>).GetDisplayName(),
         typeof(Stack<>).GetDisplayName()
@@ -81,6 +81,10 @@ public static class GenerationConstants
     /// </summary>
     public static readonly HashSet<string> SupportedDictionaries =
     [
+        typeof(Dictionary<,>).GetDisplayName(),
+        typeof(SortedDictionary<,>).GetDisplayName(),
+        typeof(SortedList<,>).GetDisplayName(),
+        typeof(ReadOnlyDictionary<,>).GetDisplayName()
     ];
     #endregion
 

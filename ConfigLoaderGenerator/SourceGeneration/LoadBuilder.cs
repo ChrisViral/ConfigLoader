@@ -83,7 +83,7 @@ public static class LoadBuilder
             return GenerateAssignValueLoad(value, field, context);
         }
 
-        if (field.Type.IsBuiltin || field.Type.IsEnum || SupportedTypes.Contains(field.Type.FullName))
+        if (field.Type.IsBuiltin || field.Type.IsEnum || field.Type.IsSupportedType)
         {
             return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context);
         }
@@ -91,6 +91,11 @@ public static class LoadBuilder
         if (field.Type.IsArray || field.Type.IsSupportedCollection)
         {
             return GenerateTryParseValueLoad(value, GenerateTryParseArrayInvocation, field, context);
+        }
+
+        if (field.Type.IsSupportedDictionary)
+        {
+            return GenerateTryParseValueLoad(value, GenerateTryParseSimpleDictionaryInvocation, field, context);
         }
 
         if (field.Type.IsDictionary)
@@ -208,6 +213,24 @@ public static class LoadBuilder
     {
         // ParseUtils.TryParse(value.value, out T[] result, ParseUtils.TryParse, options);
         return tryParse.Invoke(value.AsArgument(), outVar, tryParse.AsArgument(), options);
+    }
+
+    /// <summary>
+    /// Creates a TryParse invocation for <see cref="IDictionary{TKey,TValue}"/> implementations
+    /// </summary>
+    /// <param name="tryParse">TryParse member access</param>
+    /// <param name="value">Value to parse</param>
+    /// <param name="outVar">Output variable</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to parse into</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>TryParse</c> invocation</returns>
+    private static InvocationExpressionSyntax GenerateTryParseSimpleDictionaryInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                                         ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // ParseUtils.TryParse(value.value, out TDict result, ParseUtils.TryParse, ParseUtils.TryParse, options);
+        ArgumentSyntax tryParseArgument = tryParse.AsArgument();
+        return tryParse.Invoke(value.AsArgument(), outVar, tryParseArgument, tryParseArgument, options);
     }
 
     /// <summary>

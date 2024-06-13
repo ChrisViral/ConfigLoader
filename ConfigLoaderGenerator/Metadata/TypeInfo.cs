@@ -63,6 +63,10 @@ public readonly struct TypeInfo
     /// </summary>
     public bool IsEnum => this.Symbol.IsEnum();
     /// <summary>
+    /// If this type is a base supported type
+    /// </summary>
+    public bool IsSupportedType => SupportedTypes.Contains(this.Symbol.FullName());
+    /// <summary>
     /// If this type is an array
     /// </summary>
     public bool IsArray => this.ArraySymbol is not null;
@@ -77,7 +81,7 @@ public readonly struct TypeInfo
     /// <summary>
     /// If this type is a base supported generic collection
     /// </summary>
-    public bool IsSupportedDictionary => this.NamedSymbol is { IsGenericType: true } && SupportedCollections.Contains(this.NamedSymbol.ConstructUnboundGenericType().FullName());
+    public bool IsSupportedDictionary => this.NamedSymbol is { IsGenericType: true } && SupportedDictionaries.Contains(this.NamedSymbol.ConstructUnboundGenericType().FullName());
     /// <summary>
     /// If this type implements <see cref="ICollection{T}"/>
     /// </summary>

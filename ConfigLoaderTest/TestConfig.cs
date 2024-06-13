@@ -57,9 +57,9 @@ public partial class TestConfig
 
     public void Test(ConfigNode node)
     {
-        if (ParseUtils.TryParse<Dictionary<string, decimal>, string, decimal>("", out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+        if (ParseUtils.TryParse("value.value", out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
         {
-
+            this.stringDecimalDictionary = _stringDecimalDictionary;
         }
 
         WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults);
