@@ -24,11 +24,11 @@ public static partial class ParseUtils
     /// <summary>
     /// Default collection separators
     /// </summary>
-    internal static readonly char[] DefaultCollectionSeparators = [','];
+    internal static readonly char[] DefaultCollectionSeparators = [WriteUtils.DEFAULT_COLLECTION_SEPARATOR];
     /// <summary>
     /// Default dictionary separators
     /// </summary>
-    internal static readonly char[] DefaultDictionarySeparators = ['|'];
+    internal static readonly char[] DefaultDictionarySeparators = [WriteUtils.DEFAULT_DICT_SEPARATOR];
     #endregion
 
     #region Split

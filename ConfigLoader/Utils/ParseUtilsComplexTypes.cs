@@ -25,11 +25,11 @@ public static partial class ParseUtils
     /// <summary>
     /// Default separators
     /// </summary>
-    internal static readonly char[] DefaultSeparators = [','];
+    internal static readonly char[] DefaultSeparators = [WriteUtils.DEFAULT_SEPARATOR];
     /// <summary>
     /// Default <see cref="Matrix4x4"/> separators
     /// </summary>
-    internal static readonly char[] DefaultMatrixSeparators = [',', ' ', '\t'];
+    internal static readonly char[] DefaultMatrixSeparators = [WriteUtils.DEFAULT_SEPARATOR, ' ', '\t'];
     /// <summary>
     /// Default <see cref="Color32"/> return value (white)
     /// </summary>
