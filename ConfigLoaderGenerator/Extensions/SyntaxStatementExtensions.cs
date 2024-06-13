@@ -58,5 +58,16 @@ public static class SyntaxStatementExtensions
     /// </summary>
     /// <returns>A <see langword="continue"/> statement</returns>
     public static ContinueStatementSyntax Continue() => ContinueStatement();
+
+    /// <summary>
+    /// Creates an <see langword="if"/> block with the provided statements
+    /// </summary>
+    /// <param name="condition">If condition</param>
+    /// <param name="statements">Block statements</param>
+    /// <returns>An if statement over the provided <paramref name="condition"/> and with the provided <see cref="statements"/></returns>
+    public static IfStatementSyntax If(ExpressionSyntax condition, params StatementSyntax[] statements)
+    {
+        return IfStatement(condition, Block(statements));
+    }
     #endregion
 }

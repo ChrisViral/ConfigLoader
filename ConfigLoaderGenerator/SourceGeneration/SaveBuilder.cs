@@ -6,6 +6,7 @@ using ConfigLoaderGenerator.Metadata;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -257,7 +258,7 @@ public static class SaveBuilder
 
         // node.AddNode("name", this.value);
         ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), value.AsArgument());
-        IfStatementSyntax ifNotNull = IfStatement(value.IsNotNull(), Block().AddStatements(addValueInvocation.AsStatement()));
+        IfStatementSyntax ifNotNull = If(value.IsNotNull(), addValueInvocation.AsStatement());
         return body.AddBodyStatements(ifNotNull);
     }
     #endregion

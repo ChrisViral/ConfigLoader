@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
+using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -125,8 +126,7 @@ public static class LoadBuilder
         ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(value);
 
         // if(!string.IsNullOrEmpty(value.value))
-        BlockSyntax ifBlock = Block().AddStatements(fieldAssign.AsStatement());
-        IfStatementSyntax ifStatement = IfStatement(isNotNullOrEmptyInvocation, ifBlock);
+        IfStatementSyntax ifStatement = If(isNotNullOrEmptyInvocation, fieldAssign.AsStatement());
 
         // Add if statement and return
         return Block().AddStatements(ifStatement);
@@ -164,8 +164,7 @@ public static class LoadBuilder
         ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(tempVar);
 
         // if (ParseUtils.TryParse(value.value, out Type _value, options)) { }
-        BlockSyntax ifBlock           = Block().AddStatements(fieldAssign.AsStatement());
-        IfStatementSyntax ifStatement = IfStatement(tryParseInvocation, ifBlock);
+        IfStatementSyntax ifStatement = If(tryParseInvocation, fieldAssign.AsStatement());
 
         // Add namespace if the type isn't builtin
         context.UsedNamespaces.AddNamespaceName(UtilsNamespace);

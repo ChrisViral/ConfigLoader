@@ -200,7 +200,7 @@ public static class ConfigBuilder
     public static IfStatementSyntax GenerateNodeGuard()
     {
         // if (node == null) return;
-        return IfStatement(Node.IsNull(), Block(Return()));
+        return If(Node.IsNull(), Return());
     }
     #endregion
 
@@ -251,8 +251,6 @@ public static class ConfigBuilder
 
         // int count = node.count;
         VariableDeclarationSyntax countVariable = countName.DeclareVariable(SyntaxKind.IntKeyword, Node.Access(count));
-        // for (int i = 0; i < count; i++)
-        ForStatementSyntax forStatement = IncrementingForLoop(Index, MakeLiteral(0), countName);
 
         // node.values[i]
         ExpressionSyntax currentValue = Node.Access(values).ElementAccess(Index.AsArgument());
@@ -278,9 +276,8 @@ public static class ConfigBuilder
             nameSwitchStatement = nameSwitchStatement.AddSections(section);
         }
 
-        // Add statements to loop body
-        BlockSyntax forBody = Block().AddStatements(valueDeclaration.AsLocalDeclaration(), nameSwitchStatement);
-        forStatement = forStatement.WithStatement(forBody);
+        // for (int i = 0; i < count; i++) { }
+        ForStatementSyntax forStatement = IncrementingFor(Index, MakeLiteral(0), countName, valueDeclaration.AsLocalDeclaration(), nameSwitchStatement);
 
         // Add loop to method and return
         return method.AddBodyStatements(countVariable.AsLocalDeclaration(), forStatement);

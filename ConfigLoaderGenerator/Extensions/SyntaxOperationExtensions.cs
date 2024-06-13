@@ -55,7 +55,7 @@ public static class SyntaxOperationExtensions
     /// <param name="element">Element to access</param>
     /// <param name="name">Name of the value to access on the element</param>
     /// <returns>A conditional access expression under the form <c><paramref name="element"/>?.<paramref name="name"></paramref></c></returns>
-    public static ConditionalAccessExpressionSyntax ConditionalAccess<T>(this T element, IdentifierNameSyntax name) where T : ExpressionSyntax
+    public static ConditionalAccessExpressionSyntax ConditionalAccess<T>(this T element, SimpleNameSyntax name) where T : ExpressionSyntax
     {
         return ConditionalAccessExpression(element, MemberBindingExpression(name));
     }
@@ -308,14 +308,14 @@ public static class SyntaxOperationExtensions
     }
 
     /// <summary>
-    /// Generate an incrementing for loop from <paramref name="start"/> (inclusive) to <paramref name="end"/> (exclusive)
+    /// Generate an incrementing <see langword="for"/> loop from <paramref name="start"/> (inclusive) to <paramref name="end"/> (exclusive)
     /// </summary>
     /// <param name="index">Index variable</param>
     /// <param name="start">Start value expression</param>
     /// <param name="end">End value expression</param>
-    /// <param name="loopBody">Loop execution body, if not specified, the loop will be generated with an empty block</param>
-    /// <returns>The generated for loop</returns>
-    public static ForStatementSyntax IncrementingForLoop(IdentifierNameSyntax index, ExpressionSyntax start, ExpressionSyntax end, BlockSyntax? loopBody = null)
+    /// <param name="statements">Statements executed within the loop</param>
+    /// <returns>The generated <see langword="for"/> loop</returns>
+    public static ForStatementSyntax IncrementingFor(IdentifierNameSyntax index, ExpressionSyntax start, ExpressionSyntax end, params StatementSyntax[] statements)
     {
         // int i = start
         VariableDeclarationSyntax indexDeclaration = index.DeclareVariable(SyntaxKind.IntKeyword.AsType(), start);
@@ -324,18 +324,18 @@ public static class SyntaxOperationExtensions
         // i++
         ExpressionSyntax increment = index.Increment();
         // for (int i = start; i < end; i++) { }
-        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), loopBody ?? Block());
+        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), Block(statements));
     }
 
     /// <summary>
-    /// Generate an incrementing for loop from <paramref name="start"/> (exclusive) to <paramref name="end"/> (inclusive)
+    /// Generate an incrementing <see langword="for"/> loop from <paramref name="start"/> (exclusive) to <paramref name="end"/> (inclusive)
     /// </summary>
     /// <param name="index">Index variable</param>
     /// <param name="start">Start value expression</param>
     /// <param name="end">End value expression</param>
-    /// <param name="loopBody">Loop execution body, if not specified, the loop will be generated with an empty block</param>
-    /// <returns>The generated for loop</returns>
-    public static ForStatementSyntax DecrementingForLoop(IdentifierNameSyntax index, ExpressionSyntax start, ExpressionSyntax end, BlockSyntax? loopBody = null)
+    /// <param name="statements">Statements executed within the loop</param>
+    /// <returns>The generated <see langword="for"/> loop</returns>
+    public static ForStatementSyntax DecrementingFor(IdentifierNameSyntax index, ExpressionSyntax start, ExpressionSyntax end, params StatementSyntax[] statements)
     {
         // int i = start - 1
         VariableDeclarationSyntax indexDeclaration = index.DeclareVariable(SyntaxKind.IntKeyword.AsType(), start.Subtract(1.AsLiteral()));
@@ -344,6 +344,30 @@ public static class SyntaxOperationExtensions
         // i--
         ExpressionSyntax increment = index.Decrement();
         // for (int i = start - 1; i >= end; i--) { }
-        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), loopBody ?? Block());
+        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), Block(statements));
+    }
+
+    /// <summary>
+    /// Generate an <see langword="foreach"/>
+    /// </summary>
+    /// <param name="type">Variable type</param>
+    /// <param name="value">Value name</param>
+    /// <param name="collection">Collection to iterate in expression</param>
+    /// <param name="statements">Statements executed within the loop</param>
+    /// <returns>The generated <see langword="foreach"/> loop</returns>
+    public static ForEachStatementSyntax ForEach(TypeSyntax type, IdentifierNameSyntax value, ExpressionSyntax collection, params StatementSyntax[] statements)
+    {
+        return ForEachStatement(type, value.Identifier, collection, Block(statements));
+    }
+
+    /// <summary>
+    /// Generate an <see langword="while"/>
+    /// </summary>
+    /// <param name="condition">While loop condition</param>
+    /// <param name="statements">Statements executed within the loop</param>
+    /// <returns>The generated <see langword="while"/> loop</returns>
+    public static WhileStatementSyntax While(ExpressionSyntax condition, params StatementSyntax[] statements)
+    {
+        return WhileStatement(condition, Block(statements));
     }
 }
