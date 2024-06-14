@@ -4,9 +4,11 @@ using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
+using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
@@ -98,7 +100,7 @@ public static class SaveBuilder
 
         if (field.Type.IsNodeObject)
         {
-            return GenerateAddNodeSave(body, name, value, context);
+            return GenerateAddNodeSave(body, name, value, field, context);
         }
 
         // Unknown type
@@ -174,10 +176,17 @@ public static class SaveBuilder
 
         // node.AddValue("value", WriteUtils.Write(value, WriteOptions.Defaults));
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
+        StatementSyntax writeStatement = addValueInvocation.AsStatement();
+
+        if (field is { IsRequired: false, Type.Symbol.IsReferenceType: true })
+        {
+            // if (value != null) { }
+            writeStatement = If(value.IsNotNull(), writeStatement);
+        }
 
         // Add namespace and return
         context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
-        return body.AddBodyStatements(addValueInvocation.AsStatement());
+        return body.AddBodyStatements(writeStatement);
     }
 
     /// <summary>
@@ -252,7 +261,7 @@ public static class SaveBuilder
         }
 
         // this.value?.Save(node.AddNode("value"));
-        ExpressionSyntax saveNode = field.Type.Symbol.IsReferenceType
+        ExpressionSyntax saveNode = field is { IsRequired: false, Type.Symbol.IsReferenceType: true }
                                         ? value.ConditionalAccess(Save) // this.value?.Save
                                         : value.Access(Save);           // this.value.Save
 
@@ -269,16 +278,22 @@ public static class SaveBuilder
     /// <param name="body">Save method declaration</param>
     /// <param name="name">Name expression</param>
     /// <param name="value">Value expression</param>
+    /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field node save code generated</returns>
-    private static MethodDeclarationSyntax GenerateAddNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateAddNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
         // node.AddNode("name", this.value);
         ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), value.AsArgument());
-        IfStatementSyntax ifNotNull = If(value.IsNotNull(), addValueInvocation.AsStatement());
-        return body.AddBodyStatements(ifNotNull);
+        StatementSyntax addStatement = addValueInvocation.AsStatement();
+        if (field is { IsRequired: false })
+        {
+            addStatement = If(value.IsNotNull(), addValueInvocation.AsStatement());
+        }
+
+        return body.AddBodyStatements(addStatement);
     }
     #endregion
 }

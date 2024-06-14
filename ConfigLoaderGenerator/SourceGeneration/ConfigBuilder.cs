@@ -340,6 +340,16 @@ public static class ConfigBuilder
         // Make sure node is not null
         method = method.AddBodyStatements(GenerateNodeGuard());
 
+        foreach (ConfigFieldMetadata field in data.ValueFields.Concat(data.NodeFields).Where(f => f is { IsRequired: true, Type.Symbol.IsReferenceType: true }))
+        {
+            // throw new MissingRequiredConfigFieldException();
+            ArgumentSyntax errorMessage = MakeLiteral("ConfigField marked as missing could not be loaded").AsArgument();
+            ThrowStatementSyntax throwMissing = Throw(MissingException.New(errorMessage, field.FieldName.AsLiteral().AsArgument()));
+            // if (this.value != null)
+            StatementSyntax checkStatement = IfStatement(This().Access(field.FieldName).IsNull(), throwMissing);
+            method = method.AddBodyStatements(checkStatement);
+        }
+
         // ReSharper disable once LoopCanBeConvertedToQuery
         foreach (ConfigFieldMetadata field in data.ValueFields)
         {

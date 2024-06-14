@@ -26,11 +26,11 @@ public partial class TestConfig
     public int intValue = 0;
     [ConfigField]
     public float floatValue = 0f;
-    [ConfigField]
+    [ConfigField(IsRequired = true)]
     public string stringValue = string.Empty;
     [ConfigField(EnumHandling = EnumHandling.Flags)]
     public AccessModifier modifier = AccessModifier.Public;
-    [ConfigField]
+    [ConfigField(IsRequired = true)]
     public FloatCurve floatCurve;
     [ConfigField]
     public ConfigTest explicitImplementation;
@@ -38,7 +38,7 @@ public partial class TestConfig
     public ConfigNode configNode;
     [ConfigField]
     public int[] intArray;
-    [ConfigField(CollectionSeparator = ',')]
+    [ConfigField(IsRequired = true, CollectionSeparator = ',')]
     public List<int> intList;
     [ConfigField]
     public HashSet<string> stringHashSet;
@@ -53,45 +53,17 @@ public partial class TestConfig
     [ConfigField(KeyValueSeparator = '|')]
     public Dictionary<string, decimal> stringDecimalDictionary;
 
-    [ConfigField(Name = "OtherName", Separator = ' ', SplitOptions = ExtendedSplitOptions.RemoveEmptyEntries)]
+    [ConfigField(IsRequired = true, Name = "OtherName", Separator = ' ', SplitOptions = ExtendedSplitOptions.RemoveEmptyEntries)]
     public Vector3 VectorProperty { get; set; }
 
     public void Test(ConfigNode node)
     {
-        HashSet<string> required = [];
-        for (int i = 0; i < node.CountValues; i++)
+        string _intList = WriteUtils.Write(this.intList, WriteUtils.Write, WriteOptions.Defaults);
+        if (string.IsNullOrEmpty(_intList))
         {
-            ConfigNode.Value value = node.values[i];
-            switch (value.name)
-            {
-                case "intValue":
-                {
-                    if (ParseUtils.TryParse(value.value, out int _intValue, ParseOptions.Defaults))
-                    {
-                        this.intValue = _intValue;
-                        required.Add("intValue");
-                    }
-                    break;
-                }
-                case "charStack":
-                {
-                    if (ParseUtils.TryParse(value.value, out Stack<char> _charStack, ParseUtils.TryParse, ParseOptions.Defaults))
-                    {
-                        this.charStack = _charStack;
-                        required.Add("charStack");
-                    }
-                    break;
-                }
-            }
+            throw new MissingRequiredConfigFieldException("", "");
         }
 
-        if (!required.Contains("intValue"))
-        {
-            throw new MissingRequiredConfigFieldException("Required config field is missing", "intValue");
-        }
-        if (!required.Contains("intValue"))
-        {
-            throw new MissingRequiredConfigFieldException("Required config field is missing", "charStack");
-        }
+        node.AddValue("", _intList);
     }
 }

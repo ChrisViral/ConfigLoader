@@ -48,7 +48,7 @@ public sealed class ConfigFieldAttribute : Attribute
     /// <summary>
     /// Required default value
     /// </summary>
-    public const bool DefaultIsRequired = true;
+    public const bool DefaultIsRequired = false;
     /// <summary>
     /// Enum handling default value
     /// </summary>
