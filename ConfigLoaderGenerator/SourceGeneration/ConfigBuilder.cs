@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using ConfigLoader;
 using ConfigLoader.Attributes;
+using ConfigLoader.Exceptions;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Utils;
@@ -15,6 +17,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxOperationExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
+using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -126,7 +129,7 @@ public static class ConfigBuilder
     /// <param name="nodeParam">The ConfigNode parameter</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified type declaration with the generated methods added</returns>
-    public static TypeDeclarationSyntax GenerateImplementation(TypeDeclarationSyntax type, ConfigData data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
+    private static TypeDeclarationSyntax GenerateImplementation(TypeDeclarationSyntax type, ConfigData data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
     {
         // Generate methods
         ConfigObjectMetadata objectData = data.Attribute;
@@ -153,7 +156,7 @@ public static class ConfigBuilder
     /// <param name="context">Generation context</param>
     /// <returns>The modifier type declaration with the methods added</returns>
     /// <exception cref="InvalidEnumArgumentException">If the implementation type enum value is invalid</exception>
-    public static TypeDeclarationSyntax GenerateInterfaceImplementation(TypeDeclarationSyntax type, in ConfigObjectMetadata data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
+    private static TypeDeclarationSyntax GenerateInterfaceImplementation(TypeDeclarationSyntax type, in ConfigObjectMetadata data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -197,7 +200,7 @@ public static class ConfigBuilder
     /// Generates a guard statement that ensures the node value is not null
     /// </summary>
     /// <returns>The generated if statement</returns>
-    public static IfStatementSyntax GenerateNodeGuard()
+    private static IfStatementSyntax GenerateNodeGuard()
     {
         // if (node == null) return;
         return If(Node.IsNull(), Return());
@@ -219,9 +222,27 @@ public static class ConfigBuilder
         // Make sure node is not null
         method = method.AddBodyStatements(GenerateNodeGuard());
 
+        // Get amount of required value and nodes
+        int requiredValues = data.ValueFields.Count(f => f.IsRequired);
+        int requiredNodes = data.NodeFields.Count(f => f.IsRequired);
+        // If there are required values or required nodes, create hashset now
+        if (requiredValues is not 0 || requiredNodes is not 0)
+        {
+            ExpressionSyntax hashsetCreation = HashSetString.New(Math.Max(requiredValues, requiredNodes).AsLiteral().AsArgument());
+            VariableDeclarationSyntax requiredSetVariable = Required.DeclareVariable(HashSetString, hashsetCreation);
+            method = method.AddBodyStatements(requiredSetVariable.AsLocalDeclaration());
+            context.UsedNamespaces.AddNamespaceName(typeof(HashSet<>).Namespace);
+            context.UsedNamespaces.AddNamespaceName(typeof(MissingRequiredConfigFieldException).Namespace);
+        }
         // Simple fields loop
         method = GenerateNodeLoop(method, ValueCount, CountValues, Values, ConfigNodeValue, Value.Access(Value), data.ValueFields, LoadBuilder.GenerateValueLoad, context);
 
+        // If there were required values and there are required nodes, clear the hashset
+        if (requiredValues is not 0 && requiredNodes is not 0)
+        {
+            ExpressionSyntax clearInvoke = Required.Access(Clear).Invoke();
+            method = method.AddBodyStatements(clearInvoke.AsStatement());
+        }
         // Config fields loop
         method = GenerateNodeLoop(method, NodeCount, CountNodes, Nodes, ConfigNode, Value, data.NodeFields, LoadBuilder.GenerateNodeLoad, context);
 
@@ -241,8 +262,9 @@ public static class ConfigBuilder
     /// <param name="fields">List of fields to generate load code for</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited load method declaration with the load code generated</returns>
-    private static MethodDeclarationSyntax GenerateNodeLoop(MethodDeclarationSyntax method, IdentifierNameSyntax countName, IdentifierNameSyntax count, IdentifierNameSyntax values, TypeSyntax valueType,
-                                                            ExpressionSyntax value, IReadOnlyCollection<ConfigFieldMetadata> fields, LoadSectionGenerator generateSection, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateNodeLoop(MethodDeclarationSyntax method, IdentifierNameSyntax countName, IdentifierNameSyntax count, IdentifierNameSyntax values,
+                                                            TypeSyntax valueType, ExpressionSyntax value, IReadOnlyCollection<ConfigFieldMetadata> fields,
+                                                            LoadSectionGenerator generateSection, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -258,8 +280,8 @@ public static class ConfigBuilder
         VariableDeclarationSyntax valueDeclaration = Value.DeclareVariable(valueType, currentValue);
 
         // switch (value.name)
+        int requiredCount = 0;
         SwitchStatementSyntax nameSwitchStatement = Value.Access(Name).AsSwitchStatement();
-        // ReSharper disable once LoopCanBeConvertedToQuery
         foreach (ConfigFieldMetadata field in fields)
         {
             // case "name":
@@ -274,13 +296,32 @@ public static class ConfigBuilder
 
             // Add sections for the field
             nameSwitchStatement = nameSwitchStatement.AddSections(section);
+
+            if (field.IsRequired)
+            {
+                requiredCount++;
+            }
         }
 
         // for (int i = 0; i < count; i++) { }
         ForStatementSyntax forStatement = IncrementingFor(Index, MakeLiteral(0), countName, valueDeclaration.AsLocalDeclaration(), nameSwitchStatement);
+        method = method.AddBodyStatements(countVariable.AsLocalDeclaration(), forStatement);
+
+        if (requiredCount is 0) return method;
+
+        // Check if required fields where loaded
+        BlockSyntax checksBlock = Block();
+        foreach (ConfigFieldMetadata requiredField in fields.Where(f => f.IsRequired))
+        {
+            ArgumentSyntax requiredFieldName = requiredField.FieldName.AsLiteral().AsArgument();
+            ExpressionSyntax requiredCheck = Not(Required.Access(Contains).Invoke(requiredFieldName));
+            ThrowStatementSyntax throwMissing = Throw(MissingException.New(MakeLiteral("ConfigField marked as missing could not be loaded").AsArgument(), requiredFieldName));
+            checksBlock = checksBlock.AddStatements(IfStatement(requiredCheck, throwMissing));
+        }
 
         // Add loop to method and return
-        return method.AddBodyStatements(countVariable.AsLocalDeclaration(), forStatement);
+        ExpressionSyntax countNotZero = Required.Access(Count).IsNotEqual(requiredCount.AsLiteral());
+        return method.AddBodyStatements(If(countNotZero, checksBlock));
     }
     #endregion
 

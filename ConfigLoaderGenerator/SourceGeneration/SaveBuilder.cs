@@ -30,7 +30,7 @@ public static class SaveBuilder
     /// <param name="field">Field to write from</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>Write</c> invocation</returns>
-    public delegate InvocationExpressionSyntax WriteInvocation(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context);
+    private delegate InvocationExpressionSyntax WriteInvocation(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context);
 
     /// <summary>
     /// ConfigLoader write utils namespace
@@ -56,14 +56,8 @@ public static class SaveBuilder
     /// WriteOptions defaults identifier
     /// </summary>
     private static readonly ExpressionSyntax DefaultOptions = WriteOptions.Access(Defaults);
-    /// <summary>
-    /// Types that can be directly assigned with AddValue
-    /// </summary>
-    private static readonly HashSet<string> AddableTypes =
-    [
-        typeof(string).FullName
-    ];
 
+    #region Generation
     /// <summary>
     /// Generate the field save code implementation
     /// </summary>
@@ -77,11 +71,6 @@ public static class SaveBuilder
     public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save method
-        if (AddableTypes.Contains(field.Type.FullName))
-        {
-            return GenerateAddValueSave(body, name, value, field, context);
-        }
-
         if (field.Type.IsBuiltin|| field.Type.IsEnum || field.Type.IsSupportedType)
         {
             return GenerateWriteValueSave(body, name, value, WriteValueSave, field, context);
@@ -109,32 +98,59 @@ public static class SaveBuilder
 
         if (field.Type.IsNodeObject)
         {
-            return GenerateAddNodeSave(body, name, value, field, context);
+            return GenerateAddNodeSave(body, name, value, context);
         }
 
         // Unknown type
         throw new InvalidOperationException($"Unknown type to save {field.Type.FullName}");
     }
 
-    #region Values
     /// <summary>
-    /// Generate the field value save code implementation
+    /// Generates parse options for a specific field
     /// </summary>
-    /// <param name="body">Save method declaration</param>
-    /// <param name="name">Name expression</param>
-    /// <param name="value">Value expression</param>
-    /// <param name="field">Field data</param>
-    /// <param name="context">Generation context</param>
-    /// <returns>The edited save method declaration with the field value save code generated</returns>
-    public static MethodDeclarationSyntax GenerateAddValueSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    /// <param name="field">Field to create the parse options for</param>
+    /// <returns>The created parse options, or the default options if none were required</returns>
+    private static ExpressionSyntax GenerateWriteOptions(in ConfigFieldMetadata field)
     {
-        context.Token.ThrowIfCancellationRequested();
+        List<ArgumentSyntax> options = new(5);
 
-        // node.AddValue("value", WriteUtils.Write());
-        ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), value.AsArgument());
-        return body.AddBodyStatements(addValueInvocation.AsStatement());
+        if (field.EnumHandling is not ConfigFieldAttribute.DefaultEnumHandling)
+        {
+            ExpressionSyntax value  = nameof(EnumHandling).Access(EnumUtils.ToString(field.EnumHandling));
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.EnumHandling));
+            options.Add(argument);
+        }
+        if (!string.IsNullOrEmpty(field.Format))
+        {
+            ExpressionSyntax value  = MakeLiteral(field.Format!);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.Format));
+            options.Add(argument);
+        }
+        if (field.Separator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.Separator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.Separator));
+            options.Add(argument);
+        }
+        if (field.CollectionSeparator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.CollectionSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.CollectionSeparator));
+            options.Add(argument);
+        }
+        // ReSharper disable once InvertIf
+        if (field.KeyValueSeparator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.KeyValueSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.KeyValueSeparator));
+            options.Add(argument);
+        }
+
+        return options.Count is not 0 ? WriteOptions.New(options.ToArray()) : DefaultOptions;
     }
+    #endregion
 
+    #region Values
     /// <summary>
     /// Generate the field value save code implementation
     /// </summary>
@@ -145,12 +161,12 @@ public static class SaveBuilder
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field value save code generated</returns>
-    public static MethodDeclarationSyntax GenerateWriteValueSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, WriteInvocation createWrite, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateWriteValueSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, WriteInvocation createWrite, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
         // WriteOptions.Defaults
-        ArgumentSyntax options = CreateWriteOptions(field).AsArgument();
+        ArgumentSyntax options = GenerateWriteOptions(field).AsArgument();
         // WriteUtils.Write
         MemberAccessExpressionSyntax write = WriteUtils.Access(Write);
         // WriteUtils.Write(value, WriteOptions.Defaults)
@@ -173,7 +189,7 @@ public static class SaveBuilder
     /// <param name="field">Field to write from</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>Write</c> invocation</returns>
-    public static InvocationExpressionSyntax WriteValueSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static InvocationExpressionSyntax WriteValueSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // WriteUtils.Write(value, WriteOptions.Defaults)
         return write.Invoke(value.AsArgument(), options);
@@ -188,7 +204,7 @@ public static class SaveBuilder
     /// <param name="field">Field to write from</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>Write</c> invocation</returns>
-    public static InvocationExpressionSyntax WriteDictionarySave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static InvocationExpressionSyntax WriteDictionarySave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // WriteUtils.Write(value, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults)
         ArgumentSyntax writeArgument = write.AsArgument();
@@ -204,7 +220,7 @@ public static class SaveBuilder
     /// <param name="field">Field to write from</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>Write</c> invocation</returns>
-    public static InvocationExpressionSyntax WriteCollectionSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static InvocationExpressionSyntax WriteCollectionSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // WriteUtils.Write(value, WriteUtils.Write, WriteOptions.Defaults)
         return write.Invoke(value.AsArgument(), write.AsArgument(), options);
@@ -221,7 +237,7 @@ public static class SaveBuilder
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field node save code generated</returns>
-    public static MethodDeclarationSyntax GenerateConfigNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateConfigNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -253,65 +269,16 @@ public static class SaveBuilder
     /// <param name="body">Save method declaration</param>
     /// <param name="name">Name expression</param>
     /// <param name="value">Value expression</param>
-    /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field node save code generated</returns>
-    public static MethodDeclarationSyntax GenerateAddNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateAddNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
-
 
         // node.AddNode("name", this.value);
         ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), value.AsArgument());
         IfStatementSyntax ifNotNull = If(value.IsNotNull(), addValueInvocation.AsStatement());
         return body.AddBodyStatements(ifNotNull);
     }
-    #endregion
-
-    #region Options
-        #region Options
-    /// <summary>
-    /// Creates parse options for a specific field
-    /// </summary>
-    /// <param name="field">Field to create the parse options for</param>
-    /// <returns>The created parse options, or the default options if none were required</returns>
-    public static ExpressionSyntax CreateWriteOptions(in ConfigFieldMetadata field)
-    {
-        List<ArgumentSyntax> options = new(5);
-
-        if (field.EnumHandling is not ConfigFieldAttribute.DefaultEnumHandling)
-        {
-            ExpressionSyntax value  = nameof(EnumHandling).Access(EnumUtils.ToString(field.EnumHandling));
-            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.EnumHandling));
-            options.Add(argument);
-        }
-        if (!string.IsNullOrEmpty(field.Format))
-        {
-            ExpressionSyntax value  = MakeLiteral(field.Format!);
-            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.Format));
-            options.Add(argument);
-        }
-        if (field.Separator != default)
-        {
-            ExpressionSyntax value  = MakeLiteral(field.Separator);
-            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.Separator));
-            options.Add(argument);
-        }
-        if (field.CollectionSeparator != default)
-        {
-            ExpressionSyntax value  = MakeLiteral(field.CollectionSeparator);
-            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.CollectionSeparator));
-            options.Add(argument);
-        }
-        if (field.KeyValueSeparator != default)
-        {
-            ExpressionSyntax value  = MakeLiteral(field.KeyValueSeparator);
-            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.KeyValueSeparator));
-            options.Add(argument);
-        }
-
-        return options.Count is not 0 ? WriteOptions.New(options.ToArray()) : DefaultOptions;
-    }
-    #endregion
     #endregion
 }

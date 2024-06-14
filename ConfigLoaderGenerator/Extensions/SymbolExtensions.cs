@@ -72,6 +72,13 @@ internal static class SymbolExtensions
     public static bool IsBuiltin(this ITypeSymbol type) => BuiltinTypes.Contains(type.FullName());
 
     /// <summary>
+    /// Checks ig a given type is a builtin type
+    /// </summary>
+    /// <param name="type">Type to check</param>
+    /// <returns><see langword="true"/> if <paramref name="type"/> is builtin, otherwise <see langword="false"/></returns>
+    public static bool IsSupported(this ITypeSymbol type) => SupportedTypes.Contains(type.FullName());
+
+    /// <summary>
     /// Checks if a given type implements <typeparamref name="T"/>
     /// </summary>
     /// <typeparam name="T">Interface type</typeparam>
@@ -109,6 +116,13 @@ internal static class SymbolExtensions
         return typeSymbol.AllInterfaces.Any(i => i.FullName() == interfaceName);
     }
 
+    /// <summary>
+    /// Tries to find a specific interface in the symbol, and return it
+    /// </summary>
+    /// <typeparam name="T">Interface type</typeparam>
+    /// <param name="typeSymbol">Type to find the interface on</param>
+    /// <param name="foundInterface">The found interface, if any</param>
+    /// <returns><see langword="true"/> if the interface was found, otherwise <see langword="false"/></returns>
     public static bool TryGetInterface<T>(this ITypeSymbol typeSymbol, out INamedTypeSymbol? foundInterface)
     {
         return TryGetInterface(typeSymbol, typeof(T), out foundInterface);

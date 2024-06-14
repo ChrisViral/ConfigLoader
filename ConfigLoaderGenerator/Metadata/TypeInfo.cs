@@ -28,11 +28,11 @@ public readonly struct TypeInfo
     /// <summary>
     /// The associated array symbol, if any
     /// </summary>
-    public IArrayTypeSymbol? ArraySymbol { get; }
+    private IArrayTypeSymbol? ArraySymbol { get; }
     /// <summary>
     /// The associated array symbol, if any
     /// </summary>
-    public INamedTypeSymbol? NamedSymbol { get; }
+    private INamedTypeSymbol? NamedSymbol { get; }
     /// <summary>
     /// Fully qualified name
     /// </summary>
@@ -59,13 +59,13 @@ public readonly struct TypeInfo
     /// </summary>
     public bool IsBuiltin => this.Symbol.IsBuiltin();
     /// <summary>
+    /// If this type is a base supported type
+    /// </summary>
+    public bool IsSupportedType => this.Symbol.IsSupported();
+    /// <summary>
     /// If this is an enum type
     /// </summary>
     public bool IsEnum => this.Symbol.IsEnum();
-    /// <summary>
-    /// If this type is a base supported type
-    /// </summary>
-    public bool IsSupportedType => SupportedTypes.Contains(this.Symbol.FullName());
     /// <summary>
     /// If this type is an array
     /// </summary>

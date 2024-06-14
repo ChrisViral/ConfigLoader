@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ConfigLoader;
 using ConfigLoader.Attributes;
+using ConfigLoader.Exceptions;
 using ConfigLoader.Utils;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ namespace ConfigLoaderTest
                 return;
             }
 
+            HashSet<string> required = new HashSet<string>(13);
             int valueCount = node.CountValues;
             for (int i = 0; i < valueCount; i++)
             {
@@ -32,6 +34,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out int _intValue, ParseOptions.Defaults))
                         {
                             this.intValue = _intValue;
+                            required.Add("intValue");
                         }
 
                         break;
@@ -42,6 +45,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out float _floatValue, ParseOptions.Defaults))
                         {
                             this.floatValue = _floatValue;
+                            required.Add("floatValue");
                         }
 
                         break;
@@ -52,6 +56,7 @@ namespace ConfigLoaderTest
                         if (!string.IsNullOrEmpty(value.value))
                         {
                             this.stringValue = value.value;
+                            required.Add("stringValue");
                         }
 
                         break;
@@ -62,6 +67,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out AccessModifier _modifier, new ParseOptions(EnumHandling: EnumHandling.Flags)))
                         {
                             this.modifier = _modifier;
+                            required.Add("modifier");
                         }
 
                         break;
@@ -72,6 +78,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out int[] _intArray, ParseUtils.TryParse, ParseOptions.Defaults))
                         {
                             this.intArray = _intArray;
+                            required.Add("intArray");
                         }
 
                         break;
@@ -82,6 +89,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out List<int> _intList, ParseUtils.TryParse, new ParseOptions(CollectionSeparator: ',')))
                         {
                             this.intList = _intList;
+                            required.Add("intList");
                         }
 
                         break;
@@ -92,6 +100,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out HashSet<string> _stringHashSet, ParseUtils.TryParse, ParseOptions.Defaults))
                         {
                             this.stringHashSet = _stringHashSet;
+                            required.Add("stringHashSet");
                         }
 
                         break;
@@ -102,6 +111,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out LinkedList<long> _longLinkedList, ParseUtils.TryParse, ParseOptions.Defaults))
                         {
                             this.longLinkedList = _longLinkedList;
+                            required.Add("longLinkedList");
                         }
 
                         break;
@@ -112,6 +122,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out Queue<object> _objectQueue, ParseUtils.TryParse, ParseOptions.Defaults))
                         {
                             this.objectQueue = _objectQueue;
+                            required.Add("objectQueue");
                         }
 
                         break;
@@ -122,6 +133,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out Stack<char> _charStack, ParseUtils.TryParse, ParseOptions.Defaults))
                         {
                             this.charStack = _charStack;
+                            required.Add("charStack");
                         }
 
                         break;
@@ -132,6 +144,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out ReadOnlyCollection<double> _doubleReadOnlyCollection, ParseUtils.TryParse, ParseOptions.Defaults))
                         {
                             this.doubleReadOnlyCollection = _doubleReadOnlyCollection;
+                            required.Add("doubleReadOnlyCollection");
                         }
 
                         break;
@@ -142,6 +155,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, new ParseOptions(KeyValueSeparator: '|')))
                         {
                             this.stringDecimalDictionary = _stringDecimalDictionary;
+                            required.Add("stringDecimalDictionary");
                         }
 
                         break;
@@ -152,6 +166,7 @@ namespace ConfigLoaderTest
                         if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, new ParseOptions(SplitOptions: ExtendedSplitOptions.RemoveEmptyEntries, Separator: ' ')))
                         {
                             this.VectorProperty = _VectorProperty;
+                            required.Add("VectorProperty");
                         }
 
                         break;
@@ -159,6 +174,37 @@ namespace ConfigLoaderTest
                 }
             }
 
+            if (required.Count != 13)
+            {
+                if (!required.Contains("intValue"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "intValue");
+                if (!required.Contains("floatValue"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "floatValue");
+                if (!required.Contains("stringValue"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "stringValue");
+                if (!required.Contains("modifier"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "modifier");
+                if (!required.Contains("intArray"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "intArray");
+                if (!required.Contains("intList"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "intList");
+                if (!required.Contains("stringHashSet"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "stringHashSet");
+                if (!required.Contains("longLinkedList"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "longLinkedList");
+                if (!required.Contains("objectQueue"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "objectQueue");
+                if (!required.Contains("charStack"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "charStack");
+                if (!required.Contains("doubleReadOnlyCollection"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "doubleReadOnlyCollection");
+                if (!required.Contains("stringDecimalDictionary"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "stringDecimalDictionary");
+                if (!required.Contains("VectorProperty"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "VectorProperty");
+            }
+
+            required.Clear();
             int nodeCount = node.CountNodes;
             for (int i = 0; i < nodeCount; i++)
             {
@@ -169,6 +215,7 @@ namespace ConfigLoaderTest
                     {
                         this.floatCurve = new FloatCurve();
                         this.floatCurve.Load(value);
+                        required.Add("floatCurve");
                         break;
                     }
 
@@ -176,15 +223,27 @@ namespace ConfigLoaderTest
                     {
                         this.explicitImplementation = new ConfigTest();
                         ((IConfigNode)this.explicitImplementation).Load(value);
+                        required.Add("explicitImplementation");
                         break;
                     }
 
                     case "configNode":
                     {
                         this.configNode = value;
+                        required.Add("configNode");
                         break;
                     }
                 }
+            }
+
+            if (required.Count != 3)
+            {
+                if (!required.Contains("floatCurve"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "floatCurve");
+                if (!required.Contains("explicitImplementation"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "explicitImplementation");
+                if (!required.Contains("configNode"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "configNode");
             }
         }
 
@@ -201,7 +260,7 @@ namespace ConfigLoaderTest
 
             node.AddValue("intValue", WriteUtils.Write(this.intValue, WriteOptions.Defaults));
             node.AddValue("floatValue", WriteUtils.Write(this.floatValue, WriteOptions.Defaults));
-            node.AddValue("stringValue", this.stringValue);
+            node.AddValue("stringValue", WriteUtils.Write(this.stringValue, WriteOptions.Defaults));
             node.AddValue("modifier", WriteUtils.Write(this.modifier, new WriteOptions(EnumHandling: EnumHandling.Flags)));
             node.AddValue("intArray", WriteUtils.Write(this.intArray, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("intList", WriteUtils.Write(this.intList, WriteUtils.Write, new WriteOptions(CollectionSeparator: ',')));

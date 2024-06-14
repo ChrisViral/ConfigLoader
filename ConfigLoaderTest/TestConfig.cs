@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ConfigLoader.Attributes;
+using ConfigLoader.Exceptions;
 using ConfigLoader.Utils;
 using UnityEngine;
 
@@ -57,13 +58,40 @@ public partial class TestConfig
 
     public void Test(ConfigNode node)
     {
-        ParseOptions options = new(SplitOptions: ExtendedSplitOptions.None);
-
-        if (ParseUtils.TryParse("value.value", out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+        HashSet<string> required = [];
+        for (int i = 0; i < node.CountValues; i++)
         {
-            this.stringDecimalDictionary = _stringDecimalDictionary;
+            ConfigNode.Value value = node.values[i];
+            switch (value.name)
+            {
+                case "intValue":
+                {
+                    if (ParseUtils.TryParse(value.value, out int _intValue, ParseOptions.Defaults))
+                    {
+                        this.intValue = _intValue;
+                        required.Add("intValue");
+                    }
+                    break;
+                }
+                case "charStack":
+                {
+                    if (ParseUtils.TryParse(value.value, out Stack<char> _charStack, ParseUtils.TryParse, ParseOptions.Defaults))
+                    {
+                        this.charStack = _charStack;
+                        required.Add("charStack");
+                    }
+                    break;
+                }
+            }
         }
 
-        WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults);
+        if (!required.Contains("intValue"))
+        {
+            throw new MissingRequiredConfigFieldException("Required config field is missing", "intValue");
+        }
+        if (!required.Contains("intValue"))
+        {
+            throw new MissingRequiredConfigFieldException("Required config field is missing", "charStack");
+        }
     }
 }

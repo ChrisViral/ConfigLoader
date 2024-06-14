@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using ConfigLoader.Exceptions;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -133,6 +135,14 @@ public static class GenerationConstants
     /// ConfigNode.Value type
     /// </summary>
     public static readonly QualifiedNameSyntax ConfigNodeValue = QualifiedName(ConfigNode, IdentifierName("Value"));
+    /// <summary>
+    /// Generic <see cref="string"/> <see cref="HashSet{T}"/>
+    /// </summary>
+    public static readonly GenericNameSyntax HashSetString = nameof(HashSet<string>).AsGenericName(SyntaxKind.StringKeyword.AsType());
+    /// <summary>
+    /// <see cref="MissingRequiredConfigFieldException"/> type
+    /// </summary>
+    public static readonly IdentifierNameSyntax MissingException = nameof(MissingRequiredConfigFieldException).AsName();
     #endregion
 
     #region Methods
@@ -160,6 +170,18 @@ public static class GenerationConstants
     /// IsNullOrEmpty method identifier
     /// </summary>
     public static readonly IdentifierNameSyntax IsNullOrEmpty = nameof(string.IsNullOrEmpty).AsName();
+    /// <summary>
+    /// Add method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax Add = nameof(HashSet<string>.Add).AsName();
+    /// <summary>
+    /// Clear method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax Clear = nameof(HashSet<string>.Clear).AsName();
+    /// <summary>
+    /// Contains method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax Contains = nameof(HashSet<string>.Contains).AsName();
     #endregion
 
     #region Variables
@@ -203,6 +225,14 @@ public static class GenerationConstants
     /// ConfigNode name
     /// </summary>
     public static readonly IdentifierNameSyntax Name   = IdentifierName("name");
+    /// <summary>
+    /// Required variable
+    /// </summary>
+    public static readonly IdentifierNameSyntax Required   = IdentifierName("required");
+    /// <summary>
+    /// HashSet Count identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax Count = nameof(HashSet<string>.Count).AsName();
     #endregion
 
     #region Utility
