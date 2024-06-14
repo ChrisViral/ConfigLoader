@@ -228,8 +228,8 @@ public static class ConfigBuilder
         // If there are required values or required nodes, create hashset now
         if (requiredValues is not 0 || requiredNodes is not 0)
         {
-            ExpressionSyntax hashsetCreation = HashSetString.New(Math.Max(requiredValues, requiredNodes).AsLiteral().AsArgument());
-            VariableDeclarationSyntax requiredSetVariable = Required.DeclareVariable(HashSetString, hashsetCreation);
+            int maxRequired = Math.Max(requiredValues, requiredNodes);
+            VariableDeclarationSyntax requiredSetVariable = Required.DeclareNewVariable(HashSetString, maxRequired.AsLiteral().AsArgument());
             method = method.AddBodyStatements(requiredSetVariable.AsLocalDeclaration());
             context.UsedNamespaces.AddNamespaceName(typeof(HashSet<>).Namespace);
             context.UsedNamespaces.AddNamespaceName(typeof(MissingRequiredConfigFieldException).Namespace);
@@ -271,6 +271,19 @@ public static class ConfigBuilder
         // If there are no fields to load, return early
         if (fields.Count == 0) return method;
 
+        // Create collectors for multi-value collections
+        ConfigFieldMetadata[] multipleValuesFields = fields.Where(f => f.IsMultipleValuesCollection).ToArray();
+        if (multipleValuesFields.Length > 0)
+        {
+            context.UsedNamespaces.AddNamespaceName(typeof(List<>).Namespace!);
+            foreach (ConfigFieldMetadata field in multipleValuesFields)
+            {
+                GenericNameSyntax listType = GenericList.AsGenericName(field.Type.GetElementSymbol().DisplayName().AsName());
+                VariableDeclarationSyntax collector = field.CollectorName.DeclareNewVariable(listType);
+                method = method.AddBodyStatements(collector.AsLocalDeclaration());
+            }
+        }
+
         // int count = node.count;
         VariableDeclarationSyntax countVariable = countName.DeclareVariable(SyntaxKind.IntKeyword, Node.Access(count));
 
@@ -307,6 +320,29 @@ public static class ConfigBuilder
         ForStatementSyntax forStatement = IncrementingFor(Index, MakeLiteral(0), countName, valueDeclaration.AsLocalDeclaration(), nameSwitchStatement);
         method = method.AddBodyStatements(countVariable.AsLocalDeclaration(), forStatement);
 
+        // Assign back collector values
+        foreach (ConfigFieldMetadata field in multipleValuesFields)
+        {
+            // valueCollector.Count != 0
+            ExpressionSyntax notEmpty = field.CollectorName.Access(Count).IsNotEqual(MakeLiteral(0));
+            // this.value = valueCollector;
+            StatementSyntax assignCollector = GenerateCollectorAssign(field);
+            BlockSyntax block = Block(assignCollector);
+
+            // If required, add it
+            if (field.IsRequired)
+            {
+                // required.Add("value");
+                ExpressionSyntax addRequired = Required.Access(Add).Invoke(field.FieldName.AsLiteral().AsArgument());
+                block = block.AddStatements(addRequired.AsStatement());
+            }
+
+            // if (valueCollector.Count != 0) { }
+            IfStatementSyntax assignStatement = If(notEmpty, block);
+            // Add method and return
+            method = method.AddBodyStatements(assignStatement);
+        }
+
         if (requiredCount is 0) return method;
 
         // Check if required fields where loaded
@@ -322,6 +358,30 @@ public static class ConfigBuilder
         // Add loop to method and return
         ExpressionSyntax countNotZero = Required.Access(Count).IsNotEqual(requiredCount.AsLiteral());
         return method.AddBodyStatements(If(countNotZero, checksBlock));
+    }
+
+    private static StatementSyntax GenerateCollectorAssign(in ConfigFieldMetadata field)
+    {
+        ExpressionSyntax assignation;
+        if (field.Type.IsArray)
+        {
+            assignation = field.CollectorName.Access(ToArray).Invoke();
+        }
+        else if (field.Type.NamedSymbol?.ConstructUnboundGenericType()?.FullName() == typeof(List<>).GetDisplayName())
+        {
+            assignation = field.CollectorName;
+        }
+        else if (field.Type.IsSupportedCollection)
+        {
+            assignation = field.Type.Identifier.New(field.CollectorName.AsArgument());
+        }
+        else
+        {
+            GenericNameSyntax genericFrom = FromList.AsGenericName(field.Type.Identifier, field.Type.GetElementSymbol().DisplayName().AsName());
+            assignation = CollectionUtils.Access(genericFrom).Invoke(field.CollectorName.AsArgument());
+        }
+
+        return This().Access(field.FieldName).Assign(assignation).AsStatement();
     }
     #endregion
 

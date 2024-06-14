@@ -37,6 +37,7 @@
     <Compile Include="..\ConfigLoader\Utils\Parse\ParseOptions.cs" Link="Imported\ParseOptions.cs" />
     <Compile Include="..\ConfigLoader\Utils\Write\WriteOptions.cs" Link="Imported\WriteOptions.cs" />
     <Compile Include="..\ConfigLoader\Utils\EnumUtils.cs" Link="Imported\EnumUtils.cs" />
+    <Compile Include="..\ConfigLoader\Utils\CollectionUtils.cs" Link="Imported\CollectionUtils.cs" />
     <Compile Include="..\ConfigLoader\NameExports.cs" Link="Imported\NameExports.cs" />
   </ItemGroup>
 

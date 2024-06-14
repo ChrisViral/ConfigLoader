@@ -217,10 +217,11 @@ public static class SyntaxOperationExtensions
     /// <summary>
     /// Simple declaration without assignment
     /// </summary>
+    /// <typeparam name="T">Declared name type</typeparam>
     /// <param name="name">Variable name to declare</param>
     /// <param name="type">Variable type</param>
     /// <returns>The declared variable expression</returns>
-    public static DeclarationExpressionSyntax Declaration(this IdentifierNameSyntax name, TypeSyntax type)
+    public static DeclarationExpressionSyntax Declaration<T>(this T name, TypeSyntax type) where T : SimpleNameSyntax
     {
         return DeclarationExpression(type, SingleVariableDesignation(name.Identifier));
     }
@@ -228,10 +229,11 @@ public static class SyntaxOperationExtensions
     /// <summary>
     /// Declares an initialized integer variable for the specified name
     /// </summary>
+    /// <typeparam name="T">Declared name type</typeparam>
     /// <param name="name">Variable name</param>
     /// <param name="value">Variable initialization value</param>
     /// <returns>The <see cref="VariableDeclarationSyntax"/> that declares the specified integer variable</returns>
-    public static VariableDeclarationSyntax DeclareVariable(this IdentifierNameSyntax name, int value)
+    public static VariableDeclarationSyntax DeclareVariable<T>(this T name, int value) where T : SimpleNameSyntax
     {
         return VariableDeclaration(SyntaxKind.IntKeyword.AsType())
               .AddVariables(VariableDeclarator(name.Identifier).WithInitializer(EqualsValueClause(value.AsLiteral())));
@@ -240,10 +242,11 @@ public static class SyntaxOperationExtensions
     /// <summary>
     /// Declares an initialized string variable for the specified name
     /// </summary>
+    /// <typeparam name="T">Declared name type</typeparam>
     /// <param name="name">Variable name</param>
     /// <param name="value">Variable initialization value</param>
     /// <returns>The <see cref="VariableDeclarationSyntax"/> that declares the specified string variable</returns>
-    public static VariableDeclarationSyntax DeclareVariable(this IdentifierNameSyntax name, string value)
+    public static VariableDeclarationSyntax DeclareVariable<T>(this T name, string value)  where T : SimpleNameSyntax
     {
         return VariableDeclaration(SyntaxKind.StringKeyword.AsType())
               .AddVariables(VariableDeclarator(name.Identifier).WithInitializer(EqualsValueClause(value.AsLiteral())));
@@ -252,11 +255,12 @@ public static class SyntaxOperationExtensions
     /// <summary>
     /// Declares an initialized variable for the specified name
     /// </summary>
+    /// <typeparam name="T">Declared name type</typeparam>
     /// <param name="name">Variable name</param>
     /// <param name="type">Variable type</param>
     /// <param name="value">Variable initialization value</param>
     /// <returns>The <see cref="VariableDeclarationSyntax"/> that declares the specified variable</returns>
-    public static VariableDeclarationSyntax DeclareVariable(this IdentifierNameSyntax name, SyntaxKind type, ExpressionSyntax value)
+    public static VariableDeclarationSyntax DeclareVariable<T>(this T name, SyntaxKind type, ExpressionSyntax value)  where T : SimpleNameSyntax
     {
         return VariableDeclaration(type.AsType()).AddVariables(VariableDeclarator(name.Identifier).WithInitializer(EqualsValueClause(value)));
     }
@@ -264,13 +268,27 @@ public static class SyntaxOperationExtensions
     /// <summary>
     /// Declares an initialized variable for the specified name
     /// </summary>
+    /// <typeparam name="T">Declared name type</typeparam>
     /// <param name="name">Variable name</param>
     /// <param name="type">Variable type</param>
     /// <param name="value">Variable initialization value</param>
     /// <returns>The <see cref="VariableDeclarationSyntax"/> that declares the specified variable</returns>
-    public static VariableDeclarationSyntax DeclareVariable(this IdentifierNameSyntax name, TypeSyntax type, ExpressionSyntax value)
+    public static VariableDeclarationSyntax DeclareVariable<T>(this T name, TypeSyntax type, ExpressionSyntax value) where T : SimpleNameSyntax
     {
         return VariableDeclaration(type).AddVariables(VariableDeclarator(name.Identifier).WithInitializer(EqualsValueClause(value)));
+    }
+
+    /// <summary>
+    /// Declares an initialized variable for the specified name using the type's constructor
+    /// </summary>
+    /// <typeparam name="T">Declared name type</typeparam>
+    /// <param name="name">Variable name</param>
+    /// <param name="type">Variable type</param>
+    /// <param name="arguments">Constructor arguments</param>
+    /// <returns>The <see cref="VariableDeclarationSyntax"/> that declares the specified variable</returns>
+    public static VariableDeclarationSyntax DeclareNewVariable<T>(this T name, TypeSyntax type, params ArgumentSyntax[] arguments) where T : SimpleNameSyntax
+    {
+        return VariableDeclaration(type).AddVariables(VariableDeclarator(name.Identifier).WithInitializer(EqualsValueClause(type.New(arguments))));
     }
 
     /// <summary>

@@ -23,6 +23,9 @@ namespace ConfigLoaderTest
             }
 
             HashSet<string> required = new HashSet<string>(3);
+            List<int> intArrayCollector = new List<int>();
+            List<int> intListCollector = new List<int>();
+            List<string> stringHashSetCollector = new List<string>();
             int valueCount = node.CountValues;
             for (int i = 0; i < valueCount; i++)
             {
@@ -72,9 +75,9 @@ namespace ConfigLoaderTest
 
                     case "intArray":
                     {
-                        if (ParseUtils.TryParse(value.value, out int[] _intArray, ParseUtils.TryParse, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out int _intArray, ParseOptions.Defaults))
                         {
-                            this.intArray = _intArray;
+                            intArrayCollector.Add(_intArray);
                         }
 
                         break;
@@ -82,10 +85,9 @@ namespace ConfigLoaderTest
 
                     case "intList":
                     {
-                        if (ParseUtils.TryParse(value.value, out List<int> _intList, ParseUtils.TryParse, new ParseOptions(CollectionSeparator: ',')))
+                        if (ParseUtils.TryParse(value.value, out int _intList, new ParseOptions(CollectionSeparator: ',')))
                         {
-                            this.intList = _intList;
-                            required.Add("intList");
+                            intListCollector.Add(_intList);
                         }
 
                         break;
@@ -93,9 +95,9 @@ namespace ConfigLoaderTest
 
                     case "stringHashSet":
                     {
-                        if (ParseUtils.TryParse(value.value, out HashSet<string> _stringHashSet, ParseUtils.TryParse, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out string _stringHashSet, ParseOptions.Defaults))
                         {
-                            this.stringHashSet = _stringHashSet;
+                            stringHashSetCollector.Add(_stringHashSet);
                         }
 
                         break;
@@ -162,6 +164,22 @@ namespace ConfigLoaderTest
                         break;
                     }
                 }
+            }
+
+            if (intArrayCollector.Count != 0)
+            {
+                this.intArray = intArrayCollector.ToArray();
+            }
+
+            if (intListCollector.Count != 0)
+            {
+                this.intList = intListCollector;
+                required.Add("intList");
+            }
+
+            if (stringHashSetCollector.Count != 0)
+            {
+                this.stringHashSet = new HashSet<string>(stringHashSetCollector);
             }
 
             if (required.Count != 3)

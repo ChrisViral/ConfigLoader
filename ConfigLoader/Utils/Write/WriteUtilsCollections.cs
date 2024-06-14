@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using ConfigLoader.Attributes;
 using ConfigLoader.Extensions;
-using JetBrains.Annotations;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -29,17 +28,6 @@ public static partial class WriteUtils
     private const int COLLECTION_ALLOCATION = 25;
     #endregion
 
-    #region Utility
-    /// <summary>
-    /// Checks if a given collection is null or empty
-    /// </summary>
-    /// <typeparam name="T">Collection element type</typeparam>
-    /// <param name="collection">Collection to check</param>
-    /// <returns><see langword="true"/> if <paramref name="collection"/> is <see langword="null"/> or empty, otherwise <see langword="false"/></returns>
-    [ContractAnnotation("null => false")]
-    private static bool IsNullOrEmptyCollection<T>(ICollection<T>? collection) => collection is not { Count: > 0 };
-    #endregion
-
     #region Collections
     /// <summary>
     /// Writes a <see cref="IList{T}"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
@@ -52,7 +40,7 @@ public static partial class WriteUtils
     public static string Write<T>(IList<T>? value, WriteFunc<T> write, in WriteOptions options)
     {
         // Check if the collection is null or empty
-        if (IsNullOrEmptyCollection(value)) return string.Empty;
+        if (CollectionUtils.IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
         char separator = !options.CollectionSeparator.IsNullChar() ? options.CollectionSeparator : ConfigFieldAttribute.DefaultCollectionSeparator;
@@ -80,7 +68,7 @@ public static partial class WriteUtils
     public static string Write<T>(ICollection<T>? value, WriteFunc<T> write, in WriteOptions options)
     {
         // Check if the collection is null or empty
-        if (IsNullOrEmptyCollection(value)) return string.Empty;
+        if (CollectionUtils.IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
         char separator = !options.CollectionSeparator.IsNullChar() ? options.CollectionSeparator : ConfigFieldAttribute.DefaultCollectionSeparator;
@@ -196,7 +184,7 @@ public static partial class WriteUtils
     public static string Write<TKey, TValue>(IDictionary<TKey, TValue>? value, WriteFunc<TKey> writeKey, WriteFunc<TValue> writeValue, in WriteOptions options)
     {
         // Check if the collection is null or empty
-        if (IsNullOrEmptyCollection(value)) return string.Empty;
+        if (CollectionUtils.IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
         char separator = !options.CollectionSeparator.IsNullChar() ? options.CollectionSeparator : ConfigFieldAttribute.DefaultCollectionSeparator;

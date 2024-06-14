@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
@@ -28,11 +29,11 @@ public readonly struct TypeInfo
     /// <summary>
     /// The associated array symbol, if any
     /// </summary>
-    private IArrayTypeSymbol? ArraySymbol { get; }
+    public IArrayTypeSymbol? ArraySymbol { get; }
     /// <summary>
     /// The associated array symbol, if any
     /// </summary>
-    private INamedTypeSymbol? NamedSymbol { get; }
+    public INamedTypeSymbol? NamedSymbol { get; }
     /// <summary>
     /// Fully qualified name
     /// </summary>
@@ -103,4 +104,38 @@ public readonly struct TypeInfo
         this.IsConfigNode = this.Symbol.Implements(IConfigNode.AsRaw());
         this.IsNodeObject = this.FullName == ConfigNode.AsRaw();
     }
+
+    #region Utility methods
+    /// <summary>
+    /// Gets the collection element symbol for this type
+    /// </summary>
+    /// <returns>The collection element type symbol of this type</returns>
+    /// <exception cref="InvalidOperationException">If this type is not an <see cref="ICollection{T}"/> type</exception>
+    public ITypeSymbol GetElementSymbol()
+    {
+        if (this.IsArray) return this.ArraySymbol!.ElementType;
+
+        if (this.Symbol.TryGetInterface(typeof(ICollection<>), out INamedTypeSymbol? collectionInterface))
+        {
+            return collectionInterface!.TypeArguments[0];
+        }
+
+        throw new InvalidOperationException("Cannot get the element symbol of a type that does not implement ICollection<T>");
+    }
+
+    /// <summary>
+    /// Gets the dictionary key and value symbols for this type
+    /// </summary>
+    /// <returns>A tuple containing both key and value symbols</returns>
+    /// <exception cref="InvalidOperationException">If this type is not an <see cref="IDictionary{TKey,TValue}"/> type</exception>
+    public (ITypeSymbol key, ITypeSymbol value) GetKeyValueSymbols()
+    {
+        if (this.Symbol.TryGetInterface(typeof(IDictionary<,>), out INamedTypeSymbol? dictionaryInterface))
+        {
+            return (dictionaryInterface!.TypeArguments[0], dictionaryInterface.TypeArguments[1]);
+        }
+
+        throw new InvalidOperationException("Cannot get the key/value symbols of a type that does not implement IDictionary<TKey, TValue>");
+    }
+    #endregion
 }

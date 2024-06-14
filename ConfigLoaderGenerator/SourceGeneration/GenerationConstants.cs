@@ -136,6 +136,10 @@ public static class GenerationConstants
     /// </summary>
     public static readonly QualifiedNameSyntax ConfigNodeValue = QualifiedName(ConfigNode, IdentifierName("Value"));
     /// <summary>
+    /// <see cref="List{T}"/> type
+    /// </summary>
+    public static readonly IdentifierNameSyntax GenericList = IdentifierName(nameof(System.Collections.Generic.List<int>));
+    /// <summary>
     /// Generic <see cref="string"/> <see cref="HashSet{T}"/>
     /// </summary>
     public static readonly GenericNameSyntax HashSetString = nameof(HashSet<string>).AsGenericName(SyntaxKind.StringKeyword.AsType());
@@ -143,6 +147,10 @@ public static class GenerationConstants
     /// <see cref="MissingRequiredConfigFieldException"/> type
     /// </summary>
     public static readonly IdentifierNameSyntax MissingException = nameof(MissingRequiredConfigFieldException).AsName();
+    /// <summary>
+    /// <see cref="CollectionUtils"/> type
+    /// </summary>
+    public static readonly IdentifierNameSyntax CollectionUtils = nameof(CollectionUtils).AsName();
     #endregion
 
     #region Methods
@@ -182,6 +190,14 @@ public static class GenerationConstants
     /// Contains method identifier
     /// </summary>
     public static readonly IdentifierNameSyntax Contains = nameof(HashSet<string>.Contains).AsName();
+    /// <summary>
+    /// ToArray method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax ToArray = nameof(System.Collections.Generic.List<int>.ToArray).AsName();
+    /// <summary>
+    /// FromList method identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax FromList = nameof(ConfigLoader.Utils.CollectionUtils.FromList).AsName();
     #endregion
 
     #region Variables

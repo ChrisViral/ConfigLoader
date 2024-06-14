@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ConfigLoader.Attributes;
-using ConfigLoader.Exceptions;
 using ConfigLoader.Utils;
 using UnityEngine;
 
@@ -36,11 +34,11 @@ public partial class TestConfig
     public ConfigTest explicitImplementation;
     [ConfigField]
     public ConfigNode configNode;
-    [ConfigField]
+    [ConfigField(CollectionHandling = CollectionHandling.MultipleValues)]
     public int[] intArray;
-    [ConfigField(IsRequired = true, CollectionSeparator = ',')]
+    [ConfigField(IsRequired = true, CollectionSeparator = ',', CollectionHandling = CollectionHandling.MultipleValues)]
     public List<int> intList;
-    [ConfigField]
+    [ConfigField(CollectionHandling = CollectionHandling.MultipleValues)]
     public HashSet<string> stringHashSet;
     [ConfigField]
     public LinkedList<long> longLinkedList;
@@ -58,12 +56,26 @@ public partial class TestConfig
 
     public void Test(ConfigNode node)
     {
-        string _intList = WriteUtils.Write(this.intList, WriteUtils.Write, WriteOptions.Defaults);
-        if (string.IsNullOrEmpty(_intList))
+        for (int i = 0; i < node.CountValues; i++)
         {
-            throw new MissingRequiredConfigFieldException("", "");
-        }
+            List<string> list = new List<string>();
+            ConfigNode.Value value = node.values[i];
+            switch (value.name)
+            {
+                case "stringHashSetValue":
+                {
+                    if (!string.IsNullOrEmpty(value.value))
+                    {
+                        list.Add(value.value);
+                    }
+                    break;
+                }
+            }
 
-        node.AddValue("", _intList);
+            if (list.Count != 0)
+            {
+                this.stringHashSet = CollectionUtils.FromList<HashSet<string>, string>(list);
+            }
+        }
     }
 }
