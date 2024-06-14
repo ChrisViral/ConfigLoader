@@ -4,11 +4,9 @@ using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
-using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 
@@ -128,10 +126,10 @@ public static class SaveBuilder
             ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.Format));
             options.Add(argument);
         }
-        if (field.Separator != default)
+        if (field.ValueSeparator != default)
         {
-            ExpressionSyntax value  = MakeLiteral(field.Separator);
-            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.Separator));
+            ExpressionSyntax value  = MakeLiteral(field.ValueSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.WriteOptions.ValueSeparator));
             options.Add(argument);
         }
         if (field.CollectionSeparator != default)

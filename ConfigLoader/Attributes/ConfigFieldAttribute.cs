@@ -39,6 +39,17 @@ public enum ExtendedSplitOptions
 }
 
 /// <summary>
+/// Collection serialization handling
+/// </summary>
+[PublicAPI]
+public enum CollectionHandling
+{
+    SingleValue,
+    MultipleValues,
+    NodeOfKeys
+}
+
+/// <summary>
 /// Config generation target field attribute
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field), PublicAPI]
@@ -57,6 +68,26 @@ public sealed class ConfigFieldAttribute : Attribute
     /// Parse value split options default value
     /// </summary>
     public const ExtendedSplitOptions DefaultSplitOptions = ExtendedSplitOptions.TrimAndRemoveEmptyEntries;
+    /// <summary>
+    /// Default value separator
+    /// </summary>
+    public const char DefaultValueSeparator = ' ';
+    /// <summary>
+    /// Default collection element separator
+    /// </summary>
+    public const char DefaultCollectionSeparator = ',';
+    /// <summary>
+    /// Default KeyValue pair separator
+    /// </summary>
+    public const char DefaultKeyValueSeparator = ':';
+    /// <summary>
+    /// Collection handling default value
+    /// </summary>
+    public const CollectionHandling DefaultCollectionHandling = CollectionHandling.SingleValue;
+    /// <summary>
+    /// Collection handling default value
+    /// </summary>
+    public const string DefaultKeyName = "key";
     #endregion
 
     #region Properties
@@ -85,15 +116,23 @@ public sealed class ConfigFieldAttribute : Attribute
     /// <summary>
     /// Character that separates values within complex values (Vectors, etc.)
     /// </summary>
-    public char Separator { get; init; }
+    public char ValueSeparator { get; init; }
     /// <summary>
     /// Character that separates values within collections (arrays, etc.)
     /// </summary>
     public char CollectionSeparator { get; init; }
     /// <summary>
-    /// character that separates key/value pairs in dictionaries
+    /// Character that separates key/value pairs in dictionaries
     /// </summary>
     public char KeyValueSeparator { get; init; }
+    /// <summary>
+    /// Collection serialization method
+    /// </summary>
+    public CollectionHandling CollectionHandling { get; init; } = DefaultCollectionHandling;
+    /// <summary>
+    /// Key name for key-node collections
+    /// </summary>
+    public string? KeyName { get; init; }
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>

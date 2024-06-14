@@ -19,7 +19,7 @@ public static class StringExtensions
     /// </summary>
     /// <param name="character">Character to check</param>
     /// <returns><see langword="true"/> if <paramref name="character"/> is equal to the null character, otherwise <see langword="false"/></returns>
-    public static bool IsNull(this char character) => character == default;
+    public static bool IsNullChar(this char character) => character == '\0';
     #endregion
 
     #region Split

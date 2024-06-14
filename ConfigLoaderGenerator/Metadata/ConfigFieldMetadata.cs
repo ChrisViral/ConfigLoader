@@ -18,10 +18,6 @@ namespace ConfigLoaderGenerator.Metadata;
 public readonly struct ConfigFieldMetadata
 {
     /// <summary>
-    /// Symbol this field is associated to
-    /// </summary>
-    public ISymbol Symbol { get; }
-    /// <summary>
     /// Name of the field associated to this metadata
     /// </summary>
     public IdentifierNameSyntax FieldName { get; }
@@ -44,19 +40,23 @@ public readonly struct ConfigFieldMetadata
     /// <summary>
     /// Write format string
     /// </summary>
-    public string? Format { get; init; }
+    public string? Format { get; }
     /// <summary>
     /// Character that separates values within complex values (Vectors, etc.)
     /// </summary>
-    public char Separator { get; init; }
+    public char ValueSeparator { get; }
     /// <summary>
     /// Character that separates values within collections (arrays, etc.)
     /// </summary>
-    public char CollectionSeparator { get; init; }
+    public char CollectionSeparator { get; }
     /// <summary>
-    /// character that separates key/value pairs in dictionaries
+    /// Character that separates key/value pairs in dictionaries
     /// </summary>
-    public char KeyValueSeparator { get; init; }
+    public char KeyValueSeparator { get; }
+    /// <summary>
+    /// Collection serialization method
+    /// </summary>
+    public CollectionHandling CollectionHandling { get; } = ConfigFieldAttribute.DefaultCollectionHandling;
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
@@ -67,13 +67,9 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public TypeInfo Type { get; }
     /// <summary>
-    /// If this field targets a property
-    /// </summary>
-    public bool IsProperty { get; }
-    /// <summary>
     /// If this object must be loaded as a ConfigNode
     /// </summary>
-    public bool IsConfigLoadable => this.Type.IsConfigNode || this.Type.IsNodeObject;
+    public bool IsConfigLoadable => this.Type.IsConfigNode || this.Type.IsNodeObject || this.CollectionHandling is CollectionHandling.NodeOfKeys;
 
     /// <summary>
     /// Creates a new Config Object metadata container from the given <paramref name="data"/>
@@ -82,24 +78,16 @@ public readonly struct ConfigFieldMetadata
     /// <param name="data">Attribute data to parse the metadata from</param>
     public ConfigFieldMetadata(ISymbol symbol, AttributeData data)
     {
-        this.Symbol    = symbol;
+        // Get base field data
         this.FieldName = IdentifierName(symbol.Name);
-        switch (symbol)
+        this.Type = symbol switch
         {
-            case IFieldSymbol field:
-                this.Type       = new TypeInfo(field.Type);
-                this.IsProperty = false;
-                break;
+            IFieldSymbol field       => new TypeInfo(field.Type),
+            IPropertySymbol property => new TypeInfo(property.Type),
+            _                        => throw new InvalidOperationException($"Cannot parse field for {symbol.GetType().Name} symbol")
+        };
 
-            case IPropertySymbol property:
-                this.Type       = new TypeInfo(property.Type);
-                this.IsProperty = true;
-                break;
-
-            default:
-                throw new InvalidOperationException($"Cannot parse field for {symbol.GetType().Name} symbol");
-        }
-
+        // Parse named arguments
         foreach ((string name, TypedConstant value) in data.NamedArguments)
         {
             if (value.Value is null) continue;
@@ -126,8 +114,8 @@ public readonly struct ConfigFieldMetadata
                     this.SplitOptions = (ExtendedSplitOptions)value.Value;
                     break;
 
-                case nameof(ConfigFieldAttribute.Separator):
-                    this.Separator = (char)value.Value;
+                case nameof(ConfigFieldAttribute.ValueSeparator):
+                    this.ValueSeparator = (char)value.Value;
                     break;
 
                 case nameof(ConfigFieldAttribute.CollectionSeparator):
@@ -136,6 +124,10 @@ public readonly struct ConfigFieldMetadata
 
                 case nameof(ConfigFieldAttribute.KeyValueSeparator):
                     this.KeyValueSeparator = (char)value.Value;
+                    break;
+
+                case nameof(ConfigFieldAttribute.CollectionHandling):
+                    this.CollectionHandling = (CollectionHandling)value.Value;
                     break;
 
                 case nameof(ConfigFieldAttribute.NodeNameValue):

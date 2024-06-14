@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using ConfigLoader.Attributes;
 using ConfigLoader.Extensions;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -24,11 +25,11 @@ public static partial class ParseUtils
     /// <summary>
     /// Default collection separators
     /// </summary>
-    internal static readonly char[] DefaultCollectionSeparators = [WriteUtils.DEFAULT_COLLECTION_SEPARATOR];
+    internal static readonly char[] DefaultCollectionSeparators = [ConfigFieldAttribute.DefaultCollectionSeparator];
     /// <summary>
     /// Default dictionary separators
     /// </summary>
-    internal static readonly char[] DefaultDictionarySeparators = [WriteUtils.DEFAULT_DICT_SEPARATOR];
+    internal static readonly char[] DefaultKeyValueSeparators = [ConfigFieldAttribute.DefaultKeyValueSeparator];
     #endregion
 
     #region Split
@@ -41,7 +42,7 @@ public static partial class ParseUtils
     private static string[] SplitCollectionInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[] separators = !options.CollectionSeparator.IsNull() ? MakeBuffer(options.CollectionSeparator) : DefaultCollectionSeparators;
+        char[] separators = !options.CollectionSeparator.IsNullChar() ? MakeBuffer(options.CollectionSeparator) : DefaultCollectionSeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);
@@ -56,7 +57,7 @@ public static partial class ParseUtils
     private static string[] SplitDictionaryInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[] separators = !options.KeyValueSeparator.IsNull() ? MakeBuffer(options.KeyValueSeparator) : DefaultDictionarySeparators;
+        char[] separators = !options.KeyValueSeparator.IsNullChar() ? MakeBuffer(options.KeyValueSeparator) : DefaultKeyValueSeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);

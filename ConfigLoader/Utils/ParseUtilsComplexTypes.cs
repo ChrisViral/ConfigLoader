@@ -1,4 +1,5 @@
-﻿using ConfigLoader.Extensions;
+﻿using ConfigLoader.Attributes;
+using ConfigLoader.Extensions;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -25,7 +26,7 @@ public static partial class ParseUtils
     /// <summary>
     /// Default separators
     /// </summary>
-    internal static readonly char[] DefaultSeparators = [WriteUtils.DEFAULT_SEPARATOR];
+    internal static readonly char[] DefaultValueSeparators = [ConfigFieldAttribute.DefaultValueSeparator];
     /// <summary>
     /// Default <see cref="Color32"/> return value (white)
     /// </summary>
@@ -57,7 +58,7 @@ public static partial class ParseUtils
     private static string[] SplitValuesInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[] separators = !options.Separator.IsNull() ? MakeBuffer(options.Separator) : DefaultSeparators;
+        char[] separators = !options.ValueSeparator.IsNullChar() ? MakeBuffer(options.ValueSeparator) : DefaultValueSeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);

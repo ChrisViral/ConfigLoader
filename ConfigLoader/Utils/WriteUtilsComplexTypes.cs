@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using ConfigLoader.Attributes;
 using ConfigLoader.Extensions;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -16,10 +17,6 @@ namespace ConfigLoader.Utils;
 public static partial class WriteUtils
 {
     #region Defaults
-    /// <summary>
-    /// Value separator
-    /// </summary>
-    internal const char DEFAULT_SEPARATOR = ',';
     /// <summary>
     /// <see cref="byte"/> allocation size
     /// </summary>
@@ -47,7 +44,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Vector2 value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(FLOAT_ALLOCATION * 2);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options));
@@ -62,7 +59,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Vector2d value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(DOUBLE_ALLOCATION * 2);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options));
@@ -77,7 +74,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Vector2Int value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(INT_ALLOCATION * 2);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options));
@@ -92,7 +89,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Vector3 value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(FLOAT_ALLOCATION * 3);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options)).Append(separator);
@@ -108,7 +105,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Vector3d value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(DOUBLE_ALLOCATION * 3);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options)).Append(separator);
@@ -124,7 +121,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Vector3Int value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(INT_ALLOCATION * 3);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options)).Append(separator);
@@ -140,7 +137,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Vector4 value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(FLOAT_ALLOCATION * 4);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options)).Append(separator);
@@ -157,7 +154,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Vector4d value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(DOUBLE_ALLOCATION * 4);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options)).Append(separator);
@@ -176,7 +173,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Quaternion value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(FLOAT_ALLOCATION * 4);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options)).Append(separator);
@@ -193,7 +190,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(QuaternionD value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(DOUBLE_ALLOCATION * 4);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options)).Append(separator);
@@ -212,7 +209,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Rect value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(FLOAT_ALLOCATION * 4);
         builder.Append(Write(value.x, options)).Append(separator);
         builder.Append(Write(value.y, options)).Append(separator);
@@ -231,7 +228,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Color value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(FLOAT_ALLOCATION * 4);
         builder.Append(Write(value.r, options)).Append(separator);
         builder.Append(Write(value.g, options)).Append(separator);
@@ -248,7 +245,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Color32 value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(BYTE_ALLOCATION * 4);
         builder.Append(Write(value.r, options)).Append(separator);
         builder.Append(Write(value.g, options)).Append(separator);
@@ -267,7 +264,8 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Matrix4x4 value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
+        // ReSharper disable once RedundantArgumentDefaultValue
         StringBuilder builder = StringBuilderCache.Acquire(FLOAT_ALLOCATION * 16);
         // First row
         builder.Append(Write(value.m00, options)).Append(separator);
@@ -300,7 +298,7 @@ public static partial class WriteUtils
     /// <returns>The written value as a <see cref="string"/></returns>
     public static string Write(Matrix4x4D value, in WriteOptions options)
     {
-        char separator = !options.Separator.IsNull() ? options.Separator : DEFAULT_SEPARATOR;
+        char separator = !options.ValueSeparator.IsNullChar() ? options.ValueSeparator : ConfigFieldAttribute.DefaultValueSeparator;
         StringBuilder builder = StringBuilderCache.Acquire(DOUBLE_ALLOCATION * 16);
         // First row
         builder.Append(Write(value.m00, options)).Append(separator);

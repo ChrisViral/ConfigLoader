@@ -427,10 +427,10 @@ public static class LoadBuilder
             ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.SplitOptions));
             options.Add(argument);
         }
-        if (field.Separator != default)
+        if (field.ValueSeparator != default)
         {
-            ExpressionSyntax value  = MakeLiteral(field.Separator);
-            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.Separator));
+            ExpressionSyntax value  = MakeLiteral(field.ValueSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.ValueSeparator));
             options.Add(argument);
         }
         if (field.CollectionSeparator != default)
@@ -439,6 +439,7 @@ public static class LoadBuilder
             ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.CollectionSeparator));
             options.Add(argument);
         }
+        // ReSharper disable once InvertIf
         if (field.KeyValueSeparator != default)
         {
             ExpressionSyntax value  = MakeLiteral(field.KeyValueSeparator);
