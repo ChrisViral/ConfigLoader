@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ConfigLoader;
 using ConfigLoader.Attributes;
+using ConfigLoader.Exceptions;
 using ConfigLoader.Utils;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ namespace ConfigLoaderTest
                 return;
             }
 
+            HashSet<string> required = new HashSet<string>(3);
             int valueCount = node.CountValues;
             for (int i = 0; i < valueCount; i++)
             {
@@ -52,6 +54,7 @@ namespace ConfigLoaderTest
                         if (!string.IsNullOrEmpty(value.value))
                         {
                             this.stringValue = value.value;
+                            required.Add("stringValue");
                         }
 
                         break;
@@ -59,7 +62,7 @@ namespace ConfigLoaderTest
 
                     case "modifier":
                     {
-                        if (ParseUtils.TryParse(value.value, out AccessModifier _modifier, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out AccessModifier _modifier, new ParseOptions(EnumHandling: EnumHandling.Flags)))
                         {
                             this.modifier = _modifier;
                         }
@@ -79,9 +82,10 @@ namespace ConfigLoaderTest
 
                     case "intList":
                     {
-                        if (ParseUtils.TryParse(value.value, out List<int> _intList, ParseUtils.TryParse, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out List<int> _intList, ParseUtils.TryParse, new ParseOptions(CollectionSeparator: ',')))
                         {
                             this.intList = _intList;
+                            required.Add("intList");
                         }
 
                         break;
@@ -139,7 +143,7 @@ namespace ConfigLoaderTest
 
                     case "stringDecimalDictionary":
                     {
-                        if (ParseUtils.TryParse(value.value, out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, new ParseOptions(KeyValueSeparator: '|')))
                         {
                             this.stringDecimalDictionary = _stringDecimalDictionary;
                         }
@@ -149,9 +153,10 @@ namespace ConfigLoaderTest
 
                     case "OtherName":
                     {
-                        if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, new ParseOptions(SplitOptions: ExtendedSplitOptions.RemoveEmptyEntries, Separator: ' ')))
                         {
                             this.VectorProperty = _VectorProperty;
+                            required.Add("VectorProperty");
                         }
 
                         break;
@@ -159,6 +164,17 @@ namespace ConfigLoaderTest
                 }
             }
 
+            if (required.Count != 3)
+            {
+                if (!required.Contains("stringValue"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "stringValue");
+                if (!required.Contains("intList"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "intList");
+                if (!required.Contains("VectorProperty"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "VectorProperty");
+            }
+
+            required.Clear();
             int nodeCount = node.CountNodes;
             for (int i = 0; i < nodeCount; i++)
             {
@@ -169,6 +185,7 @@ namespace ConfigLoaderTest
                     {
                         this.floatCurve = new FloatCurve();
                         this.floatCurve.Load(value);
+                        required.Add("floatCurve");
                         break;
                     }
 
@@ -186,6 +203,12 @@ namespace ConfigLoaderTest
                     }
                 }
             }
+
+            if (required.Count != 1)
+            {
+                if (!required.Contains("floatCurve"))
+                    throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "floatCurve");
+            }
         }
 
         /// <summary>
@@ -199,20 +222,54 @@ namespace ConfigLoaderTest
                 return;
             }
 
+            if (this.stringValue == null)
+                throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "stringValue");
+            if (this.intList == null)
+                throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "intList");
+            if (this.floatCurve == null)
+                throw new MissingRequiredConfigFieldException("ConfigField marked as missing could not be loaded", "floatCurve");
             node.AddValue("intValue", WriteUtils.Write(this.intValue, WriteOptions.Defaults));
             node.AddValue("floatValue", WriteUtils.Write(this.floatValue, WriteOptions.Defaults));
-            node.AddValue("stringValue", this.stringValue);
-            node.AddValue("modifier", WriteUtils.Write(this.modifier, WriteOptions.Defaults));
-            node.AddValue("intArray", WriteUtils.Write(this.intArray, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("intList", WriteUtils.Write(this.intList, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("stringHashSet", WriteUtils.Write(this.stringHashSet, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("longLinkedList", WriteUtils.Write(this.longLinkedList, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("objectQueue", WriteUtils.Write(this.objectQueue, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("charStack", WriteUtils.Write(this.charStack, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("doubleReadOnlyCollection", WriteUtils.Write(this.doubleReadOnlyCollection, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("stringDecimalDictionary", WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
-            node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, WriteOptions.Defaults));
-            this.floatCurve?.Save(node.AddNode("floatCurve"));
+            node.AddValue("stringValue", WriteUtils.Write(this.stringValue, WriteOptions.Defaults));
+            node.AddValue("modifier", WriteUtils.Write(this.modifier, new WriteOptions(EnumHandling: EnumHandling.Flags)));
+            if (this.intArray != null)
+            {
+                node.AddValue("intArray", WriteUtils.Write(this.intArray, WriteUtils.Write, WriteOptions.Defaults));
+            }
+
+            node.AddValue("intList", WriteUtils.Write(this.intList, WriteUtils.Write, new WriteOptions(CollectionSeparator: ',')));
+            if (this.stringHashSet != null)
+            {
+                node.AddValue("stringHashSet", WriteUtils.Write(this.stringHashSet, WriteUtils.Write, WriteOptions.Defaults));
+            }
+
+            if (this.longLinkedList != null)
+            {
+                node.AddValue("longLinkedList", WriteUtils.Write(this.longLinkedList, WriteUtils.Write, WriteOptions.Defaults));
+            }
+
+            if (this.objectQueue != null)
+            {
+                node.AddValue("objectQueue", WriteUtils.Write(this.objectQueue, WriteUtils.Write, WriteOptions.Defaults));
+            }
+
+            if (this.charStack != null)
+            {
+                node.AddValue("charStack", WriteUtils.Write(this.charStack, WriteUtils.Write, WriteOptions.Defaults));
+            }
+
+            if (this.doubleReadOnlyCollection != null)
+            {
+                node.AddValue("doubleReadOnlyCollection", WriteUtils.Write(this.doubleReadOnlyCollection, WriteUtils.Write, WriteOptions.Defaults));
+            }
+
+            if (this.stringDecimalDictionary != null)
+            {
+                node.AddValue("stringDecimalDictionary", WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, new WriteOptions(KeyValueSeparator: '|')));
+            }
+
+            node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, new WriteOptions(Separator: ' ')));
+            this.floatCurve.Save(node.AddNode("floatCurve"));
             ((IConfigNode)this.explicitImplementation).Save(node.AddNode("explicitImplementation"));
             if (this.configNode != null)
             {

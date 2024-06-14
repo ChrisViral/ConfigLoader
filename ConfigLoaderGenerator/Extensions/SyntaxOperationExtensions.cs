@@ -39,6 +39,40 @@ public static class SyntaxOperationExtensions
     /// <summary>
     /// Creates a simple access expression from the current expression and a given name
     /// </summary>
+    /// <param name="element">Element to access</param>
+    /// <param name="name">Name of the value to access on the element</param>
+    /// <returns>An access expression under the form <c><paramref name="element"/>.<paramref name="name"></paramref></c></returns>
+    public static MemberAccessExpressionSyntax Access(this string element, string name)
+    {
+        return MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, IdentifierName(element), IdentifierName(name));
+    }
+
+    /// <summary>
+    /// Creates a simple access expression from the current expression and a given name
+    /// </summary>
+    /// <param name="element">Element to access</param>
+    /// <param name="name">Name of the value to access on the element</param>
+    /// <returns>An access expression under the form <c><paramref name="element"/>.<paramref name="name"></paramref></c></returns>
+    public static MemberAccessExpressionSyntax Access(this string element, SimpleNameSyntax name)
+    {
+        return MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, IdentifierName(element), name);
+    }
+
+    /// <summary>
+    /// Creates a simple access expression from the current expression and a given name
+    /// </summary>
+    /// <typeparam name="T">Expression syntax type</typeparam>
+    /// <param name="element">Element to access</param>
+    /// <param name="name">Name of the value to access on the element</param>
+    /// <returns>An access expression under the form <c><paramref name="element"/>.<paramref name="name"></paramref></c></returns>
+    public static MemberAccessExpressionSyntax Access<T>(this T element, string name) where T : ExpressionSyntax
+    {
+        return MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, element, IdentifierName(name));
+    }
+
+    /// <summary>
+    /// Creates a simple access expression from the current expression and a given name
+    /// </summary>
     /// <typeparam name="T">Expression syntax type</typeparam>
     /// <param name="element">Element to access</param>
     /// <param name="name">Name of the value to access on the element</param>

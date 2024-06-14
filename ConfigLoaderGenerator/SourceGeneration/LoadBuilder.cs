@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
@@ -34,11 +35,11 @@ public static class LoadBuilder
     /// <param name="field">Field to parse into</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>TryParse</c> invocation</returns>
-    public delegate InvocationExpressionSyntax TryParseInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
-                                                                  ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context);
+    private delegate InvocationExpressionSyntax TryParseInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                   ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context);
 
     /// <summary>
-    /// ConfigLoader parse utils namespace
+    /// <see cref="ConfigLoader"/> parse utils namespace
     /// </summary>
     private static readonly string UtilsNamespace = typeof(ParseUtils).Namespace!;
     /// <summary>
@@ -46,17 +47,21 @@ public static class LoadBuilder
     /// </summary>
     private static readonly IdentifierNameSyntax TryParse = nameof(ConfigLoader.Utils.ParseUtils.TryParse).AsName();
     /// <summary>
-    /// ParseUtils class identifier
+    /// <see cref="ParseUtils"/> class identifier
     /// </summary>
     private static readonly IdentifierNameSyntax ParseUtils = nameof(ConfigLoader.Utils.ParseUtils).AsName();
     /// <summary>
-    /// ParseOptions struct identifier
+    /// <see cref="ParseOptions"/> struct identifier
     /// </summary>
     private static readonly IdentifierNameSyntax ParseOptions = nameof(ConfigLoader.Utils.ParseOptions).AsName();
     /// <summary>
-    /// ParseOptions defaults identifier
+    /// <see cref="ParseOptions"/> defaults identifier
     /// </summary>
     private static readonly IdentifierNameSyntax Defaults = nameof(ConfigLoader.Utils.ParseOptions.Defaults).AsName();
+    /// <summary>
+    /// Default <see cref="ParseOptions"/>
+    /// </summary>
+    private static readonly ExpressionSyntax DefaultOptions = ParseOptions.Access(Defaults);
     /// <summary>
     /// Types that can be directly assigned to the field
     /// </summary>
@@ -129,9 +134,17 @@ public static class LoadBuilder
 
         // this.value = value.value;
         ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(value);
+        BlockSyntax block = Block(fieldAssign.AsStatement());
+
+        if (field.IsRequired)
+        {
+            // required.Add("name");
+            ExpressionSyntax addInvocation = Required.Access(Add).Invoke(field.FieldName.AsLiteral().AsArgument());
+            block = block.AddStatements(addInvocation.AsStatement());
+        }
 
         // if(!string.IsNullOrEmpty(value.value))
-        IfStatementSyntax ifStatement = If(isNotNullOrEmptyInvocation, fieldAssign.AsStatement());
+        IfStatementSyntax ifStatement = If(isNotNullOrEmptyInvocation, block);
 
         // Add if statement and return
         return Block().AddStatements(ifStatement);
@@ -157,8 +170,8 @@ public static class LoadBuilder
                                        .AsArgument()
                                        .WithOut();
 
-        // ParseOptions.Defaults
-        ArgumentSyntax options = ParseOptions.Access(Defaults).AsArgument();
+        // Create options from metadata
+        ArgumentSyntax options = CreateParseOptions(field).AsArgument();
 
         // ParseUtils.TryParse
         MemberAccessExpressionSyntax tryParse = ParseUtils.Access(TryParse);
@@ -167,9 +180,17 @@ public static class LoadBuilder
 
         // this.value = _value;
         ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(tempVar);
+        BlockSyntax block = Block(fieldAssign.AsStatement());
+
+        if (field.IsRequired)
+        {
+            // required.Add("name");
+            ExpressionSyntax addInvocation = Required.Access(Add).Invoke(field.FieldName.AsLiteral().AsArgument());
+            block = block.AddStatements(addInvocation.AsStatement());
+        }
 
         // if (ParseUtils.TryParse(value.value, out Type _value, options)) { }
-        IfStatementSyntax ifStatement = If(tryParseInvocation, fieldAssign.AsStatement());
+        IfStatementSyntax ifStatement = If(tryParseInvocation, block);
 
         // Add namespace if the type isn't builtin
         context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
@@ -326,7 +347,7 @@ public static class LoadBuilder
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    public static BlockSyntax GenerateInterfaceNodeLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateInterfaceNodeLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -344,9 +365,17 @@ public static class LoadBuilder
 
         // this.value.Load(value)
         ExpressionSyntax loadConfig = fieldAccess.Access(Load).Invoke(value.AsArgument());
+        BlockSyntax block = Block(instantiation.AsStatement(), loadConfig.AsStatement());
+
+        if (field.IsRequired)
+        {
+            // required.Add("name");
+            ExpressionSyntax addInvocation = Required.Access(Add).Invoke(field.FieldName.AsLiteral().AsArgument());
+            block = block.AddStatements(addInvocation.AsStatement());
+        }
 
         // Add statements and return
-        return Block().AddStatements(instantiation.AsStatement(), loadConfig.AsStatement());
+        return block;
     }
 
     /// <summary>
@@ -356,15 +385,68 @@ public static class LoadBuilder
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified statement body</returns>
-    public static BlockSyntax GenerateNodeAssignLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static BlockSyntax GenerateNodeAssignLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
         // this.value = value;
         ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(value);
+        BlockSyntax block = Block(fieldAssign.AsStatement());
+
+        if (field.IsRequired)
+        {
+            // required.Add("name");
+            ExpressionSyntax addInvocation = Required.Access(Add).Invoke(field.FieldName.AsLiteral().AsArgument());
+            block = block.AddStatements(addInvocation.AsStatement());
+        }
 
         // Add statements and return
-        return Block().AddStatements(fieldAssign.AsStatement());
+        return block;
+    }
+    #endregion
+
+    #region Options
+    /// <summary>
+    /// Creates parse options for a specific field
+    /// </summary>
+    /// <param name="field">Field to create the parse options for</param>
+    /// <returns>The created parse options, or the default options if none were required</returns>
+    private static ExpressionSyntax CreateParseOptions(in ConfigFieldMetadata field)
+    {
+        List<ArgumentSyntax> options = new(5);
+
+        if (field.EnumHandling is not ConfigFieldAttribute.DefaultEnumHandling)
+        {
+            ExpressionSyntax value  = nameof(EnumHandling).Access(EnumUtils.ToString(field.EnumHandling));
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.EnumHandling));
+            options.Add(argument);
+        }
+        if (field.SplitOptions is not ConfigFieldAttribute.DefaultSplitOptions)
+        {
+            ExpressionSyntax value  = nameof(ExtendedSplitOptions).Access(EnumUtils.ToString(field.SplitOptions));
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.SplitOptions));
+            options.Add(argument);
+        }
+        if (field.Separator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.Separator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.Separator));
+            options.Add(argument);
+        }
+        if (field.CollectionSeparator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.CollectionSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.CollectionSeparator));
+            options.Add(argument);
+        }
+        if (field.KeyValueSeparator != default)
+        {
+            ExpressionSyntax value  = MakeLiteral(field.KeyValueSeparator);
+            ArgumentSyntax argument = value.AsArgument(nameof(ConfigLoader.Utils.ParseOptions.KeyValueSeparator));
+            options.Add(argument);
+        }
+
+        return options.Count is not 0 ? ParseOptions.New(options.ToArray()) : DefaultOptions;
     }
     #endregion
 }

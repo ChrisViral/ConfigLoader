@@ -41,7 +41,7 @@
     <Compile Include="Attributes\ConfigObjectAttribute.cs" />
     <Compile Include="Exceptions\MissingRequiredConfigFieldException.cs" />
     <Compile Include="Extensions\EnumExtensions.cs" />
-    <Compile Include="Extensions\StringSplitExtensions.cs" />
+    <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="IGeneratedConfigNode.cs" />
     <Compile Include="NameExports.cs" />
     <Compile Include="Utils\EnumUtils.cs" />

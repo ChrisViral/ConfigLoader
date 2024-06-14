@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using ConfigLoader.Extensions;
 using JetBrains.Annotations;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -24,11 +25,11 @@ public static partial class WriteUtils
     /// <summary>
     /// Default dictionary separator
     /// </summary>
-    private const string DEFAULT_COLLECTION_SEPARATOR = ",";
+    internal const char DEFAULT_COLLECTION_SEPARATOR = ',';
     /// <summary>
     /// Default dictionary separator
     /// </summary>
-    private const string DEFAULT_DICT_SEPARATOR = "|";
+    internal const char DEFAULT_DICT_SEPARATOR = ':';
     /// <summary>
     /// Default dictionary separator
     /// </summary>
@@ -61,8 +62,8 @@ public static partial class WriteUtils
         if (IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
-        string separator = options.CollectionSeparator ?? DEFAULT_COLLECTION_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * value!.Count);
+        char separator = !options.CollectionSeparator.IsNull() ? options.CollectionSeparator : DEFAULT_COLLECTION_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire(COLLECTION_ALLOCATION * value!.Count);
 
         // Append values
         builder.Append(write(value[0], options));
@@ -89,8 +90,8 @@ public static partial class WriteUtils
         if (IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
-        string separator = options.CollectionSeparator ?? DEFAULT_COLLECTION_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * value!.Count);
+        char separator = !options.CollectionSeparator.IsNull() ? options.CollectionSeparator : DEFAULT_COLLECTION_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire(COLLECTION_ALLOCATION * value!.Count);
 
         // Get values enumerator
         using IEnumerator<T> enumerator = value.GetEnumerator();
@@ -121,7 +122,7 @@ public static partial class WriteUtils
         // Make sure the enumerable is not null
         if (value is null) return string.Empty;
 
-        string separator;
+        char separator;
         StringBuilder builder;
         IEnumerator<T> enumerator;
 
@@ -132,8 +133,8 @@ public static partial class WriteUtils
             if (collection.Count is 0) return string.Empty;
 
             // Create StringBuilder and enumerator
-            separator  = options.CollectionSeparator ?? DEFAULT_COLLECTION_SEPARATOR;
-            builder    = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * collection.Count);
+            separator = !options.CollectionSeparator.IsNull() ? options.CollectionSeparator : DEFAULT_COLLECTION_SEPARATOR;
+            builder    = StringBuilderCache.Acquire(COLLECTION_ALLOCATION * collection.Count);
             enumerator = value.GetEnumerator();
         }
         else
@@ -147,7 +148,7 @@ public static partial class WriteUtils
             }
 
             // Create StringBuilder
-            separator = options.CollectionSeparator ?? DEFAULT_SEPARATOR;
+            separator = !options.CollectionSeparator.IsNull() ? options.CollectionSeparator : DEFAULT_COLLECTION_SEPARATOR;
             builder   = StringBuilderCache.Acquire();
         }
 
@@ -180,8 +181,8 @@ public static partial class WriteUtils
     public static string Write<TKey, TValue>(KeyValuePair<TKey, TValue> value, WriteFunc<TKey> writeKey, WriteFunc<TValue> writeValue, in WriteOptions options)
     {
         // Get StringBuilder and separator
-        string separator = options.Separator ?? DEFAULT_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * 2);
+        char separator = !options.KeyValueSeparator.IsNull() ? options.KeyValueSeparator : DEFAULT_DICT_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire(COLLECTION_ALLOCATION * 2);
         builder.Append(writeKey(value.Key, options)).Append(separator);
         builder.Append(writeValue(value.Value, options));
 
@@ -205,8 +206,8 @@ public static partial class WriteUtils
         if (IsNullOrEmptyCollection(value)) return string.Empty;
 
         // Get StringBuilder and separator
-        string separator = options.Separator ?? DEFAULT_DICT_SEPARATOR;
-        StringBuilder builder = StringBuilderCache.Acquire((COLLECTION_ALLOCATION + separator.Length) * value!.Count);
+        char separator = !options.CollectionSeparator.IsNull() ? options.CollectionSeparator : DEFAULT_COLLECTION_SEPARATOR;
+        StringBuilder builder = StringBuilderCache.Acquire(COLLECTION_ALLOCATION * value!.Count);
 
         // Get values enumerator
         using IEnumerator<KeyValuePair<TKey, TValue>> enumerator = value.GetEnumerator();

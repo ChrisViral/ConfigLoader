@@ -24,11 +24,11 @@ public static partial class ParseUtils
     /// <summary>
     /// Default collection separators
     /// </summary>
-    internal static readonly char[] DefaultCollectionSeparators = [','];
+    internal static readonly char[] DefaultCollectionSeparators = [WriteUtils.DEFAULT_COLLECTION_SEPARATOR];
     /// <summary>
     /// Default dictionary separators
     /// </summary>
-    internal static readonly char[] DefaultDictionarySeparators = ['|'];
+    internal static readonly char[] DefaultDictionarySeparators = [WriteUtils.DEFAULT_DICT_SEPARATOR];
     #endregion
 
     #region Split
@@ -41,11 +41,7 @@ public static partial class ParseUtils
     private static string[] SplitCollectionInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[]? separators = options.CollectionSeparators;
-        if (separators is not { Length: > 0 })
-        {
-            separators = DefaultCollectionSeparators;
-        }
+        char[] separators = !options.CollectionSeparator.IsNull() ? MakeBuffer(options.CollectionSeparator) : DefaultCollectionSeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);
@@ -60,11 +56,7 @@ public static partial class ParseUtils
     private static string[] SplitDictionaryInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
-        char[]? separators = options.DictionarySeparators;
-        if (separators is not { Length: > 0 })
-        {
-            separators = DefaultDictionarySeparators;
-        }
+        char[] separators = !options.KeyValueSeparator.IsNull() ? MakeBuffer(options.KeyValueSeparator) : DefaultDictionarySeparators;
 
         // Return splits
         return value.Split(separators, options.SplitOptions);
@@ -411,7 +403,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitValuesInternal(value!, options);
+        string[] splits = SplitDictionaryInternal(value!, options);
         if (splits.Length is 2
          && keyTryParse(splits[0], out TKey? key, options)
          && valueTryParse(splits[1], out TValue? val, options))
@@ -446,7 +438,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = [];
         if (result.IsReadOnly)
         {
@@ -489,7 +481,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new Dictionary<TKey, TValue>(splits.Length);
         return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
     }
@@ -514,7 +506,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = [];
         return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
     }
@@ -539,7 +531,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         result = new SortedList<TKey, TValue>(splits.Length);
         return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, in options);
     }
@@ -564,7 +556,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitCollectionInternal(value!, options);
         Dictionary<TKey, TValue> dict = new(splits.Length);
         if (TryParseDictionaryInternal(splits, ref dict, keyTryParse, valueTryParse, in options))
         {

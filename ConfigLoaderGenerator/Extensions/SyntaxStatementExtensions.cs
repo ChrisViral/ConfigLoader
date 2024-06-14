@@ -42,12 +42,6 @@ public static class SyntaxStatementExtensions
 
     #region Static methods
     /// <summary>
-    /// <see langword="return"/> statement
-    /// </summary>
-    /// <returns>A <see langword="return"/> statement</returns>
-    public static ReturnStatementSyntax Return() => ReturnStatement();
-
-    /// <summary>
     /// <see langword="break"/> statement
     /// </summary>
     /// <returns>A <see langword="break"/> statement</returns>
@@ -60,6 +54,34 @@ public static class SyntaxStatementExtensions
     public static ContinueStatementSyntax Continue() => ContinueStatement();
 
     /// <summary>
+    /// <see langword="return"/> statement, optionally with the specified expression
+    /// </summary>
+    /// <param name="expression">Expression to return, if needed</param>
+    /// <returns>A <see langword="return"/> statement with the given expression if specified</returns>
+    public static ReturnStatementSyntax Return(ExpressionSyntax? expression = null) => ReturnStatement(expression);
+
+    /// <summary>
+    /// <see langword="throw"/> statement, optionally with the specified expression
+    /// </summary>
+    /// <param name="expression">Expression to throw</param>
+    /// <returns>A <see langword="throw"/> statement with the given expression if specified</returns>
+    public static ThrowStatementSyntax Throw(ExpressionSyntax? expression = null)
+    {
+        return ThrowStatement(expression);
+    }
+
+    /// <summary>
+    /// <see langword="throw"/> statement, optionally with the specified expression
+    /// </summary>
+    /// <param name="exceptionType">Exception type to throw</param>
+    /// <param name="arguments">Exception constructor arguments, if needed</param>
+    /// <returns>A <see langword="throw"/> statement with the given exception</returns>
+    public static ThrowStatementSyntax Throw(TypeSyntax exceptionType, params ArgumentSyntax[] arguments)
+    {
+        return ThrowStatement(exceptionType.New(arguments));
+    }
+
+    /// <summary>
     /// Creates an <see langword="if"/> block with the provided statements
     /// </summary>
     /// <param name="condition">If condition</param>
@@ -68,6 +90,17 @@ public static class SyntaxStatementExtensions
     public static IfStatementSyntax If(ExpressionSyntax condition, params StatementSyntax[] statements)
     {
         return IfStatement(condition, Block(statements));
+    }
+
+    /// <summary>
+    /// Creates an <see langword="if"/> block with the provided statements
+    /// </summary>
+    /// <param name="condition">If condition</param>
+    /// <param name="block">Statement block</param>
+    /// <returns>An if statement over the provided <paramref name="condition"/> and with the provided <see cref="block"/></returns>
+    public static IfStatementSyntax If(ExpressionSyntax condition, BlockSyntax block)
+    {
+        return IfStatement(condition, block);
     }
     #endregion
 }

@@ -30,6 +30,17 @@ public static class SyntaxModificationExtensions
     }
 
     /// <summary>
+    /// Adds an <see langword="else"/> clause to the given if statement
+    /// </summary>
+    /// <param name="ifStatement"><see langword="if"/> statement to add the clause to</param>
+    /// <param name="statements">Statements within the <see langword="else"/> block</param>
+    /// <returns></returns>
+    public static IfStatementSyntax WithElse(this IfStatementSyntax ifStatement, params StatementSyntax[] statements)
+    {
+        return ifStatement.WithElse(ElseClause(Block(statements)));
+    }
+
+    /// <summary>
     /// Adds a <see langword="ref"/> keyword to this argument
     /// </summary>
     /// <param name="argument">Argument to add the keyword to</param>

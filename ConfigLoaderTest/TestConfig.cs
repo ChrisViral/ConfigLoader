@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ConfigLoader.Attributes;
+using ConfigLoader.Exceptions;
 using ConfigLoader.Utils;
 using UnityEngine;
 
@@ -25,11 +26,11 @@ public partial class TestConfig
     public int intValue = 0;
     [ConfigField]
     public float floatValue = 0f;
-    [ConfigField]
+    [ConfigField(IsRequired = true)]
     public string stringValue = string.Empty;
-    [ConfigField]
+    [ConfigField(EnumHandling = EnumHandling.Flags)]
     public AccessModifier modifier = AccessModifier.Public;
-    [ConfigField]
+    [ConfigField(IsRequired = true)]
     public FloatCurve floatCurve;
     [ConfigField]
     public ConfigTest explicitImplementation;
@@ -37,7 +38,7 @@ public partial class TestConfig
     public ConfigNode configNode;
     [ConfigField]
     public int[] intArray;
-    [ConfigField]
+    [ConfigField(IsRequired = true, CollectionSeparator = ',')]
     public List<int> intList;
     [ConfigField]
     public HashSet<string> stringHashSet;
@@ -49,19 +50,20 @@ public partial class TestConfig
     public Stack<char> charStack;
     [ConfigField]
     public ReadOnlyCollection<double> doubleReadOnlyCollection;
-    [ConfigField]
+    [ConfigField(KeyValueSeparator = '|')]
     public Dictionary<string, decimal> stringDecimalDictionary;
 
-    [ConfigField(Name = "OtherName")]
+    [ConfigField(IsRequired = true, Name = "OtherName", Separator = ' ', SplitOptions = ExtendedSplitOptions.RemoveEmptyEntries)]
     public Vector3 VectorProperty { get; set; }
 
     public void Test(ConfigNode node)
     {
-        if (ParseUtils.TryParse("value.value", out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+        string _intList = WriteUtils.Write(this.intList, WriteUtils.Write, WriteOptions.Defaults);
+        if (string.IsNullOrEmpty(_intList))
         {
-            this.stringDecimalDictionary = _stringDecimalDictionary;
+            throw new MissingRequiredConfigFieldException("", "");
         }
 
-        WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults);
+        node.AddValue("", _intList);
     }
 }
