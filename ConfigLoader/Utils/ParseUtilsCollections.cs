@@ -54,7 +54,7 @@ public static partial class ParseUtils
     /// <param name="value">Value to split</param>
     /// <param name="options">Parsing options</param>
     /// <returns>The array of split values</returns>
-    private static string[] SplitDictionaryInternal(string value, in ParseOptions options)
+    private static string[] SplitKeyValueInternal(string value, in ParseOptions options)
     {
         // Assign default separators if needed
         char[] separators = !options.KeyValueSeparator.IsNullChar() ? MakeBuffer(options.KeyValueSeparator) : DefaultKeyValueSeparators;
@@ -136,7 +136,6 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitCollectionInternal(value!, options);
         result = [];
         if (result.IsReadOnly)
         {
@@ -144,19 +143,8 @@ public static partial class ParseUtils
             return false;
         }
 
-        foreach (string element in splits)
-        {
-            // If parse partially fails, return early
-            if (!tryParse(element, out TElement? parsed, options))
-            {
-                result = default;
-                return false;
-            }
-
-            result.Add(parsed!);
-        }
-
-        return true;
+        string[] splits = SplitCollectionInternal(value!, options);
+        return TryParseCollectionInternal(splits, ref result, tryParse, options);
     }
 
     /// <summary>
@@ -404,7 +392,7 @@ public static partial class ParseUtils
         }
 
         // Split values and try parsing
-        string[] splits = SplitDictionaryInternal(value!, options);
+        string[] splits = SplitKeyValueInternal(value!, options);
         if (splits.Length is 2
          && keyTryParse(splits[0], out TKey? key, options)
          && valueTryParse(splits[1], out TValue? val, options))
@@ -439,7 +427,7 @@ public static partial class ParseUtils
             return false;
         }
 
-        string[] splits = SplitCollectionInternal(value!, options);
+        // If dictionary is readonly, also return now
         result = [];
         if (result.IsReadOnly)
         {
@@ -447,19 +435,9 @@ public static partial class ParseUtils
             return false;
         }
 
-        foreach (string element in splits)
-        {
-            // If parse partially fails, return early
-            if (!TryParse(element, out KeyValuePair<TKey, TValue> parsed, keyTryParse, valueTryParse, in options))
-            {
-                result = default;
-                return false;
-            }
-
-            result.Add(parsed.Key, parsed.Value);
-        }
-
-        return true;
+        // Split and parse
+        string[] splits = SplitCollectionInternal(value!, options);
+        return TryParseDictionaryInternal(splits, ref result, keyTryParse, valueTryParse, options);
     }
 
     /// <summary>
