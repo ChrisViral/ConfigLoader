@@ -4,8 +4,10 @@ using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
@@ -78,7 +80,9 @@ public static class SaveBuilder
 
         if (field.Type.IsArray)
         {
-            return GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
+            return field.IsMultipleValuesCollection
+                       ? GenerateWriteValueCollectionSave(body, name, value, field, context)
+                       : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
         if (field.Type.IsSupportedDictionary || field.Type.IsDictionary)
@@ -88,7 +92,9 @@ public static class SaveBuilder
 
         if (field.Type.IsSupportedCollection || field.Type.IsCollection)
         {
-            return GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
+            return field.IsMultipleValuesCollection
+                       ? GenerateWriteValueCollectionSave(body, name, value, field, context)
+                       : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
         if (field.Type.IsConfigNode)
@@ -161,7 +167,8 @@ public static class SaveBuilder
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field value save code generated</returns>
-    private static MethodDeclarationSyntax GenerateWriteValueSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, WriteInvocation createWrite, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateWriteValueSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, WriteInvocation createWrite,
+                                                                  in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -196,7 +203,8 @@ public static class SaveBuilder
     /// <param name="field">Field to write from</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>Write</c> invocation</returns>
-    private static InvocationExpressionSyntax WriteValueSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static InvocationExpressionSyntax WriteValueSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options,
+                                                             in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // WriteUtils.Write(value, WriteOptions.Defaults)
         return write.Invoke(value.AsArgument(), options);
@@ -211,7 +219,8 @@ public static class SaveBuilder
     /// <param name="field">Field to write from</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>Write</c> invocation</returns>
-    private static InvocationExpressionSyntax WriteDictionarySave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static InvocationExpressionSyntax WriteDictionarySave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options,
+                                                                  in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // WriteUtils.Write(value, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults)
         ArgumentSyntax writeArgument = write.AsArgument();
@@ -227,10 +236,54 @@ public static class SaveBuilder
     /// <param name="field">Field to write from</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>Write</c> invocation</returns>
-    private static InvocationExpressionSyntax WriteCollectionSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static InvocationExpressionSyntax WriteCollectionSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options,
+                                                                  in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // WriteUtils.Write(value, WriteUtils.Write, WriteOptions.Defaults)
         return write.Invoke(value.AsArgument(), write.AsArgument(), options);
+    }
+
+    private static MethodDeclarationSyntax GenerateWriteValueCollectionSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value,
+                                                                            in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
+        // WriteOptions.Defaults
+        ArgumentSyntax options = GenerateWriteOptions(field).AsArgument();
+        // WriteUtils.Write
+        MemberAccessExpressionSyntax write = WriteUtils.Access(Write);
+        // WriteUtils.Write(value, WriteOptions.Defaults)
+        ExpressionSyntax writeInvocation = WriteValueSave(write, Value, options, field, context);
+        // node.AddValue("value", WriteUtils.Write(value, WriteOptions.Defaults));
+        ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
+        StatementSyntax writeStatement = addValueInvocation.AsStatement();
+
+        ITypeSymbol elementType = field.Type.GetElementSymbol();
+        StatementSyntax finalBlock;
+        if (field.Type.IsArray)
+        {
+            // Type value = this.values[i];
+            VariableDeclarationSyntax variable = Value.DeclareVariable(elementType.DisplayName().AsName(), value.ElementAccess(Index.AsArgument()));
+            // for (int i = 0; i < values.Length; i++) { }
+            finalBlock = IncrementingFor(Index, MakeLiteral(0), value.Access(Length), variable.AsLocalDeclaration(), writeStatement);
+        }
+        else
+        {
+            // foreach (Type value in this.values) { }
+            finalBlock = ForEach(elementType.DisplayName().AsName(), Value, value, writeStatement);
+        }
+
+
+        if (field is { IsRequired: false, Type.Symbol.IsReferenceType: true })
+        {
+            // if (value != null) { }
+            finalBlock = If(value.IsNotNull(), finalBlock);
+        }
+
+        // Add namespace and return
+        context.UsedNamespaces.AddNamespace(elementType.ContainingNamespace);
+        context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
+        return body.AddBodyStatements(finalBlock);
     }
     #endregion
 
@@ -244,7 +297,8 @@ public static class SaveBuilder
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field node save code generated</returns>
-    private static MethodDeclarationSyntax GenerateConfigNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateConfigNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value,
+                                                                  in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -279,7 +333,8 @@ public static class SaveBuilder
     /// <param name="field">Field data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field node save code generated</returns>
-    private static MethodDeclarationSyntax GenerateAddNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateAddNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value,
+                                                               in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 

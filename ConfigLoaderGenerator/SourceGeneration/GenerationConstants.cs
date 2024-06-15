@@ -246,6 +246,10 @@ public static class GenerationConstants
     /// </summary>
     public static readonly IdentifierNameSyntax Required   = IdentifierName("required");
     /// <summary>
+    /// Array Length identifier
+    /// </summary>
+    public static readonly IdentifierNameSyntax Length = nameof(Array.Length).AsName();
+    /// <summary>
     /// HashSet Count identifier
     /// </summary>
     public static readonly IdentifierNameSyntax Count = nameof(HashSet<string>.Count).AsName();

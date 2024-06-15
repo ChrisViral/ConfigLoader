@@ -17,6 +17,8 @@ public struct ConfigTest : IConfigNode
     #endregion
 }
 
+public class DerivedConfig : TestConfig;
+
 [ConfigObject(LoadMethodAccess = AccessModifier.Public, SaveMethodAccess = AccessModifier.Public)]
 public partial class TestConfig
 {
@@ -56,25 +58,11 @@ public partial class TestConfig
 
     public void Test(ConfigNode node)
     {
-        for (int i = 0; i < node.CountValues; i++)
+        if (this.intArray != null)
         {
-            List<string> list = new List<string>();
-            ConfigNode.Value value = node.values[i];
-            switch (value.name)
+            foreach (int value in this.intArray)
             {
-                case "stringHashSetValue":
-                {
-                    if (!string.IsNullOrEmpty(value.value))
-                    {
-                        list.Add(value.value);
-                    }
-                    break;
-                }
-            }
-
-            if (list.Count != 0)
-            {
-                this.stringHashSet = CollectionUtils.FromList<HashSet<string>, string>(list);
+                node.AddValue("intArray", WriteUtils.Write(value, WriteOptions.Defaults));
             }
         }
     }

@@ -38,6 +38,70 @@ public static class SyntaxStatementExtensions
     /// <param name="expression">The expression to create a statement for</param>
     /// <returns>The created <see cref="ExpressionStatementSyntax"/></returns>
     public static ExpressionStatementSyntax AsStatement<T>(this T expression) where T : ExpressionSyntax => ExpressionStatement(expression);
+
+    /// <summary>
+    /// Generate an incrementing <see langword="for"/> loop from <paramref name="start"/> (inclusive) to <paramref name="end"/> (exclusive)
+    /// </summary>
+    /// <param name="index">Index variable</param>
+    /// <param name="start">Start value expression</param>
+    /// <param name="end">End value expression</param>
+    /// <param name="statements">Statements executed within the loop</param>
+    /// <returns>The generated <see langword="for"/> loop</returns>
+    public static ForStatementSyntax IncrementingFor(IdentifierNameSyntax index, ExpressionSyntax start, ExpressionSyntax end, params StatementSyntax[] statements)
+    {
+        // int i = start
+        VariableDeclarationSyntax indexDeclaration = index.DeclareVariable(SyntaxKind.IntKeyword.AsType(), start);
+        // i < end
+        ExpressionSyntax condition = index.IsLessThan(end);
+        // i++
+        ExpressionSyntax increment = index.Increment();
+        // for (int i = start; i < end; i++) { }
+        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), Block(statements));
+    }
+
+    /// <summary>
+    /// Generate an incrementing <see langword="for"/> loop from <paramref name="start"/> (exclusive) to <paramref name="end"/> (inclusive)
+    /// </summary>
+    /// <param name="index">Index variable</param>
+    /// <param name="start">Start value expression</param>
+    /// <param name="end">End value expression</param>
+    /// <param name="statements">Statements executed within the loop</param>
+    /// <returns>The generated <see langword="for"/> loop</returns>
+    public static ForStatementSyntax DecrementingFor(IdentifierNameSyntax index, ExpressionSyntax start, ExpressionSyntax end, params StatementSyntax[] statements)
+    {
+        // int i = start - 1
+        VariableDeclarationSyntax indexDeclaration = index.DeclareVariable(SyntaxKind.IntKeyword.AsType(), start.Subtract(1.AsLiteral()));
+        // i >= end
+        ExpressionSyntax condition = index.IsGreaterThanOrEqual(end);
+        // i--
+        ExpressionSyntax increment = index.Decrement();
+        // for (int i = start - 1; i >= end; i--) { }
+        return ForStatement(indexDeclaration, [], condition, increment.AsSeparatedList(), Block(statements));
+    }
+
+    /// <summary>
+    /// Generate an <see langword="foreach"/>
+    /// </summary>
+    /// <param name="type">Variable type</param>
+    /// <param name="value">Value name</param>
+    /// <param name="collection">Collection to iterate in expression</param>
+    /// <param name="statements">Statements executed within the loop</param>
+    /// <returns>The generated <see langword="foreach"/> loop</returns>
+    public static ForEachStatementSyntax ForEach(TypeSyntax type, IdentifierNameSyntax value, ExpressionSyntax collection, params StatementSyntax[] statements)
+    {
+        return ForEachStatement(type, value.Identifier, collection, Block(statements));
+    }
+
+    /// <summary>
+    /// Generate an <see langword="while"/>
+    /// </summary>
+    /// <param name="condition">While loop condition</param>
+    /// <param name="statements">Statements executed within the loop</param>
+    /// <returns>The generated <see langword="while"/> loop</returns>
+    public static WhileStatementSyntax While(ExpressionSyntax condition, params StatementSyntax[] statements)
+    {
+        return WhileStatement(condition, Block(statements));
+    }
     #endregion
 
     #region Static methods
