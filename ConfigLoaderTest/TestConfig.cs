@@ -52,18 +52,14 @@ public partial class TestConfig
     public ReadOnlyCollection<double> doubleReadOnlyCollection;
     [ConfigField(KeyValueSeparator = '|')]
     public Dictionary<string, decimal> stringDecimalDictionary;
+    [ConfigField]
+    public KeyValuePair<string, float> stringFloatPair;
 
     [ConfigField(IsRequired = true, Name = "OtherName", ValueSeparator = ' ', SplitOptions = ExtendedSplitOptions.RemoveEmptyEntries)]
     public Vector3 VectorProperty { get; set; }
 
     public void Test(ConfigNode node)
     {
-        if (this.intArray != null)
-        {
-            foreach (int value in this.intArray)
-            {
-                node.AddValue("intArray", WriteUtils.Write(value, WriteOptions.Defaults));
-            }
-        }
+        ParseUtils.TryParse("", out KeyValuePair<string, float> pair, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults);
     }
 }

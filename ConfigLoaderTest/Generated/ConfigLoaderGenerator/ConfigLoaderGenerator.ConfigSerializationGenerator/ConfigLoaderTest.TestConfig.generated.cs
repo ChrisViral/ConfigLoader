@@ -154,6 +154,16 @@ namespace ConfigLoaderTest
                         break;
                     }
 
+                    case "stringFloatPair":
+                    {
+                        if (ParseUtils.TryParse(value.value, out KeyValuePair<string, float> _stringFloatPair, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+                        {
+                            this.stringFloatPair = _stringFloatPair;
+                        }
+
+                        break;
+                    }
+
                     case "OtherName":
                     {
                         if (ParseUtils.TryParse(value.value, out Vector3 _VectorProperty, new ParseOptions(SplitOptions: ExtendedSplitOptions.RemoveEmptyEntries, ValueSeparator: ' ')))
@@ -298,6 +308,7 @@ namespace ConfigLoaderTest
                 node.AddValue("stringDecimalDictionary", WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, new WriteOptions(KeyValueSeparator: '|')));
             }
 
+            node.AddValue("stringFloatPair", WriteUtils.Write(this.stringFloatPair, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
             node.AddValue("OtherName", WriteUtils.Write(this.VectorProperty, new WriteOptions(ValueSeparator: ' ')));
             this.floatCurve.Save(node.AddNode("floatCurve"));
             ((IConfigNode)this.explicitImplementation).Save(node.AddNode("explicitImplementation"));

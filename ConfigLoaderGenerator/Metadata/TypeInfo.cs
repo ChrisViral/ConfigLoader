@@ -79,6 +79,7 @@ public readonly struct TypeInfo
     /// If this type implements <see cref="ICollection{T}"/>
     /// </summary>
     public bool IsCollection => this.Symbol.Implements(typeof(ICollection<>));
+
     /// <summary>
     /// If this type is a base supported generic collection
     /// </summary>
@@ -87,6 +88,10 @@ public readonly struct TypeInfo
     /// If this type implements <see cref="ICollection{T}"/>
     /// </summary>
     public bool IsDictionary => this.Symbol.Implements(typeof(IDictionary<,>));
+    /// <summary>
+    /// If this type is a KeyValuePair
+    /// </summary>
+    public bool IsKeyValue => this.NamedSymbol is { IsGenericType: true } && this.NamedSymbol.ConstructUnboundGenericType().FullName() == typeof(KeyValuePair<,>).GetDisplayName();
 
     /// <summary>
     /// Creates a new TypeInfo based on a given type symbol

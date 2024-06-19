@@ -152,9 +152,9 @@ public static class LoadBuilder
 
         }
 
-        if (field.Type.IsDictionary)
+        if (field.Type.IsDictionary || field.Type.IsKeyValue)
         {
-            return field.Type.IsSupportedDictionary
+            return field.Type.IsSupportedDictionary || field.Type.IsKeyValue
                 ? GenerateTryParseValueLoad(value, GenerateTryParseSimpleDictionaryInvocation, field, context)
                 : GenerateTryParseValueLoad(value, GenerateTryParseDictionaryInvocation, field, context);
         }

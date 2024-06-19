@@ -85,7 +85,7 @@ public static class SaveBuilder
                        : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
-        if (field.Type.IsSupportedDictionary || field.Type.IsDictionary)
+        if (field.Type.IsSupportedDictionary || field.Type.IsDictionary || field.Type.IsKeyValue)
         {
             return GenerateWriteValueSave(body, name, value, WriteDictionarySave, field, context);
         }
