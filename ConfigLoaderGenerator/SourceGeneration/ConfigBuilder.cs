@@ -15,7 +15,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
-using static ConfigLoaderGenerator.Extensions.SyntaxOperationExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
@@ -278,7 +277,7 @@ public static class ConfigBuilder
             context.UsedNamespaces.AddNamespaceName(typeof(List<>).Namespace!);
             foreach (ConfigFieldMetadata field in multipleValuesFields)
             {
-                GenericNameSyntax listType = GenericList.AsGenericName(field.Type.GetElementSymbol().DisplayName().AsName());
+                GenericNameSyntax listType = GenericList.AsGenericName(field.Type.ElementType!.Identifier);
                 VariableDeclarationSyntax collector = field.CollectorName.DeclareNewVariable(listType);
                 method = method.AddBodyStatements(collector.AsLocalDeclaration());
             }
@@ -367,7 +366,7 @@ public static class ConfigBuilder
         {
             assignation = field.CollectorName.Access(ToArray).Invoke();
         }
-        else if (field.Type.NamedSymbol?.ConstructUnboundGenericType()?.FullName() == typeof(List<>).GetDisplayName())
+        else if (field.Type.IsList)
         {
             assignation = field.CollectorName;
         }
@@ -377,7 +376,7 @@ public static class ConfigBuilder
         }
         else
         {
-            GenericNameSyntax genericFrom = FromList.AsGenericName(field.Type.Identifier, field.Type.GetElementSymbol().DisplayName().AsName());
+            GenericNameSyntax genericFrom = FromList.AsGenericName(field.Type.Identifier, field.Type.ElementType!.Identifier);
             assignation = CollectionUtils.Access(genericFrom).Invoke(field.CollectorName.AsArgument());
         }
 

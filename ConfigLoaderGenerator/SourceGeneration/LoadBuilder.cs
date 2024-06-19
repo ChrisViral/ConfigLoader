@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -14,6 +12,7 @@ using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
+using TypeInfo = ConfigLoaderGenerator.Metadata.TypeInfo;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -147,7 +146,7 @@ public static class LoadBuilder
                 return GenerateTryParseValueLoad(value, GenerateTryParseSimpleCollectionInvocation, field, context);
             }
 
-            TypeSyntax elementType = field.Type.GetElementSymbol().DisplayName().AsName();
+            TypeSyntax elementType = field.Type.ElementType!.Identifier;
             return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context, elementType);
 
         }
@@ -166,7 +165,7 @@ public static class LoadBuilder
                 return GenerateTryParseValueLoad(value, GenerateTryParseSimpleCollectionInvocation, field, context);
             }
 
-            TypeSyntax elementType = field.Type.GetElementSymbol().DisplayName().AsName();
+            TypeSyntax elementType = field.Type.ElementType!.Identifier;
             return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context, elementType);
         }
 
@@ -178,7 +177,7 @@ public static class LoadBuilder
                 return GenerateTryParseValueLoad(value, GenerateTryParseCollectionInvocation, field, context);
             }
 
-            TypeSyntax elementType = field.Type.GetElementSymbol().DisplayName().AsName();
+            TypeSyntax elementType = field.Type.ElementType!.Identifier;
             return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context, elementType);
         }
 
@@ -320,14 +319,14 @@ public static class LoadBuilder
                                                                                    ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Get collection element type
-        ITypeSymbol elementSymbol = field.Type.GetElementSymbol();
+        TypeInfo elementSymbol = field.Type.ElementType!;
 
         // ParseUtils.TryParse<TCollection, TElement>
-        GenericNameSyntax tryParseGenericName = TryParse.AsGenericName(field.Type.Identifier, elementSymbol.DisplayName().AsName());
+        GenericNameSyntax tryParseGenericName = TryParse.AsGenericName(field.Type.Identifier, elementSymbol.Identifier);
         ExpressionSyntax tryParseGeneric = tryParse.WithName(tryParseGenericName);
 
         // Add element namespace
-        context.UsedNamespaces.AddNamespace(elementSymbol.ContainingNamespace);
+        context.UsedNamespaces.AddNamespace(elementSymbol.Namespace);
 
         // ParseUtils.TryParse<TCollection, TElement>(value.value, out TCollection result, ParseUtils.TryParse, options);
         return tryParseGeneric.Invoke(value.AsArgument(), outVar, tryParse.AsArgument(), options);
@@ -365,15 +364,16 @@ public static class LoadBuilder
                                                                                    ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Get dictionary key/value types
-        (ITypeSymbol keySymbol, ITypeSymbol valueSymbol) = field.Type.GetKeyValueSymbols();
+        TypeInfo keyType = field.Type.KeyType!;
+        TypeInfo valueType = field.Type.ValueType!;
 
         // ParseUtils.TryParse<TDict, TKey, TValue>
-        GenericNameSyntax tryParseGenericName = TryParse.AsGenericName(field.Type.Identifier, keySymbol.DisplayName().AsName(), valueSymbol.DisplayName().AsName());
+        GenericNameSyntax tryParseGenericName = TryParse.AsGenericName(field.Type.Identifier, keyType.Identifier, valueType.Identifier);
         ExpressionSyntax tryParseGeneric = tryParse.WithName(tryParseGenericName);
 
         // Add key/value namespaces
-        context.UsedNamespaces.AddNamespace(keySymbol.ContainingNamespace);
-        context.UsedNamespaces.AddNamespace(valueSymbol.ContainingNamespace);
+        context.UsedNamespaces.AddNamespace(keyType.Namespace);
+        context.UsedNamespaces.AddNamespace(valueType.Namespace);
 
         // ParseUtils.TryParse<TDict, TKey, TValue>(value.value, out TDict result, ParseUtils.TryParse, ParseUtils.TryParse, options);
         ArgumentSyntax tryParseArgument = tryParse.AsArgument();

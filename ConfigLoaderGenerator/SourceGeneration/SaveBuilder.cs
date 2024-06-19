@@ -4,13 +4,12 @@ using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Extensions;
 using ConfigLoaderGenerator.Metadata;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
+using TypeInfo = ConfigLoaderGenerator.Metadata.TypeInfo;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
  * You are free to redistribute, share, adapt, etc. as long as the original author (stupid_chris/Christophe Savard) is properly, clearly, *
@@ -258,19 +257,19 @@ public static class SaveBuilder
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
         StatementSyntax writeStatement = addValueInvocation.AsStatement();
 
-        ITypeSymbol elementType = field.Type.GetElementSymbol();
+        TypeInfo elementType = field.Type.ElementType!;
         StatementSyntax finalBlock;
         if (field.Type.IsArray)
         {
             // Type value = this.values[i];
-            VariableDeclarationSyntax variable = Value.DeclareVariable(elementType.DisplayName().AsName(), value.ElementAccess(Index.AsArgument()));
+            VariableDeclarationSyntax variable = Value.DeclareVariable(elementType.Identifier, value.ElementAccess(Index.AsArgument()));
             // for (int i = 0; i < values.Length; i++) { }
             finalBlock = IncrementingFor(Index, MakeLiteral(0), value.Access(Length), variable.AsLocalDeclaration(), writeStatement);
         }
         else
         {
             // foreach (Type value in this.values) { }
-            finalBlock = ForEach(elementType.DisplayName().AsName(), Value, value, writeStatement);
+            finalBlock = ForEach(elementType.Identifier, Value, value, writeStatement);
         }
 
 
@@ -281,7 +280,7 @@ public static class SaveBuilder
         }
 
         // Add namespace and return
-        context.UsedNamespaces.AddNamespace(elementType.ContainingNamespace);
+        context.UsedNamespaces.AddNamespace(elementType.Namespace);
         context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
         return body.AddBodyStatements(finalBlock);
     }

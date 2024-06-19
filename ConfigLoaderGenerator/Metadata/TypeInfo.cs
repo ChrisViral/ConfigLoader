@@ -20,20 +20,12 @@ namespace ConfigLoaderGenerator.Metadata;
 /// <summary>
 /// Type info container
 /// </summary>
-public readonly struct TypeInfo
+public class TypeInfo
 {
     /// <summary>
     /// Type symbol
     /// </summary>
     public ITypeSymbol Symbol { get; }
-    /// <summary>
-    /// The associated array symbol, if any
-    /// </summary>
-    public IArrayTypeSymbol? ArraySymbol { get; }
-    /// <summary>
-    /// The associated array symbol, if any
-    /// </summary>
-    public INamedTypeSymbol? NamedSymbol { get; }
     /// <summary>
     /// Fully qualified name
     /// </summary>
@@ -58,40 +50,57 @@ public readonly struct TypeInfo
     /// <summary>
     /// If this is a builtin type
     /// </summary>
-    public bool IsBuiltin => this.Symbol.IsBuiltin();
+    public bool IsBuiltin { get; }
     /// <summary>
     /// If this type is a base supported type
     /// </summary>
-    public bool IsSupportedType => this.Symbol.IsSupported();
+    public bool IsSupportedType { get; }
     /// <summary>
     /// If this is an enum type
     /// </summary>
-    public bool IsEnum => this.Symbol.IsEnum();
+    public bool IsEnum { get; }
+
     /// <summary>
     /// If this type is an array
     /// </summary>
-    public bool IsArray => this.ArraySymbol is not null;
+    public bool IsArray { get; }
     /// <summary>
-    /// If this type is a base supported generic collection
+    /// If this type is a <see cref="List{T}"/>
     /// </summary>
-    public bool IsSupportedCollection => this.NamedSymbol is { IsGenericType: true } && SupportedCollections.Contains(this.NamedSymbol.ConstructUnboundGenericType().FullName());
+    public bool IsList { get; }
     /// <summary>
     /// If this type implements <see cref="ICollection{T}"/>
     /// </summary>
-    public bool IsCollection => this.Symbol.Implements(typeof(ICollection<>));
+    public bool IsCollection { get; }
+    /// <summary>
+    /// If this type is a base supported generic collection
+    /// </summary>
+    public bool IsSupportedCollection { get; }
+    /// <summary>
+    /// Type of element within this collection, if it is one
+    /// </summary>
+    public TypeInfo? ElementType { get; }
 
-    /// <summary>
-    /// If this type is a base supported generic collection
-    /// </summary>
-    public bool IsSupportedDictionary => this.NamedSymbol is { IsGenericType: true } && SupportedDictionaries.Contains(this.NamedSymbol.ConstructUnboundGenericType().FullName());
-    /// <summary>
-    /// If this type implements <see cref="ICollection{T}"/>
-    /// </summary>
-    public bool IsDictionary => this.Symbol.Implements(typeof(IDictionary<,>));
     /// <summary>
     /// If this type is a KeyValuePair
     /// </summary>
-    public bool IsKeyValue => this.NamedSymbol is { IsGenericType: true } && this.NamedSymbol.ConstructUnboundGenericType().FullName() == typeof(KeyValuePair<,>).GetDisplayName();
+    public bool IsKeyValue { get; }
+    /// <summary>
+    /// If this type implements <see cref="ICollection{T}"/>
+    /// </summary>
+    public bool IsDictionary { get; }
+    /// <summary>
+    /// If this type is a base supported generic collection
+    /// </summary>
+    public bool IsSupportedDictionary { get; }
+    /// <summary>
+    /// Key type of this Dictionary, if it is one
+    /// </summary>
+    public TypeInfo? KeyType { get; }
+    /// <summary>
+    /// Value type of this Dictionary, if it is one
+    /// </summary>
+    public TypeInfo? ValueType { get; }
 
     /// <summary>
     /// Creates a new TypeInfo based on a given type symbol
@@ -99,48 +108,45 @@ public readonly struct TypeInfo
     /// <param name="symbol">Symbol to make the info container for</param>
     public TypeInfo(ITypeSymbol symbol)
     {
-        this.Symbol       = symbol;
-        this.ArraySymbol  = symbol as IArrayTypeSymbol;
-        this.NamedSymbol  = symbol as INamedTypeSymbol;
+        this.Symbol = symbol;
 
-        this.FullName     = this.Symbol.FullName();
-        this.Namespace    = this.Symbol.ContainingNamespace;
-        this.Identifier   = IdentifierName(this.Symbol.DisplayName());
-        this.IsConfigNode = this.Symbol.Implements(IConfigNode.AsRaw());
+        this.FullName     = symbol.FullName();
+        this.Namespace    = symbol.ContainingNamespace;
+        this.Identifier   = IdentifierName(symbol.DisplayName());
+        this.IsConfigNode = symbol.Implements(IConfigNode.AsRaw());
         this.IsNodeObject = this.FullName == ConfigNode.AsRaw();
-    }
 
-    #region Utility methods
-    /// <summary>
-    /// Gets the collection element symbol for this type
-    /// </summary>
-    /// <returns>The collection element type symbol of this type</returns>
-    /// <exception cref="InvalidOperationException">If this type is not an <see cref="ICollection{T}"/> type</exception>
-    public ITypeSymbol GetElementSymbol()
-    {
-        if (this.IsArray) return this.ArraySymbol!.ElementType;
+        this.IsBuiltin       = symbol.IsBuiltin();
+        this.IsSupportedType = symbol.IsSupported();
+        this.IsEnum          = symbol.IsEnum();
 
-        if (this.Symbol.TryGetInterface(typeof(ICollection<>), out INamedTypeSymbol? collectionInterface))
+        switch (symbol)
         {
-            return collectionInterface!.TypeArguments[0];
+            case IArrayTypeSymbol arraySymbol:
+                this.IsArray     = true;
+                this.ElementType = new TypeInfo(arraySymbol.ElementType);
+                break;
+
+            case INamedTypeSymbol { IsGenericType: true } namedSymbol:
+                string genericTypeName = namedSymbol.ConstructUnboundGenericType().FullName();
+
+                this.IsList                = genericTypeName == typeof(List<>).GetDisplayName();
+                this.IsCollection          = this.Symbol.Implements(typeof(ICollection<>));
+                this.IsSupportedCollection = SupportedCollections.Contains(genericTypeName);
+                if (this.Symbol.TryGetInterface(typeof(ICollection<>), out INamedTypeSymbol? collectionInterface))
+                {
+                    this.ElementType = new TypeInfo(collectionInterface!.TypeArguments[0]);
+                }
+
+                this.IsDictionary          = this.Symbol.Implements(typeof(IDictionary<,>));
+                this.IsKeyValue            = genericTypeName == typeof(KeyValuePair<,>).GetDisplayName();
+                this.IsSupportedDictionary = SupportedDictionaries.Contains(genericTypeName);
+                if (this.Symbol.TryGetInterface(typeof(IDictionary<,>), out INamedTypeSymbol? dictionaryInterface))
+                {
+                    this.KeyType   = new TypeInfo(dictionaryInterface!.TypeArguments[0]);
+                    this.ValueType = new TypeInfo(dictionaryInterface.TypeArguments[1]);
+                }
+                break;
         }
-
-        throw new InvalidOperationException("Cannot get the element symbol of a type that does not implement ICollection<T>");
     }
-
-    /// <summary>
-    /// Gets the dictionary key and value symbols for this type
-    /// </summary>
-    /// <returns>A tuple containing both key and value symbols</returns>
-    /// <exception cref="InvalidOperationException">If this type is not an <see cref="IDictionary{TKey,TValue}"/> type</exception>
-    public (ITypeSymbol key, ITypeSymbol value) GetKeyValueSymbols()
-    {
-        if (this.Symbol.TryGetInterface(typeof(IDictionary<,>), out INamedTypeSymbol? dictionaryInterface))
-        {
-            return (dictionaryInterface!.TypeArguments[0], dictionaryInterface.TypeArguments[1]);
-        }
-
-        throw new InvalidOperationException("Cannot get the key/value symbols of a type that does not implement IDictionary<TKey, TValue>");
-    }
-    #endregion
 }
