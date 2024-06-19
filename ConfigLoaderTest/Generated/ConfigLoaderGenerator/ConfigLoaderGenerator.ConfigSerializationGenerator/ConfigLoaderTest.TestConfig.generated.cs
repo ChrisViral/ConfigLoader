@@ -26,7 +26,8 @@ namespace ConfigLoaderTest
             HashSet<string> required = new HashSet<string>(3);
             List<int> intArrayCollector = new List<int>();
             List<int> intListCollector = new List<int>();
-            List<string> stringHashSetCollector = new List<string>();
+            HashSet<string> stringHashSetCollector = new HashSet<string>();
+            List<double> doubleReadOnlyCollectionCollector = new List<double>();
             int valueCount = node.CountValues;
             for (int i = 0; i < valueCount; i++)
             {
@@ -136,9 +137,9 @@ namespace ConfigLoaderTest
 
                     case "doubleReadOnlyCollection":
                     {
-                        if (ParseUtils.TryParse(value.value, out ReadOnlyCollection<double> _doubleReadOnlyCollection, ParseUtils.TryParse, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out double _doubleReadOnlyCollection, ParseOptions.Defaults))
                         {
-                            this.doubleReadOnlyCollection = _doubleReadOnlyCollection;
+                            doubleReadOnlyCollectionCollector.Add(_doubleReadOnlyCollection);
                         }
 
                         break;
@@ -190,7 +191,12 @@ namespace ConfigLoaderTest
 
             if (stringHashSetCollector.Count != 0)
             {
-                this.stringHashSet = new HashSet<string>(stringHashSetCollector);
+                this.stringHashSet = stringHashSetCollector;
+            }
+
+            if (doubleReadOnlyCollectionCollector.Count != 0)
+            {
+                this.doubleReadOnlyCollection = new ReadOnlyCollection<double>(doubleReadOnlyCollectionCollector);
             }
 
             if (required.Count != 3)
@@ -300,7 +306,10 @@ namespace ConfigLoaderTest
 
             if (this.doubleReadOnlyCollection != null)
             {
-                node.AddValue("doubleReadOnlyCollection", WriteUtils.Write(this.doubleReadOnlyCollection, WriteUtils.Write, WriteOptions.Defaults));
+                foreach (double value in this.doubleReadOnlyCollection)
+                {
+                    node.AddValue("doubleReadOnlyCollection", WriteUtils.Write(value, WriteOptions.Defaults));
+                }
             }
 
             if (this.stringDecimalDictionary != null)

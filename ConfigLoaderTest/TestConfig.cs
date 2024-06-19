@@ -48,7 +48,7 @@ public partial class TestConfig
     public Queue<object> objectQueue;
     [ConfigField]
     public Stack<char> charStack;
-    [ConfigField]
+    [ConfigField(CollectionHandling = CollectionHandling.MultipleValues)]
     public ReadOnlyCollection<double> doubleReadOnlyCollection;
     [ConfigField(KeyValueSeparator = '|')]
     public Dictionary<string, decimal> stringDecimalDictionary;

@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
@@ -65,13 +65,13 @@ public class TypeInfo
     /// </summary>
     public bool IsArray { get; }
     /// <summary>
-    /// If this type is a <see cref="List{T}"/>
-    /// </summary>
-    public bool IsList { get; }
-    /// <summary>
     /// If this type implements <see cref="ICollection{T}"/>
     /// </summary>
     public bool IsCollection { get; }
+    /// <summary>
+    /// If this type is a <see cref="ReadOnlyCollection{T}"/>
+    /// </summary>
+    public bool IsReadOnlyCollection { get; }
     /// <summary>
     /// If this type is a base supported generic collection
     /// </summary>
@@ -89,6 +89,10 @@ public class TypeInfo
     /// If this type implements <see cref="ICollection{T}"/>
     /// </summary>
     public bool IsDictionary { get; }
+    /// <summary>
+    /// If this type is a <see cref="ReadOnlyDictionary{TKey,TValue}"/>
+    /// </summary>
+    public bool IsReadOnlyDictionary { get; }
     /// <summary>
     /// If this type is a base supported generic collection
     /// </summary>
@@ -130,8 +134,8 @@ public class TypeInfo
             case INamedTypeSymbol { IsGenericType: true } namedSymbol:
                 string genericTypeName = namedSymbol.ConstructUnboundGenericType().FullName();
 
-                this.IsList                = genericTypeName == typeof(List<>).GetDisplayName();
                 this.IsCollection          = this.Symbol.Implements(typeof(ICollection<>));
+                this.IsReadOnlyCollection  = genericTypeName == typeof(ReadOnlyCollection<>).GetDisplayName();
                 this.IsSupportedCollection = SupportedCollections.Contains(genericTypeName);
                 if (this.Symbol.TryGetInterface(typeof(ICollection<>), out INamedTypeSymbol? collectionInterface))
                 {
@@ -140,6 +144,7 @@ public class TypeInfo
 
                 this.IsDictionary          = this.Symbol.Implements(typeof(IDictionary<,>));
                 this.IsKeyValue            = genericTypeName == typeof(KeyValuePair<,>).GetDisplayName();
+                this.IsReadOnlyDictionary  = genericTypeName == typeof(ReadOnlyDictionary<,>).GetDisplayName();
                 this.IsSupportedDictionary = SupportedDictionaries.Contains(genericTypeName);
                 if (this.Symbol.TryGetInterface(typeof(IDictionary<,>), out INamedTypeSymbol? dictionaryInterface))
                 {

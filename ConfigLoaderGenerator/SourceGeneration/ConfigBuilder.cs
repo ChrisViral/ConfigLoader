@@ -272,16 +272,7 @@ public static class ConfigBuilder
 
         // Create collectors for multi-value collections
         ConfigFieldMetadata[] multipleValuesFields = fields.Where(f => f.IsMultipleValuesCollection).ToArray();
-        if (multipleValuesFields.Length > 0)
-        {
-            context.UsedNamespaces.AddNamespaceName(typeof(List<>).Namespace!);
-            foreach (ConfigFieldMetadata field in multipleValuesFields)
-            {
-                GenericNameSyntax listType = GenericList.AsGenericName(field.Type.ElementType!.Identifier);
-                VariableDeclarationSyntax collector = field.CollectorName.DeclareNewVariable(listType);
-                method = method.AddBodyStatements(collector.AsLocalDeclaration());
-            }
-        }
+        method = GenerateCollectorCreation(method, multipleValuesFields, context);
 
         // int count = node.count;
         VariableDeclarationSyntax countVariable = countName.DeclareVariable(SyntaxKind.IntKeyword, Node.Access(count));
@@ -320,12 +311,69 @@ public static class ConfigBuilder
         method = method.AddBodyStatements(countVariable.AsLocalDeclaration(), forStatement);
 
         // Assign back collector values
+        method = GenerateCollectorAssigns(method, multipleValuesFields);
+
+        // Make sure all required fields have been loaded
+        method = GenerateRequiredCheck(method, requiredCount, fields);
+
+        // Return final method
+        return method;
+    }
+
+    /// <summary>
+    /// Generate the collector declaration for multiple values collections
+    /// </summary>
+    /// <param name="method">Method to generate into</param>
+    /// <param name="multipleValuesFields">Collection of fields to generate collectors for</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The modified method with the collectors created</returns>
+    private static MethodDeclarationSyntax GenerateCollectorCreation(MethodDeclarationSyntax method, IReadOnlyCollection<ConfigFieldMetadata> multipleValuesFields, in ConfigBuilderContext context)
+    {
+        // Ignore if not fields to generate for
+        if (multipleValuesFields.Count <= 0) return method;
+
+        // Loop over all fields
+        foreach (ConfigFieldMetadata field in multipleValuesFields)
+        {
+            // Check which type to instantiate as
+            TypeSyntax type;
+            if (field.Type is { IsSupportedCollection: true, IsReadOnlyCollection: false })
+            {
+                type = field.Type.Identifier;
+                context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+            }
+            else
+            {
+                type = GenericList.AsGenericName(field.Type.ElementType!.Identifier);
+                context.UsedNamespaces.AddNamespaceName(typeof(List<>).Namespace!);
+            }
+
+            // Create variable
+            VariableDeclarationSyntax collector = field.CollectorName.DeclareNewVariable(type);
+            method = method.AddBodyStatements(collector.AsLocalDeclaration());
+        }
+
+        return method;
+    }
+
+    /// <summary>
+    /// Generates the assignation of collectors back to their respective fields
+    /// </summary>
+    /// <param name="method">Method to generate into</param>
+    /// <param name="multipleValuesFields">Collection of fields to generate collectors assignations for</param>
+    /// <returns>The modified method with the collector assignations created</returns>
+    private static MethodDeclarationSyntax GenerateCollectorAssigns(MethodDeclarationSyntax method, IReadOnlyCollection<ConfigFieldMetadata> multipleValuesFields)
+    {
+        // Ignore if not fields to generate for
+        if (multipleValuesFields.Count <= 0) return method;
+
+        // Assign back collector values
         foreach (ConfigFieldMetadata field in multipleValuesFields)
         {
             // valueCollector.Count != 0
             ExpressionSyntax notEmpty = field.CollectorName.Access(Count).IsNotEqual(MakeLiteral(0));
             // this.value = valueCollector;
-            StatementSyntax assignCollector = GenerateCollectorAssign(field);
+            StatementSyntax assignCollector = GenerateCollectorFieldAssign(field);
             BlockSyntax block = Block(assignCollector);
 
             // If required, add it
@@ -342,12 +390,63 @@ public static class ConfigBuilder
             method = method.AddBodyStatements(assignStatement);
         }
 
+        return method;
+    }
+
+    /// <summary>
+    /// Generate the assignment statement of a given collector to its parent field
+    /// </summary>
+    /// <param name="field">Field to generate the assignment for</param>
+    /// <returns>The collector assignment statement</returns>
+    private static StatementSyntax GenerateCollectorFieldAssign(in ConfigFieldMetadata field)
+    {
+        ExpressionSyntax assignation;
+        if (field.Type.IsArray)
+        {
+            // For arrays, convert using ToArray
+            assignation = field.CollectorName.Access(ToArray).Invoke();
+        }
+        else if (field.Type.IsSupportedCollection)
+        {
+            if (field.Type.IsReadOnlyCollection)
+            {
+                // For ReadOnlyCollections, use the constructor
+                assignation = field.Type.Identifier.New(field.CollectorName.AsArgument());
+            }
+            else
+            {
+                // For supported collections, assign directly
+                assignation = field.CollectorName;
+            }
+        }
+        else
+        {
+            // For other, unknown collections, use the generic conversion method
+            GenericNameSyntax genericFrom = FromList.AsGenericName(field.Type.Identifier, field.Type.ElementType!.Identifier);
+            assignation = CollectionUtils.Access(genericFrom).Invoke(field.CollectorName.AsArgument());
+        }
+
+        // Return assignment statement
+        return This().Access(field.FieldName).Assign(assignation).AsStatement();
+    }
+
+    /// <summary>
+    /// Generates required field checks
+    /// </summary>
+    /// <param name="method">Method body to generate in</param>
+    /// <param name="requiredCount">Amount of required fields that should exist</param>
+    /// <param name="fields">Fields to check on</param>
+    /// <returns>The method body with the required fields checks added</returns>
+    private static MethodDeclarationSyntax GenerateRequiredCheck(MethodDeclarationSyntax method, int requiredCount, IReadOnlyCollection<ConfigFieldMetadata> fields)
+    {
+        // Make sure there are any required fields
         if (requiredCount is 0) return method;
 
         // Check if required fields where loaded
         BlockSyntax checksBlock = Block();
         foreach (ConfigFieldMetadata requiredField in fields.Where(f => f.IsRequired))
         {
+            // Generate requirement check
             ArgumentSyntax requiredFieldName = requiredField.FieldName.AsLiteral().AsArgument();
             ExpressionSyntax requiredCheck = Not(Required.Access(Contains).Invoke(requiredFieldName));
             ThrowStatementSyntax throwMissing = Throw(MissingException.New(MakeLiteral("ConfigField marked as missing could not be loaded").AsArgument(), requiredFieldName));
@@ -357,30 +456,6 @@ public static class ConfigBuilder
         // Add loop to method and return
         ExpressionSyntax countNotZero = Required.Access(Count).IsNotEqual(requiredCount.AsLiteral());
         return method.AddBodyStatements(If(countNotZero, checksBlock));
-    }
-
-    private static StatementSyntax GenerateCollectorAssign(in ConfigFieldMetadata field)
-    {
-        ExpressionSyntax assignation;
-        if (field.Type.IsArray)
-        {
-            assignation = field.CollectorName.Access(ToArray).Invoke();
-        }
-        else if (field.Type.IsList)
-        {
-            assignation = field.CollectorName;
-        }
-        else if (field.Type.IsSupportedCollection)
-        {
-            assignation = field.Type.Identifier.New(field.CollectorName.AsArgument());
-        }
-        else
-        {
-            GenericNameSyntax genericFrom = FromList.AsGenericName(field.Type.Identifier, field.Type.ElementType!.Identifier);
-            assignation = CollectionUtils.Access(genericFrom).Invoke(field.CollectorName.AsArgument());
-        }
-
-        return This().Access(field.FieldName).Assign(assignation).AsStatement();
     }
     #endregion
 
@@ -399,7 +474,8 @@ public static class ConfigBuilder
         // Make sure node is not null
         method = method.AddBodyStatements(GenerateNodeGuard());
 
-        foreach (ConfigFieldMetadata field in data.ValueFields.Concat(data.NodeFields).Where(f => f is { IsRequired: true, Type.Symbol.IsReferenceType: true }))
+        foreach (ConfigFieldMetadata field in data.ValueFields.Concat(data.NodeFields)
+                                                  .Where(f => f is { IsRequired: true, Type.Symbol.IsReferenceType: true }))
         {
             // throw new MissingRequiredConfigFieldException();
             ArgumentSyntax errorMessage = MakeLiteral("ConfigField marked as missing could not be loaded").AsArgument();
