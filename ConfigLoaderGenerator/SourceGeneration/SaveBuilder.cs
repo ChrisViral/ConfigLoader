@@ -72,7 +72,7 @@ public static class SaveBuilder
     public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save method
-        if (field.Type.IsBuiltin|| field.Type.IsEnum || field.Type.IsSupportedType)
+        if (field.Type.IsSimpleValueType)
         {
             return GenerateWriteValueSave(body, name, value, WriteValueSave, field, context);
         }
@@ -84,24 +84,24 @@ public static class SaveBuilder
                        : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
-        if (field.Type.IsSupportedDictionary || field.Type.IsDictionary || field.Type.IsKeyValue)
+        if (field.Type.IsKeyValueType)
         {
-            return GenerateWriteValueSave(body, name, value, WriteDictionarySave, field, context);
+            return GenerateWriteValueSave(body, name, value, WriteKeyValueSave, field, context);
         }
 
-        if (field.Type.IsSupportedCollection || field.Type.IsCollection)
+        if (field.Type.IsCollectionType)
         {
             return field.IsMultipleValuesCollection
                        ? GenerateWriteValueCollectionSave(body, name, value, field, context)
                        : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
-        if (field.Type.IsConfigNode)
+        if (field.Type.IsIConfigNode)
         {
             return GenerateConfigNodeSave(body, name, value, field, context);
         }
 
-        if (field.Type.IsNodeObject)
+        if (field.Type.IsConfigNode)
         {
             return GenerateAddNodeSave(body, name, value, field, context);
         }
@@ -218,7 +218,7 @@ public static class SaveBuilder
     /// <param name="field">Field to write from</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>Write</c> invocation</returns>
-    private static InvocationExpressionSyntax WriteDictionarySave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options,
+    private static InvocationExpressionSyntax WriteKeyValueSave(MemberAccessExpressionSyntax write, ExpressionSyntax value, ArgumentSyntax options,
                                                                   in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // WriteUtils.Write(value, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults)

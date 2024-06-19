@@ -62,11 +62,11 @@ public class TypeInfo
     /// <summary>
     /// If this is an IConfigNode implementation
     /// </summary>
-    public bool IsConfigNode { get; }
+    public bool IsIConfigNode { get; }
     /// <summary>
     /// If this is a ConfigNode object
     /// </summary>
-    public bool IsNodeObject { get; }
+    public bool IsConfigNode { get; }
     /// <summary>
     /// If this is a builtin type
     /// </summary>
@@ -79,6 +79,14 @@ public class TypeInfo
     /// If this is an enum type
     /// </summary>
     public bool IsEnum { get; }
+    /// <summary>
+    /// If this type is a simple value type
+    /// </summary>
+    public bool IsSimpleValueType { get; }
+    /// <summary>
+    /// If this type is a simple ConfigNode type
+    /// </summary>
+    public bool IsSimpleConfigType { get; }
     #endregion
 
     #region Collection type info
@@ -89,7 +97,7 @@ public class TypeInfo
     /// <summary>
     /// If this type implements <see cref="ICollection{T}"/>
     /// </summary>
-    public bool IsCollection { get; }
+    public bool IsICollection { get; }
     /// <summary>
     /// If this type is a <see cref="ReadOnlyCollection{T}"/>
     /// </summary>
@@ -99,6 +107,10 @@ public class TypeInfo
     /// </summary>
     public bool IsSupportedCollection { get; }
     /// <summary>
+    /// If this is any kind of collection type
+    /// </summary>
+    public bool IsCollectionType { get;  }
+    /// <summary>
     /// Type of element within this collection, if it is one
     /// </summary>
     public TypeInfo? ElementType { get; }
@@ -106,13 +118,13 @@ public class TypeInfo
 
     #region Dictionary type info
     /// <summary>
-    /// If this type is a KeyValuePair
+    /// If this type is a <see cref="KeyValuePair{TKey,TValue}"/>
     /// </summary>
-    public bool IsKeyValue { get; }
+    public bool IsKeyValuePair { get; }
     /// <summary>
-    /// If this type implements <see cref="ICollection{T}"/>
+    /// If this type implements <see cref="IDictionary{TKey,TValue}"/>
     /// </summary>
-    public bool IsDictionary { get; }
+    public bool IsIDictionary { get; }
     /// <summary>
     /// If this type is a <see cref="ReadOnlyDictionary{TKey,TValue}"/>
     /// </summary>
@@ -121,6 +133,10 @@ public class TypeInfo
     /// If this type is a base supported generic collection
     /// </summary>
     public bool IsSupportedDictionary { get; }
+    /// <summary>
+    /// If this is a generic key/value type
+    /// </summary>
+    public bool IsKeyValueType { get; }
     /// <summary>
     /// Key type of this Dictionary, if it is one
     /// </summary>
@@ -139,12 +155,11 @@ public class TypeInfo
     public TypeInfo(ITypeSymbol symbol)
     {
         this.Symbol = symbol;
-
         this.FullName     = symbol.FullName();
         this.Namespace    = symbol.ContainingNamespace;
         this.Identifier   = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).AsName();
-        this.IsConfigNode = symbol.Implements(IConfigNode.AsRaw());
-        this.IsNodeObject = this.FullName == ConfigNode.AsRaw();
+        this.IsIConfigNode = symbol.Implements(IConfigNode.AsRaw());
+        this.IsConfigNode = this.FullName == ConfigNode.AsRaw();
         this.IsBuiltin       = BuiltinTypes.Contains(this.FullName);
         this.IsSupportedType = SupportedTypes.Contains(this.FullName);
         this.IsEnum          = symbol.IsValueType && symbol.BaseType?.FullName() == EnumName;
@@ -160,7 +175,7 @@ public class TypeInfo
                 string genericTypeName = namedSymbol.ConstructUnboundGenericType().FullName();
                 if (this.Symbol.TryGetInterface(typeof(ICollection<>), out INamedTypeSymbol? collectionInterface))
                 {
-                    this.IsCollection          = true;
+                    this.IsICollection          = true;
                     this.IsReadOnlyCollection  = genericTypeName == ReadOnlyCollectionName;
                     this.IsSupportedCollection = SupportedCollections.Contains(genericTypeName);
                     this.ElementType           = new TypeInfo(collectionInterface!.TypeArguments[0]);
@@ -173,7 +188,7 @@ public class TypeInfo
 
                 if (this.Symbol.TryGetInterface(typeof(IDictionary<,>), out INamedTypeSymbol? dictionaryInterface))
                 {
-                    this.IsDictionary          = true;
+                    this.IsIDictionary          = true;
                     this.IsReadOnlyDictionary  = genericTypeName == ReadOnlyDictionaryName;
                     this.IsSupportedDictionary = SupportedDictionaries.Contains(genericTypeName);
                     this.KeyType               = new TypeInfo(dictionaryInterface!.TypeArguments[0]);
@@ -181,12 +196,17 @@ public class TypeInfo
                 }
                 else if (genericTypeName == KeyValuePairName)
                 {
-                    this.IsKeyValue = true;
+                    this.IsKeyValuePair = true;
                     this.KeyType    = new TypeInfo(namedSymbol.TypeArguments[0]);
                     this.ValueType  = new TypeInfo(namedSymbol.TypeArguments[1]);
                 }
                 break;
         }
+
+        this.IsSimpleValueType  = this.IsBuiltin || this.IsEnum || this.IsSupportedType;
+        this.IsSimpleConfigType = this.IsIConfigNode || this.IsConfigNode;
+        this.IsCollectionType   = this.IsArray || this.IsICollection || this.IsSupportedCollection;
+        this.IsKeyValueType     = this.IsIDictionary || this.IsSupportedDictionary || this.IsKeyValuePair;
     }
     #endregion
 }

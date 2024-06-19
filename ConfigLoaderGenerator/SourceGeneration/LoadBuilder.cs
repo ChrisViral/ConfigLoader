@@ -134,7 +134,7 @@ public static class LoadBuilder
             return GenerateAssignValueLoad(value, field, context);
         }
 
-        if (field.Type.IsBuiltin || field.Type.IsEnum || field.Type.IsSupportedType)
+        if (field.Type.IsSimpleValueType)
         {
             return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context);
         }
@@ -151,9 +151,9 @@ public static class LoadBuilder
 
         }
 
-        if (field.Type.IsDictionary || field.Type.IsKeyValue)
+        if (field.Type.IsKeyValueType)
         {
-            return field.Type.IsSupportedDictionary || field.Type.IsKeyValue
+            return field.Type.IsSupportedDictionary || field.Type.IsKeyValuePair
                 ? GenerateTryParseValueLoad(value, GenerateTryParseSimpleDictionaryInvocation, field, context)
                 : GenerateTryParseValueLoad(value, GenerateTryParseDictionaryInvocation, field, context);
         }
@@ -170,7 +170,7 @@ public static class LoadBuilder
         }
 
         // ReSharper disable once InvertIf
-        if (field.Type.IsCollection)
+        if (field.Type.IsICollection)
         {
             if (!field.IsMultipleValuesCollection)
             {
@@ -393,12 +393,12 @@ public static class LoadBuilder
     public static BlockSyntax GenerateNodeLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save option
-        if (field.Type.IsConfigNode)
+        if (field.Type.IsIConfigNode)
         {
             return GenerateInterfaceNodeLoad(value, field, context);
         }
 
-        if (field.Type.IsNodeObject)
+        if (field.Type.IsConfigNode)
         {
             return GenerateNodeAssignLoad(value, field, context);
         }

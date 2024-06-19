@@ -69,11 +69,11 @@ public readonly struct ConfigFieldMetadata
     /// <summary>
     /// If this object must be loaded as a ConfigNode
     /// </summary>
-    public bool IsConfigLoadable => this.Type.IsConfigNode || this.Type.IsNodeObject || this.CollectionHandling is CollectionHandling.NodeOfKeys;
+    public bool IsConfigLoadable => this.Type.IsSimpleConfigType || this.CollectionHandling is CollectionHandling.NodeOfKeys;
     /// <summary>
     /// If this field is a collection stored across multiple values
     /// </summary>
-    public bool IsMultipleValuesCollection => (this.Type.IsArray || this.Type.IsCollection) && this.CollectionHandling is CollectionHandling.MultipleValues;
+    public bool IsMultipleValuesCollection => this.Type.IsCollectionType && this.CollectionHandling is CollectionHandling.MultipleValues;
     /// <summary>
     /// Gets a standard prefixed name for this field
     /// </summary>
