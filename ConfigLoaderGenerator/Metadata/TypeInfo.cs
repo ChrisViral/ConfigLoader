@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -22,6 +23,26 @@ namespace ConfigLoaderGenerator.Metadata;
 /// </summary>
 public class TypeInfo
 {
+    #region Constant type names
+    /// <summary>
+    /// Qualified name of <see cref="Enum"/>
+    /// </summary>
+    private static readonly string EnumName = typeof(Enum).GetDisplayName();
+    /// <summary>
+    /// Qualified name of unbound <see cref="ReadOnlyCollection{T}"/>
+    /// </summary>
+    private static readonly string ReadOnlyCollectionName = typeof(ReadOnlyCollection<>).GetDisplayName();
+    /// <summary>
+    /// Qualified name of unbound <see cref="KeyValuePair{TKey,TValue}"/>
+    /// </summary>
+    private static readonly string KeyValuePairName = typeof(KeyValuePair<,>).GetDisplayName();
+    /// <summary>
+    /// Qualified name of unbound <see cref="ReadOnlyDictionary{TKey,TValue}"/>
+    /// </summary>
+    private static readonly string ReadOnlyDictionaryName = typeof(ReadOnlyDictionary<,>).GetDisplayName();
+    #endregion
+
+    #region Base type info
     /// <summary>
     /// Type symbol
     /// </summary>
@@ -46,7 +67,6 @@ public class TypeInfo
     /// If this is a ConfigNode object
     /// </summary>
     public bool IsNodeObject { get; }
-
     /// <summary>
     /// If this is a builtin type
     /// </summary>
@@ -59,7 +79,9 @@ public class TypeInfo
     /// If this is an enum type
     /// </summary>
     public bool IsEnum { get; }
+    #endregion
 
+    #region Collection type info
     /// <summary>
     /// If this type is an array
     /// </summary>
@@ -80,7 +102,9 @@ public class TypeInfo
     /// Type of element within this collection, if it is one
     /// </summary>
     public TypeInfo? ElementType { get; }
+    #endregion
 
+    #region Dictionary type info
     /// <summary>
     /// If this type is a KeyValuePair
     /// </summary>
@@ -105,7 +129,9 @@ public class TypeInfo
     /// Value type of this Dictionary, if it is one
     /// </summary>
     public TypeInfo? ValueType { get; }
+    #endregion
 
+    #region Constructor
     /// <summary>
     /// Creates a new TypeInfo based on a given type symbol
     /// </summary>
@@ -116,13 +142,12 @@ public class TypeInfo
 
         this.FullName     = symbol.FullName();
         this.Namespace    = symbol.ContainingNamespace;
-        this.Identifier   = IdentifierName(symbol.DisplayName());
+        this.Identifier   = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).AsName();
         this.IsConfigNode = symbol.Implements(IConfigNode.AsRaw());
         this.IsNodeObject = this.FullName == ConfigNode.AsRaw();
-
-        this.IsBuiltin       = symbol.IsBuiltin();
-        this.IsSupportedType = symbol.IsSupported();
-        this.IsEnum          = symbol.IsEnum();
+        this.IsBuiltin       = BuiltinTypes.Contains(this.FullName);
+        this.IsSupportedType = SupportedTypes.Contains(this.FullName);
+        this.IsEnum          = symbol.IsValueType && symbol.BaseType?.FullName() == EnumName;
 
         switch (symbol)
         {
@@ -133,25 +158,35 @@ public class TypeInfo
 
             case INamedTypeSymbol { IsGenericType: true } namedSymbol:
                 string genericTypeName = namedSymbol.ConstructUnboundGenericType().FullName();
-
-                this.IsCollection          = this.Symbol.Implements(typeof(ICollection<>));
-                this.IsReadOnlyCollection  = genericTypeName == typeof(ReadOnlyCollection<>).GetDisplayName();
-                this.IsSupportedCollection = SupportedCollections.Contains(genericTypeName);
                 if (this.Symbol.TryGetInterface(typeof(ICollection<>), out INamedTypeSymbol? collectionInterface))
                 {
-                    this.ElementType = new TypeInfo(collectionInterface!.TypeArguments[0]);
+                    this.IsCollection          = true;
+                    this.IsReadOnlyCollection  = genericTypeName == ReadOnlyCollectionName;
+                    this.IsSupportedCollection = SupportedCollections.Contains(genericTypeName);
+                    this.ElementType           = new TypeInfo(collectionInterface!.TypeArguments[0]);
+                }
+                else if (SupportedCollections.Contains(genericTypeName))
+                {
+                    this.IsSupportedCollection = true;
+                    this.ElementType           = new TypeInfo(namedSymbol.TypeArguments[0]);
                 }
 
-                this.IsDictionary          = this.Symbol.Implements(typeof(IDictionary<,>));
-                this.IsKeyValue            = genericTypeName == typeof(KeyValuePair<,>).GetDisplayName();
-                this.IsReadOnlyDictionary  = genericTypeName == typeof(ReadOnlyDictionary<,>).GetDisplayName();
-                this.IsSupportedDictionary = SupportedDictionaries.Contains(genericTypeName);
                 if (this.Symbol.TryGetInterface(typeof(IDictionary<,>), out INamedTypeSymbol? dictionaryInterface))
                 {
-                    this.KeyType   = new TypeInfo(dictionaryInterface!.TypeArguments[0]);
-                    this.ValueType = new TypeInfo(dictionaryInterface.TypeArguments[1]);
+                    this.IsDictionary          = true;
+                    this.IsReadOnlyDictionary  = genericTypeName == ReadOnlyDictionaryName;
+                    this.IsSupportedDictionary = SupportedDictionaries.Contains(genericTypeName);
+                    this.KeyType               = new TypeInfo(dictionaryInterface!.TypeArguments[0]);
+                    this.ValueType             = new TypeInfo(dictionaryInterface.TypeArguments[1]);
+                }
+                else if (genericTypeName == KeyValuePairName)
+                {
+                    this.IsKeyValue = true;
+                    this.KeyType    = new TypeInfo(namedSymbol.TypeArguments[0]);
+                    this.ValueType  = new TypeInfo(namedSymbol.TypeArguments[1]);
                 }
                 break;
         }
     }
+    #endregion
 }

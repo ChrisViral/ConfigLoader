@@ -44,39 +44,11 @@ internal static class SymbolExtensions
     public static string FullName(this ITypeSymbol type) => type.ToDisplayString(FullNameFormat);
 
     /// <summary>
-    /// The display type name for this type
-    /// </summary>
-    /// <param name="type">Type to get the display name for</param>
-    /// <returns>The type's display name</returns>
-    public static string DisplayName(this ITypeSymbol type) => type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-
-    /// <summary>
     /// Gets the full namespace of this type, including parent namespaces
     /// </summary>
     /// <param name="type">Type to get the namespace of</param>
     /// <returns>The namespace of the type</returns>
     public static string FullNamespace(this ITypeSymbol type) => type.ContainingNamespace.ToDisplayString();
-
-    /// <summary>
-    /// Checks if a given type is an enum
-    /// </summary>
-    /// <param name="type">Type to check</param>
-    /// <returns><see langword="true"/> if <paramref name="type"/> is an <see cref="Enum"/> type, otherwise <see langword="false"/></returns>
-    public static bool IsEnum(this ITypeSymbol type) => type.IsValueType && type.BaseType?.FullName() == typeof(Enum).FullName;
-
-    /// <summary>
-    /// Checks ig a given type is a builtin type
-    /// </summary>
-    /// <param name="type">Type to check</param>
-    /// <returns><see langword="true"/> if <paramref name="type"/> is builtin, otherwise <see langword="false"/></returns>
-    public static bool IsBuiltin(this ITypeSymbol type) => BuiltinTypes.Contains(type.FullName());
-
-    /// <summary>
-    /// Checks ig a given type is a builtin type
-    /// </summary>
-    /// <param name="type">Type to check</param>
-    /// <returns><see langword="true"/> if <paramref name="type"/> is builtin, otherwise <see langword="false"/></returns>
-    public static bool IsSupported(this ITypeSymbol type) => SupportedTypes.Contains(type.FullName());
 
     /// <summary>
     /// Checks if a given type implements <typeparamref name="T"/>
