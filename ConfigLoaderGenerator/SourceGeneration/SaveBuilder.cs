@@ -69,7 +69,8 @@ public static class SaveBuilder
     /// <param name="context">Generation context</param>
     /// <returns>The edited save method declaration with the field save code generated</returns>
     /// <exception cref="InvalidOperationException">If the generator does not know how to save the given field type</exception>
-    public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    public static MethodDeclarationSyntax GenerateFieldSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value,
+                                                            in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best save method
         if (field.Type.IsSimpleValueType)

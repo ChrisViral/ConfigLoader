@@ -81,7 +81,7 @@ public static class ConfigBuilder
         type = GenerateImplementation(type, data, nodeParam, context);
 
         // Add IConfigNode implementation
-        type = GenerateInterfaceImplementation(type, data.Attribute, nodeParam, context);
+        type = GenerateInterfaceImplementation(type, nodeParam, data.Attribute, context);
 
         // Add namespace if needed
         MemberDeclarationSyntax rootDeclaration = type;
@@ -150,12 +150,13 @@ public static class ConfigBuilder
     /// Generates the IConfigNode implementation
     /// </summary>
     /// <param name="type">Type declaration</param>
-    /// <param name="data">Generation data</param>
     /// <param name="nodeParam">The ConfigNode parameter</param>
+    /// <param name="data">Generation data</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modifier type declaration with the methods added</returns>
     /// <exception cref="InvalidEnumArgumentException">If the implementation type enum value is invalid</exception>
-    private static TypeDeclarationSyntax GenerateInterfaceImplementation(TypeDeclarationSyntax type, in ConfigObjectMetadata data, ParameterSyntax nodeParam, in ConfigBuilderContext context)
+    private static TypeDeclarationSyntax GenerateInterfaceImplementation(TypeDeclarationSyntax type, ParameterSyntax nodeParam,
+                                                                         in ConfigObjectMetadata data, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -282,29 +283,8 @@ public static class ConfigBuilder
         // Type value = node.values[i];
         VariableDeclarationSyntax valueDeclaration = Value.DeclareVariable(valueType, currentValue);
 
-        // switch (value.name)
-        int requiredCount = 0;
-        SwitchStatementSyntax nameSwitchStatement = Value.Access(Name).AsSwitchStatement();
-        foreach (ConfigFieldMetadata field in fields)
-        {
-            // case "name":
-            SwitchLabelSyntax label = field.SerializedName.AsLiteral().AsSwitchLabel();
-
-            // Value parsing implementation
-            BlockSyntax body = generateSection(value, field, context);
-
-            // Add break statement, then Create section with label and body
-            body = body.AddStatements(Break());
-            SwitchSectionSyntax section = SwitchSection(label.AsList(), body.AsList<StatementSyntax>());
-
-            // Add sections for the field
-            nameSwitchStatement = nameSwitchStatement.AddSections(section);
-
-            if (field.IsRequired)
-            {
-                requiredCount++;
-            }
-        }
+        // Switch statement
+        SwitchStatementSyntax nameSwitchStatement = GenerateLoadSwitchStatement(value, fields, generateSection, context, out int requiredCount);
 
         // for (int i = 0; i < count; i++) { }
         ForStatementSyntax forStatement = IncrementingFor(Index, MakeLiteral(0), countName, valueDeclaration.AsLocalDeclaration(), nameSwitchStatement);
@@ -327,7 +307,8 @@ public static class ConfigBuilder
     /// <param name="multipleValuesFields">Collection of fields to generate collectors for</param>
     /// <param name="context">Generation context</param>
     /// <returns>The modified method with the collectors created</returns>
-    private static MethodDeclarationSyntax GenerateCollectorCreation(MethodDeclarationSyntax method, IReadOnlyCollection<ConfigFieldMetadata> multipleValuesFields, in ConfigBuilderContext context)
+    private static MethodDeclarationSyntax GenerateCollectorCreation(MethodDeclarationSyntax method, IReadOnlyCollection<ConfigFieldMetadata> multipleValuesFields,
+                                                                     in ConfigBuilderContext context)
     {
         // Ignore if not fields to generate for
         if (multipleValuesFields.Count <= 0) return method;
@@ -354,6 +335,47 @@ public static class ConfigBuilder
         }
 
         return method;
+    }
+
+    /// <summary>
+    /// Generates the loading switch statement
+    /// </summary>
+    /// <param name="value">Value to load expression</param>
+    /// <param name="fields">List of fields to generate load code for</param>
+    /// <param name="generateSection">Function which generates a load section for each field</param>
+    /// <param name="context">Generation context</param>
+    /// <param name="requiredCount">The amount of fields which were required</param>
+    /// <returns>The generated <see langword="switch"/> statement</returns>
+    private static SwitchStatementSyntax GenerateLoadSwitchStatement(ExpressionSyntax value, IEnumerable<ConfigFieldMetadata> fields, LoadSectionGenerator generateSection,
+                                                                     in ConfigBuilderContext context, out int requiredCount)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
+        // switch (value.name)
+        requiredCount = 0;
+        SwitchStatementSyntax nameSwitchStatement = Value.Access(Name).AsSwitchStatement();
+        foreach (ConfigFieldMetadata field in fields)
+        {
+            // case "name":
+            SwitchLabelSyntax label = field.SerializedName.AsLiteral().AsSwitchLabel();
+
+            // Value parsing implementation
+            BlockSyntax body = generateSection(value, field, context);
+
+            // Add break statement, then Create section with label and body
+            body = body.AddStatements(Break());
+            SwitchSectionSyntax section = SwitchSection(label.AsList(), body.AsList<StatementSyntax>());
+
+            // Add sections for the field
+            nameSwitchStatement = nameSwitchStatement.AddSections(section);
+
+            if (field.IsRequired)
+            {
+                requiredCount++;
+            }
+        }
+
+        return nameSwitchStatement;
     }
 
     /// <summary>
