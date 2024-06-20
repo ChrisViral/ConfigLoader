@@ -50,8 +50,12 @@ public partial class TestConfig
     public Stack<char> charStack;
     [ConfigField(CollectionHandling = CollectionHandling.MultipleValues)]
     public ReadOnlyCollection<double> doubleReadOnlyCollection;
-    [ConfigField(KeyValueSeparator = '|')]
+    [ConfigField(KeyValueSeparator = '|', CollectionHandling = CollectionHandling.MultipleValues)]
     public Dictionary<string, decimal> stringDecimalDictionary;
+    [ConfigField(CollectionHandling = CollectionHandling.MultipleValues)]
+    public ReadOnlyDictionary<float, float> floatReadOnlyDictionary;
+    [ConfigField(CollectionHandling = CollectionHandling.MultipleValues)]
+    public SortedList<int, int> intSortedList;
     [ConfigField]
     public KeyValuePair<string, float> stringFloatPair;
 

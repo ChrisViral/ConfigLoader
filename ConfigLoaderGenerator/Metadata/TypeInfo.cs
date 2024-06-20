@@ -154,15 +154,19 @@ public class TypeInfo
     /// <param name="symbol">Symbol to make the info container for</param>
     public TypeInfo(ITypeSymbol symbol)
     {
-        this.Symbol = symbol;
-        this.FullName     = symbol.FullName();
-        this.Namespace    = symbol.ContainingNamespace;
-        this.Identifier   = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).AsName();
-        this.IsIConfigNode = symbol.Implements(IConfigNode.AsRaw());
-        this.IsConfigNode = this.FullName == ConfigNode.AsRaw();
+        this.Symbol          = symbol;
+        this.FullName        = symbol.FullName();
+        this.Identifier      = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).AsName();
+        this.IsIConfigNode   = symbol.Implements(IConfigNode.AsRaw());
+        this.IsConfigNode    = this.FullName == ConfigNode.AsRaw();
         this.IsBuiltin       = BuiltinTypes.Contains(this.FullName);
+        this.Namespace       = symbol.ContainingNamespace;
         this.IsSupportedType = SupportedTypes.Contains(this.FullName);
         this.IsEnum          = symbol.IsValueType && symbol.BaseType?.FullName() == EnumName;
+        if (!this.IsBuiltin)
+        {
+            this.Namespace = symbol.ContainingNamespace;
+        }
 
         switch (symbol)
         {

@@ -124,46 +124,31 @@ public static class LoadBuilder
             return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context);
         }
 
-        if (field.Type.IsArray)
-        {
-            if (!field.IsMultipleValuesCollection)
-            {
-                return GenerateTryParseValueLoad(value, GenerateTryParseSimpleCollectionInvocation, field, context);
-            }
-
-            TypeSyntax elementType = field.Type.ElementType!.Identifier;
-            return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context, elementType);
-
-        }
-
         if (field.Type.IsKeyValueType)
         {
-            return field.Type.IsSupportedDictionary || field.Type.IsKeyValuePair
-                ? GenerateTryParseValueLoad(value, GenerateTryParseSimpleDictionaryInvocation, field, context)
-                : GenerateTryParseValueLoad(value, GenerateTryParseDictionaryInvocation, field, context);
-        }
-
-        if (field.Type.IsSupportedCollection)
-        {
-            if (!field.IsMultipleValuesCollection)
+            if (field.IsMultipleValuesDictionary)
             {
-                return GenerateTryParseValueLoad(value, GenerateTryParseSimpleCollectionInvocation, field, context);
+                return GenerateTryParsePairCollectionValueLoad(value, field, context);
             }
 
-            TypeSyntax elementType = field.Type.ElementType!.Identifier;
-            return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context, elementType);
+            TryParseInvocation invocation = field.Type.IsSupportedDictionary || field.Type.IsKeyValuePair
+                                                ? GenerateTryParsePairValueInvocation
+                                                : GenerateTryParseDictionaryInvocation;
+            return GenerateTryParseValueLoad(value, invocation, field, context);
         }
 
-        // ReSharper disable once InvertIf
-        if (field.Type.IsICollection)
+        if (field.Type.IsCollectionType)
         {
-            if (!field.IsMultipleValuesCollection)
+            if (field.IsMultipleValuesCollection)
             {
-                return GenerateTryParseValueLoad(value, GenerateTryParseCollectionInvocation, field, context);
+                TypeSyntax elementType = field.Type.ElementType!.Identifier;
+                return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context, elementType);
             }
 
-            TypeSyntax elementType = field.Type.ElementType!.Identifier;
-            return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context, elementType);
+            TryParseInvocation invocation = field.Type.IsArray || field.Type.IsSupportedCollection
+                                                ? GenerateTryParseSimpleCollectionInvocation
+                                                : GenerateTryParseCollectionInvocation;
+            return GenerateTryParseValueLoad(value, invocation, field, context);
         }
 
         // Unknown type
@@ -224,6 +209,68 @@ public static class LoadBuilder
     }
 
     /// <summary>
+    /// Generate the Pair collection value load code implementation using <c>TryParse</c>
+    /// </summary>
+    /// <param name="value">Value expression</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The modified statement body</returns>
+    private static BlockSyntax GenerateTryParsePairCollectionValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
+        // out KeyValuePair<TKey, TValue> _value
+        ArgumentSyntax outVar = field.PrefixedName
+                                     .Declaration(field.Type.ElementType!.Identifier)
+                                     .AsArgument()
+                                     .WithOut();
+
+        // Create options from metadata
+        ArgumentSyntax options = GenerateParseOptions(field).AsArgument();
+
+        // ParseUtils.TryParse
+        MemberAccessExpressionSyntax tryParse = ParseUtils.Access(TryParse);
+        // ParseUtils.TryParse(value.value, out KeyValuePair<TKey, TValue> _value, ParseUtils.TryParse, ParseUtils.TryParse, options)
+        ExpressionSyntax tryParseInvocation = GenerateTryParsePairValueInvocation(tryParse, value, outVar, options, field, context);
+
+        ExpressionSyntax fieldAssign;
+        ExpressionSyntax collectorAdd = field.CollectorName.Access(Add);
+        if (field.Type.IsSupportedDictionary)
+        {
+            // valuesCollector.Add(_value.Key, _value.Value);
+            ArgumentSyntax pairKey = field.PrefixedName.Access(PairKey).AsArgument();
+            ArgumentSyntax pairValue = field.PrefixedName.Access(PairValue).AsArgument();
+            fieldAssign = collectorAdd.Invoke(pairKey, pairValue);
+        }
+        else
+        {
+            // valuesCollector.Add(_value);
+            fieldAssign = collectorAdd.Invoke(field.PrefixedName.AsArgument());
+        }
+        BlockSyntax block = Block(fieldAssign.AsStatement());
+
+        // if (ParseUtils.TryParse(value.value, out KeyValuePair<TKey, TValue> _value, ParseUtils.TryParse, ParseUtils.TryParse, options)) { }
+        IfStatementSyntax ifStatement = If(tryParseInvocation, block);
+
+        // Add namespace if the type isn't builtin
+        context.UsedNamespaces.AddNamespaceName(UtilsNamespace);
+        if (!field.Type.ElementType.IsBuiltin)
+        {
+            context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+        }
+        if (!field.Type.KeyType!.IsBuiltin)
+        {
+            context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+        }
+        if (!field.Type.ValueType!.IsBuiltin)
+        {
+            context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+        }
+
+        return Block().AddStatements(ifStatement);
+    }
+
+    /// <summary>
     /// Creates a TryParse invocation for simple values
     /// </summary>
     /// <param name="tryParse">TryParse member access</param>
@@ -251,10 +298,11 @@ public static class LoadBuilder
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>TryParse</c> invocation</returns>
     private static InvocationExpressionSyntax GenerateTryParseSimpleCollectionInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
-                                                                              ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+                                                                                         ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
-        // ParseUtils.TryParse(value.value, out T[] result, ParseUtils.TryParse, options);
-        return tryParse.Invoke(value.AsArgument(), outVar, tryParse.AsArgument(), options);
+        // ParseUtils.TryParse(value.value, out TCollection result, ParseUtils.TryParse, options);
+        ArgumentSyntax tryParseArgument = tryParse.AsArgument();
+        return tryParse.Invoke(value.AsArgument(), outVar, tryParseArgument, options);
     }
 
     /// <summary>
@@ -285,7 +333,7 @@ public static class LoadBuilder
     }
 
     /// <summary>
-    /// Creates a TryParse invocation for <see cref="IDictionary{TKey,TValue}"/> implementations
+    /// Creates a TryParse invocation for Key/Value pair type
     /// </summary>
     /// <param name="tryParse">TryParse member access</param>
     /// <param name="value">Value to parse</param>
@@ -294,8 +342,8 @@ public static class LoadBuilder
     /// <param name="field">Field to parse into</param>
     /// <param name="context">Generation context</param>
     /// <returns>The created <c>TryParse</c> invocation</returns>
-    private static InvocationExpressionSyntax GenerateTryParseSimpleDictionaryInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
-                                                                                         ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    private static InvocationExpressionSyntax GenerateTryParsePairValueInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                                  ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // ParseUtils.TryParse(value.value, out TDict result, ParseUtils.TryParse, ParseUtils.TryParse, options);
         ArgumentSyntax tryParseArgument = tryParse.AsArgument();

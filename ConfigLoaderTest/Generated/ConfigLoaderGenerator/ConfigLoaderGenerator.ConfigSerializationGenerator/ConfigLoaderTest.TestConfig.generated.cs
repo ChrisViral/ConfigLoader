@@ -28,6 +28,9 @@ namespace ConfigLoaderTest
             List<int> intListCollector = new List<int>();
             HashSet<string> stringHashSetCollector = new HashSet<string>();
             List<double> doubleReadOnlyCollectionCollector = new List<double>();
+            Dictionary<string, decimal> stringDecimalDictionaryCollector = new Dictionary<string, decimal>();
+            Dictionary<float, float> floatReadOnlyDictionaryCollector = new Dictionary<float, float>();
+            SortedList<int, int> intSortedListCollector = new SortedList<int, int>();
             int valueCount = node.CountValues;
             for (int i = 0; i < valueCount; i++)
             {
@@ -147,9 +150,29 @@ namespace ConfigLoaderTest
 
                     case "stringDecimalDictionary":
                     {
-                        if (ParseUtils.TryParse(value.value, out Dictionary<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, new ParseOptions(KeyValueSeparator: '|')))
+                        if (ParseUtils.TryParse(value.value, out KeyValuePair<string, decimal> _stringDecimalDictionary, ParseUtils.TryParse, ParseUtils.TryParse, new ParseOptions(KeyValueSeparator: '|')))
                         {
-                            this.stringDecimalDictionary = _stringDecimalDictionary;
+                            stringDecimalDictionaryCollector.Add(_stringDecimalDictionary.Key, _stringDecimalDictionary.Value);
+                        }
+
+                        break;
+                    }
+
+                    case "floatReadOnlyDictionary":
+                    {
+                        if (ParseUtils.TryParse(value.value, out KeyValuePair<float, float> _floatReadOnlyDictionary, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+                        {
+                            floatReadOnlyDictionaryCollector.Add(_floatReadOnlyDictionary.Key, _floatReadOnlyDictionary.Value);
+                        }
+
+                        break;
+                    }
+
+                    case "intSortedList":
+                    {
+                        if (ParseUtils.TryParse(value.value, out KeyValuePair<int, int> _intSortedList, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults))
+                        {
+                            intSortedListCollector.Add(_intSortedList.Key, _intSortedList.Value);
                         }
 
                         break;
@@ -197,6 +220,21 @@ namespace ConfigLoaderTest
             if (doubleReadOnlyCollectionCollector.Count != 0)
             {
                 this.doubleReadOnlyCollection = new ReadOnlyCollection<double>(doubleReadOnlyCollectionCollector);
+            }
+
+            if (stringDecimalDictionaryCollector.Count != 0)
+            {
+                this.stringDecimalDictionary = stringDecimalDictionaryCollector;
+            }
+
+            if (floatReadOnlyDictionaryCollector.Count != 0)
+            {
+                this.floatReadOnlyDictionary = new ReadOnlyDictionary<float, float>(floatReadOnlyDictionaryCollector);
+            }
+
+            if (intSortedListCollector.Count != 0)
+            {
+                this.intSortedList = intSortedListCollector;
             }
 
             if (required.Count != 3)
@@ -315,6 +353,16 @@ namespace ConfigLoaderTest
             if (this.stringDecimalDictionary != null)
             {
                 node.AddValue("stringDecimalDictionary", WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, new WriteOptions(KeyValueSeparator: '|')));
+            }
+
+            if (this.floatReadOnlyDictionary != null)
+            {
+                node.AddValue("floatReadOnlyDictionary", WriteUtils.Write(this.floatReadOnlyDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
+            }
+
+            if (this.intSortedList != null)
+            {
+                node.AddValue("intSortedList", WriteUtils.Write(this.intSortedList, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
             }
 
             node.AddValue("stringFloatPair", WriteUtils.Write(this.stringFloatPair, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));

@@ -75,6 +75,10 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public bool IsMultipleValuesCollection => this.Type.IsCollectionType && this.CollectionHandling is CollectionHandling.MultipleValues;
     /// <summary>
+    /// If this field is a collection stored across multiple values
+    /// </summary>
+    public bool IsMultipleValuesDictionary => this.Type.IsIDictionary && this.CollectionHandling is CollectionHandling.MultipleValues;
+    /// <summary>
     /// Gets a standard prefixed name for this field
     /// </summary>
     public IdentifierNameSyntax PrefixedName => this.FieldName.Prefix("_");

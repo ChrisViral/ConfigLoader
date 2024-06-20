@@ -139,6 +139,14 @@ public static class GenerationConstants
     /// </summary>
     public static readonly IdentifierNameSyntax GenericList = IdentifierName(nameof(System.Collections.Generic.List<int>));
     /// <summary>
+    /// <see cref="KeyValuePair{TKey,TValue}"/> type
+    /// </summary>
+    public static readonly IdentifierNameSyntax GenericKeyValuePair = IdentifierName(nameof(KeyValuePair<int, int>));
+    /// <summary>
+    /// <see cref="Dictionary{TKey,TValue}"/> type
+    /// </summary>
+    public static readonly IdentifierNameSyntax GenericDictionary = IdentifierName(nameof(Dictionary<int, int>));
+    /// <summary>
     /// Generic <see cref="string"/> <see cref="HashSet{T}"/>
     /// </summary>
     public static readonly GenericNameSyntax HashSetString = nameof(HashSet<string>).AsGenericName(SyntaxKind.StringKeyword.AsType());
@@ -245,13 +253,21 @@ public static class GenerationConstants
     /// </summary>
     public static readonly IdentifierNameSyntax Required   = IdentifierName("required");
     /// <summary>
-    /// Array Length identifier
+    /// <see cref="Array"/> Length identifier
     /// </summary>
     public static readonly IdentifierNameSyntax Length = nameof(Array.Length).AsName();
     /// <summary>
-    /// HashSet Count identifier
+    /// <see cref="HashSet{T}"/> Count identifier
     /// </summary>
     public static readonly IdentifierNameSyntax Count = nameof(HashSet<string>.Count).AsName();
+    /// <summary>
+    /// <see cref="KeyValuePair{TKey,TValue}"/> Key
+    /// </summary>
+    public static readonly IdentifierNameSyntax PairKey = nameof(KeyValuePair<int, int>.Key).AsName();
+    /// <summary>
+    /// <see cref="KeyValuePair{TKey,TValue}"/> Value
+    /// </summary>
+    public static readonly IdentifierNameSyntax PairValue = nameof(KeyValuePair<int, int>.Value).AsName();
     #endregion
 
     #region Utility

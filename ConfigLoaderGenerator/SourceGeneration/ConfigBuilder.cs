@@ -272,7 +272,7 @@ public static class ConfigBuilder
         if (fields.Count == 0) return method;
 
         // Create collectors for multi-value collections
-        ConfigFieldMetadata[] multipleValuesFields = fields.Where(f => f.IsMultipleValuesCollection).ToArray();
+        ConfigFieldMetadata[] multipleValuesFields = fields.Where(f => f.IsMultipleValuesCollection || f.IsMultipleValuesDictionary).ToArray();
         method = GenerateCollectorCreation(method, multipleValuesFields, context);
 
         // int count = node.count;
@@ -318,15 +318,43 @@ public static class ConfigBuilder
         {
             // Check which type to instantiate as
             TypeSyntax type;
-            if (field.Type is { IsSupportedCollection: true, IsReadOnlyCollection: false })
+            switch (field.Type)
             {
-                type = field.Type.Identifier;
-                context.UsedNamespaces.AddNamespace(field.Type.Namespace);
-            }
-            else
-            {
-                type = GenericList.AsGenericName(field.Type.ElementType!.Identifier);
-                context.UsedNamespaces.AddNamespaceName(typeof(List<>).Namespace!);
+                case { IsSupportedCollection: true, IsReadOnlyCollection: false }:
+                    type = field.Type.Identifier;
+                    context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+                    context.UsedNamespaces.AddNamespace(field.Type.ElementType!.Namespace);
+                    break;
+
+                case { IsSupportedDictionary: true, IsReadOnlyDictionary: false }:
+                    type = field.Type.Identifier;
+                    context.UsedNamespaces.AddNamespace(field.Type.Namespace);
+                    context.UsedNamespaces.AddNamespace(field.Type.KeyType!.Namespace);
+                    context.UsedNamespaces.AddNamespace(field.Type.ValueType!.Namespace);
+                    break;
+
+                case { IsReadOnlyDictionary: true}:
+                    type = GenericDictionary.AsGenericName(field.Type.KeyType!.Identifier, field.Type.ValueType!.Identifier);
+                    context.UsedNamespaces.AddNamespaceName(typeof(Dictionary<,>).Namespace!);
+                    context.UsedNamespaces.AddNamespace(field.Type.KeyType.Namespace);
+                    context.UsedNamespaces.AddNamespace(field.Type.ValueType.Namespace);
+                    break;
+
+                case { IsIDictionary: true }:
+                    TypeSyntax pairType = GenericKeyValuePair.AsGenericName(field.Type.KeyType!.Identifier, field.Type.ValueType!.Identifier);
+                    type = GenericList.AsGenericName(pairType);
+                    context.UsedNamespaces.AddNamespaceName(typeof(KeyValuePair<,>).Namespace!);
+                    context.UsedNamespaces.AddNamespaceName(typeof(List<>).Namespace!);
+                    context.UsedNamespaces.AddNamespace(field.Type.KeyType.Namespace);
+                    context.UsedNamespaces.AddNamespace(field.Type.ValueType.Namespace);
+                    break;
+
+                default:
+                    type = GenericList.AsGenericName(field.Type.ElementType!.Identifier);
+                    context.UsedNamespaces.AddNamespaceName(typeof(List<>).Namespace!);
+                    context.UsedNamespaces.AddNamespace(field.Type.ElementType.Namespace);
+                    break;
+
             }
 
             // Create variable
@@ -428,11 +456,11 @@ public static class ConfigBuilder
             // For arrays, convert using ToArray
             assignation = field.CollectorName.Access(ToArray).Invoke();
         }
-        else if (field.Type.IsSupportedCollection)
+        else if (field.Type.IsSupportedCollection || field.Type.IsSupportedDictionary)
         {
-            if (field.Type.IsReadOnlyCollection)
+            if (field.Type.IsReadOnlyCollection || field.Type.IsReadOnlyDictionary)
             {
-                // For ReadOnlyCollections, use the constructor
+                // For ReadOnly Collections, use the constructor
                 assignation = field.Type.Identifier.New(field.CollectorName.AsArgument());
             }
             else
@@ -440,6 +468,12 @@ public static class ConfigBuilder
                 // For supported collections, assign directly
                 assignation = field.CollectorName;
             }
+        }
+        else if (field.Type.IsIDictionary)
+        {
+            // For other, unknown dictionaries, use the generic conversion method
+            GenericNameSyntax genericFrom = FromList.AsGenericName(field.Type.Identifier, field.Type.KeyType!.Identifier, field.Type.ValueType!.Identifier);
+            assignation = CollectionUtils.Access(genericFrom).Invoke(field.CollectorName.AsArgument());
         }
         else
         {
