@@ -184,20 +184,6 @@ public static partial class WriteUtils
     }
 
     /// <summary>
-    /// Writes a <see cref="object"/> value as a <see cref="object"/> using the provided <paramref name="options"/>
-    /// </summary>
-    /// <param name="value">The value to write</param>
-    /// <param name="options">Write options</param>
-    /// <returns>The written value as a <see cref="string"/></returns>
-    public static string Write(object? value, in WriteOptions options) => value switch
-    {
-        null                     => string.Empty,
-        IFormattable formattable => formattable.ToString(options.Format, CultureInfo.InvariantCulture),
-        IConvertible convertible => convertible.ToString(CultureInfo.InvariantCulture),
-        _                        => value.ToString()
-    };
-
-    /// <summary>
     /// Writes a <see cref="Guid"/> value as a <see cref="string"/> using the provided <paramref name="options"/>
     /// </summary>
     /// <param name="value">The value to write</param>

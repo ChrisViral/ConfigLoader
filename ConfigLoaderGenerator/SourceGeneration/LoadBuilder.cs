@@ -4,12 +4,10 @@ using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Metadata;
 using ConfigLoaderGenerator.Extensions;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
-using static ConfigLoaderGenerator.Extensions.SyntaxPrefixExpressionExtensions;
 using static ConfigLoaderGenerator.Extensions.SyntaxStatementExtensions;
 using static ConfigLoaderGenerator.SourceGeneration.GenerationConstants;
 using TypeInfo = ConfigLoaderGenerator.Metadata.TypeInfo;
@@ -62,14 +60,6 @@ public static class LoadBuilder
     /// Default <see cref="ParseOptions"/>
     /// </summary>
     private static readonly ExpressionSyntax DefaultOptions = ParseOptions.Access(Defaults);
-    /// <summary>
-    /// Types that can be directly assigned to the field
-    /// </summary>
-    private static readonly HashSet<string> AssignableTypes =
-    [
-        typeof(string).FullName,
-        typeof(object).FullName
-    ];
 
     #region Options
     /// <summary>
@@ -113,7 +103,7 @@ public static class LoadBuilder
             options.Add(argument);
         }
 
-        return options.Count is not 0 ? ParseOptions.New(options.ToArray()) : DefaultOptions;
+        return options.Count is not 0 ? ParseOptions.New(options) : DefaultOptions;
     }
     #endregion
 
@@ -129,11 +119,6 @@ public static class LoadBuilder
     public static BlockSyntax GenerateValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         // Find best load option
-        if (AssignableTypes.Contains(field.Type.FullName))
-        {
-            return GenerateAssignValueLoad(value, field, context);
-        }
-
         if (field.Type.IsSimpleValueType)
         {
             return GenerateTryParseValueLoad(value, GenerateTryParseValueInvocation, field, context);
@@ -183,39 +168,6 @@ public static class LoadBuilder
 
         // Unknown type
         throw new InvalidOperationException($"Unknown value type to parse ({field.Type.FullName})");
-    }
-
-    /// <summary>
-    /// Generate the value load code implementation using assignment
-    /// </summary>
-    /// <param name="value">Value expression</param>
-    /// <param name="field">Field data</param>
-    /// <param name="context">Generation context</param>
-    /// <returns>The modified statement body</returns>
-    private static BlockSyntax GenerateAssignValueLoad(ExpressionSyntax value, in ConfigFieldMetadata field, in ConfigBuilderContext context)
-    {
-        context.Token.ThrowIfCancellationRequested();
-
-        // !string.IsNullOrEmpty(value.value)
-        ExpressionSyntax isNullOrEmpty = SyntaxKind.StringKeyword.AsType().Access(IsNullOrEmpty);
-        ExpressionSyntax isNotNullOrEmptyInvocation = Not(isNullOrEmpty.Invoke(value.AsArgument()));
-
-        // this.value = value;
-        ExpressionSyntax fieldAssign = This().Access(field.FieldName).Assign(value);
-        BlockSyntax block = Block(fieldAssign.AsStatement());
-
-        if (field.IsRequired)
-        {
-            // required.Add("name");
-            ExpressionSyntax addInvocation = Required.Access(Add).Invoke(field.FieldName.AsLiteral().AsArgument());
-            block = block.AddStatements(addInvocation.AsStatement());
-        }
-
-        // if(!string.IsNullOrEmpty(value.value))
-        IfStatementSyntax ifStatement = If(isNotNullOrEmptyInvocation, block);
-
-        // Add if statement and return
-        return Block().AddStatements(ifStatement);
     }
 
     /// <summary>

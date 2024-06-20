@@ -151,7 +151,7 @@ public static class SaveBuilder
             options.Add(argument);
         }
 
-        return options.Count is not 0 ? WriteOptions.New(options.ToArray()) : DefaultOptions;
+        return options.Count is not 0 ? WriteOptions.New(options) : DefaultOptions;
     }
     #endregion
 

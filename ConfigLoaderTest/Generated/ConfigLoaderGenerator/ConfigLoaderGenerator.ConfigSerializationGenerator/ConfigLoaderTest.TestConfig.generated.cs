@@ -56,9 +56,9 @@ namespace ConfigLoaderTest
 
                     case "stringValue":
                     {
-                        if (!string.IsNullOrEmpty(value.value))
+                        if (ParseUtils.TryParse(value.value, out string _stringValue, ParseOptions.Defaults))
                         {
-                            this.stringValue = value.value;
+                            this.stringValue = _stringValue;
                             required.Add("stringValue");
                         }
 
@@ -115,11 +115,11 @@ namespace ConfigLoaderTest
                         break;
                     }
 
-                    case "objectQueue":
+                    case "colorQueue":
                     {
-                        if (ParseUtils.TryParse(value.value, out Queue<object> _objectQueue, ParseUtils.TryParse, ParseOptions.Defaults))
+                        if (ParseUtils.TryParse(value.value, out Queue<Color> _colorQueue, ParseUtils.TryParse, ParseOptions.Defaults))
                         {
-                            this.objectQueue = _objectQueue;
+                            this.colorQueue = _colorQueue;
                         }
 
                         break;
@@ -294,9 +294,9 @@ namespace ConfigLoaderTest
                 node.AddValue("longLinkedList", WriteUtils.Write(this.longLinkedList, WriteUtils.Write, WriteOptions.Defaults));
             }
 
-            if (this.objectQueue != null)
+            if (this.colorQueue != null)
             {
-                node.AddValue("objectQueue", WriteUtils.Write(this.objectQueue, WriteUtils.Write, WriteOptions.Defaults));
+                node.AddValue("colorQueue", WriteUtils.Write(this.colorQueue, WriteUtils.Write, WriteOptions.Defaults));
             }
 
             if (this.charStack != null)

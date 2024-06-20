@@ -40,8 +40,7 @@ public static class GenerationConstants
         typeof(decimal).FullName,
         typeof(bool).FullName,
         typeof(char).FullName,
-        typeof(string).FullName,
-        typeof(object).FullName
+        typeof(string).FullName
     ];
     /// <summary>
     /// Supported non-builtin types

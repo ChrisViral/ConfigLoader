@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
+﻿using System.Collections.Generic;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -34,6 +35,17 @@ public static class SyntaxOperationExtensions
     public static ObjectCreationExpressionSyntax New(this TypeSyntax type, params ArgumentSyntax[] arguments)
     {
         return ObjectCreationExpression(type).AddArgumentListArguments(arguments);
+    }
+
+    /// <summary>
+    /// Creates a parameterized object instantiation expression for the given type
+    /// </summary>
+    /// <param name="type">Type to create an instantiation for</param>
+    /// <param name="arguments">Constructor arguments</param>
+    /// <returns>An instantiation expression for <paramref name="type"/></returns>
+    public static ObjectCreationExpressionSyntax New(this TypeSyntax type, IEnumerable<ArgumentSyntax> arguments)
+    {
+        return ObjectCreationExpression(type).WithArgumentList(ArgumentList(SeparatedList(arguments)));
     }
 
     /// <summary>

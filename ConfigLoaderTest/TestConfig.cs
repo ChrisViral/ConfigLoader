@@ -45,7 +45,7 @@ public partial class TestConfig
     [ConfigField]
     public LinkedList<long> longLinkedList;
     [ConfigField]
-    public Queue<object> objectQueue;
+    public Queue<Color> colorQueue;
     [ConfigField]
     public Stack<char> charStack;
     [ConfigField(CollectionHandling = CollectionHandling.MultipleValues)]
