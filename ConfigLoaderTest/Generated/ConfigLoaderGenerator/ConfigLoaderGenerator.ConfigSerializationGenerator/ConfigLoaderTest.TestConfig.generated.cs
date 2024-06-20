@@ -352,17 +352,26 @@ namespace ConfigLoaderTest
 
             if (this.stringDecimalDictionary != null)
             {
-                node.AddValue("stringDecimalDictionary", WriteUtils.Write(this.stringDecimalDictionary, WriteUtils.Write, WriteUtils.Write, new WriteOptions(KeyValueSeparator: '|')));
+                foreach (KeyValuePair<string, decimal> value in this.stringDecimalDictionary)
+                {
+                    node.AddValue("stringDecimalDictionary", WriteUtils.Write(value, WriteUtils.Write, WriteUtils.Write, new WriteOptions(KeyValueSeparator: '|')));
+                }
             }
 
             if (this.floatReadOnlyDictionary != null)
             {
-                node.AddValue("floatReadOnlyDictionary", WriteUtils.Write(this.floatReadOnlyDictionary, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
+                foreach (KeyValuePair<float, float> value in this.floatReadOnlyDictionary)
+                {
+                    node.AddValue("floatReadOnlyDictionary", WriteUtils.Write(value, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
+                }
             }
 
             if (this.intSortedList != null)
             {
-                node.AddValue("intSortedList", WriteUtils.Write(this.intSortedList, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
+                foreach (KeyValuePair<int, int> value in this.intSortedList)
+                {
+                    node.AddValue("intSortedList", WriteUtils.Write(value, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));
+                }
             }
 
             node.AddValue("stringFloatPair", WriteUtils.Write(this.stringFloatPair, WriteUtils.Write, WriteUtils.Write, WriteOptions.Defaults));

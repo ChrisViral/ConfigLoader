@@ -81,19 +81,21 @@ public static class SaveBuilder
         if (field.Type.IsArray)
         {
             return field.IsMultipleValuesCollection
-                       ? GenerateWriteValueCollectionSave(body, name, value, field, context)
+                       ? GenerateWriteValueCollectionSave(body, name, value, WriteValueSave, field, context)
                        : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
         if (field.Type.IsKeyValueType)
         {
-            return GenerateWriteValueSave(body, name, value, WriteKeyValueSave, field, context);
+            return field.IsMultipleValuesDictionary
+                ? GenerateWriteValueCollectionSave(body, name, value, WriteKeyValueSave, field, context)
+                : GenerateWriteValueSave(body, name, value, WriteKeyValueSave, field, context);
         }
 
         if (field.Type.IsCollectionType)
         {
             return field.IsMultipleValuesCollection
-                       ? GenerateWriteValueCollectionSave(body, name, value, field, context)
+                       ? GenerateWriteValueCollectionSave(body, name, value, WriteValueSave, field, context)
                        : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
         }
 
@@ -243,8 +245,18 @@ public static class SaveBuilder
         return write.Invoke(value.AsArgument(), write.AsArgument(), options);
     }
 
+    /// <summary>
+    /// Creates a write invocation for value collections
+    /// </summary>
+    /// <param name="body">Save method declaration</param>
+    /// <param name="name">Name expression</param>
+    /// <param name="value">Value expression</param>
+    /// <param name="createWrite">Delegate which creates the generated Write invocation</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The edited save method declaration with the field value collection save code generated</returns>
     private static MethodDeclarationSyntax GenerateWriteValueCollectionSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value,
-                                                                            in ConfigFieldMetadata field, in ConfigBuilderContext context)
+                                                                            WriteInvocation createWrite, in ConfigFieldMetadata field, in ConfigBuilderContext context)
     {
         context.Token.ThrowIfCancellationRequested();
 
@@ -253,7 +265,7 @@ public static class SaveBuilder
         // WriteUtils.Write
         MemberAccessExpressionSyntax write = WriteUtils.Access(Write);
         // WriteUtils.Write(value, WriteOptions.Defaults)
-        ExpressionSyntax writeInvocation = WriteValueSave(write, Value, options, field, context);
+        ExpressionSyntax writeInvocation = createWrite(write, Value, options, field, context);
         // node.AddValue("value", WriteUtils.Write(value, WriteOptions.Defaults));
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
         StatementSyntax writeStatement = addValueInvocation.AsStatement();
