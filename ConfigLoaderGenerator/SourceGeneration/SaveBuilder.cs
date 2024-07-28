@@ -185,7 +185,7 @@ public static class SaveBuilder
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
         StatementSyntax writeStatement = addValueInvocation.AsStatement();
 
-        if (field is { IsRequired: false, Type.Symbol.IsReferenceType: true })
+        if (field is { IsRequired: false, IsReferenceType: true })
         {
             // if (value != null) { }
             writeStatement = If(value.IsNotNull(), writeStatement);
@@ -286,7 +286,7 @@ public static class SaveBuilder
         }
 
 
-        if (field is { IsRequired: false, Type.Symbol.IsReferenceType: true })
+        if (field is { IsRequired: false, IsReferenceType: true })
         {
             // if (value != null) { }
             finalBlock = If(value.IsNotNull(), finalBlock);
@@ -325,7 +325,7 @@ public static class SaveBuilder
         }
 
         // this.value?.Save(node.AddNode("value"));
-        ExpressionSyntax saveNode = field is { IsRequired: false, Type.Symbol.IsReferenceType: true }
+        ExpressionSyntax saveNode = field is { IsRequired: false, IsReferenceType: true }
                                         ? value.ConditionalAccess(Save) // this.value?.Save
                                         : value.Access(Save);           // this.value.Save
 

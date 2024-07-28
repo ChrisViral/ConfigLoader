@@ -4,6 +4,7 @@ using ConfigLoaderGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
+using static ConfigLoaderGenerator.Extensions.SyntaxLiteralExtensions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 /* ConfigLoader is distributed under CC BY-NC-SA 4.0 INTL (https://creativecommons.org/licenses/by-nc-sa/4.0/).                           *\
@@ -24,7 +25,7 @@ public readonly struct ConfigFieldMetadata
     /// <summary>
     /// Name under which to serialize this field
     /// </summary>
-    public IdentifierNameSyntax SerializedName { get; } = IdentifierName(string.Empty);
+    public LiteralExpressionSyntax SerializedName { get; } = MakeLiteral(string.Empty);
     /// <summary>
     /// If this field is required
     /// </summary>
@@ -60,7 +61,7 @@ public readonly struct ConfigFieldMetadata
     /// <summary>
     /// Collection node key name
     /// </summary>
-    public IdentifierNameSyntax KeyName { get; } = IdentifierName(ConfigFieldAttribute.DefaultKeyName);
+    public LiteralExpressionSyntax KeyName { get; } = MakeLiteral(ConfigFieldAttribute.DefaultKeyName);
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
@@ -70,6 +71,10 @@ public readonly struct ConfigFieldMetadata
     /// Type of this field
     /// </summary>
     public TypeInfo Type { get; }
+    /// <summary>
+    /// If this field is a reference type
+    /// </summary>
+    public bool IsReferenceType => this.Type.Symbol.IsReferenceType;
     /// <summary>
     /// If this object must be loaded as a ConfigNode
     /// </summary>
@@ -115,7 +120,7 @@ public readonly struct ConfigFieldMetadata
             switch (name)
             {
                 case nameof(ConfigFieldAttribute.Name):
-                    this.SerializedName = IdentifierName((string)value.Value);
+                    this.SerializedName = MakeLiteral((string)value.Value);
                     break;
 
                 case nameof(ConfigFieldAttribute.IsRequired):
@@ -157,9 +162,9 @@ public readonly struct ConfigFieldMetadata
         }
 
         // Ensure a serialization name is set
-        if (string.IsNullOrWhiteSpace(this.SerializedName.Identifier.ValueText))
+        if (string.IsNullOrWhiteSpace(this.SerializedName.Token.ValueText))
         {
-            this.SerializedName = this.FieldName;
+            this.SerializedName = this.FieldName.AsLiteral();
         }
     }
 }

@@ -385,7 +385,7 @@ public static class ConfigBuilder
         foreach (ConfigFieldMetadata field in fields)
         {
             // case "name":
-            SwitchLabelSyntax label = field.SerializedName.AsLiteral().AsSwitchLabel();
+            SwitchLabelSyntax label = field.SerializedName.AsSwitchLabel();
 
             // Value parsing implementation
             BlockSyntax body = generateSection(value, field, context);
@@ -531,7 +531,7 @@ public static class ConfigBuilder
         method = method.AddBodyStatements(GenerateNodeGuard());
 
         foreach (ConfigFieldMetadata field in data.ValueFields.Concat(data.NodeFields)
-                                                  .Where(f => f is { IsRequired: true, Type.Symbol.IsReferenceType: true }))
+                                                  .Where(f => f is { IsRequired: true, IsReferenceType: true }))
         {
             // throw new MissingRequiredConfigFieldException();
             ArgumentSyntax errorMessage = MakeLiteral("ConfigField marked as missing could not be loaded").AsArgument();
@@ -570,11 +570,10 @@ public static class ConfigBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // Variables
-        LiteralExpressionSyntax name = field.SerializedName.AsLiteral();
         ExpressionSyntax value = This().Access(field.FieldName);
 
         // Value saving implementation
-        return SaveBuilder.GenerateFieldSave(method, name, value, field, context);
+        return SaveBuilder.GenerateFieldSave(method, field.SerializedName, value, field, context);
     }
     #endregion
 }

@@ -156,11 +156,11 @@ public class TypeInfo
     {
         this.Symbol          = symbol;
         this.FullName        = symbol.FullName();
+        this.Namespace       = symbol.ContainingNamespace;
         this.Identifier      = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat).AsName();
         this.IsIConfigNode   = symbol.Implements(IConfigNode.AsRaw());
         this.IsConfigNode    = this.FullName == ConfigNode.AsRaw();
         this.IsBuiltin       = BuiltinTypes.Contains(this.FullName);
-        this.Namespace       = symbol.ContainingNamespace;
         this.IsSupportedType = SupportedTypes.Contains(this.FullName);
         this.IsEnum          = symbol.IsValueType && symbol.BaseType?.FullName() == EnumName;
         if (!this.IsBuiltin)

@@ -236,7 +236,7 @@ public static partial class ParseUtils
         if (TryParseCollectionInternal(node, keyName!, ref list, tryParse, options))
         {
             // If parse succeeded, return as ReadOnlyCollection
-            result = list.AsReadOnly();
+            result = new ReadOnlyCollection<T>(list);
             return true;
         }
 
