@@ -132,7 +132,7 @@ public sealed class ConfigFieldAttribute : Attribute
     /// <summary>
     /// Key name for key-node collections
     /// </summary>
-    public string? KeyName { get; init; }
+    public string KeyName { get; init; } = DefaultKeyName;
     /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>

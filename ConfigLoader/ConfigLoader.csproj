@@ -51,10 +51,12 @@
     <Compile Include="Utils\Parse\ParseOptions.cs" />
     <Compile Include="Utils\Parse\ParseUtilsCollections.cs" />
     <Compile Include="Utils\Parse\ParseUtilsComplexTypes.cs" />
+    <Compile Include="Utils\Parse\ParseUtilsNodeCollections.cs" />
     <Compile Include="Utils\Parse\ParseUtilsSimpleTypes.cs" />
     <Compile Include="Utils\Write\WriteOptions.cs" />
     <Compile Include="Utils\Write\WriteUtilsCollections.cs" />
     <Compile Include="Utils\Write\WriteUtilsComplexTypes.cs" />
+    <Compile Include="Utils\Write\WriteUtilsNodeCollections.cs" />
     <Compile Include="Utils\Write\WriteUtilsSimpleTypes.cs" />
   </ItemGroup>
   <ItemGroup>

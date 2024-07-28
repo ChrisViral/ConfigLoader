@@ -20,8 +20,8 @@ public static class CollectionUtils
     /// <typeparam name="T">Collection element type</typeparam>
     /// <param name="collection">Collection to check</param>
     /// <returns><see langword="true"/> if <paramref name="collection"/> is <see langword="null"/> or empty, otherwise <see langword="false"/></returns>
-    [ContractAnnotation("null => false")]
-    public static bool IsNullOrEmptyCollection<T>(ICollection<T>? collection) => collection is not { Count: > 0 };
+    [ContractAnnotation("null => true")]
+    public static bool IsNullOrEmptyCollection<T>(ICollection<T>? collection) => collection is null or { Count: 0 };
     #endregion
 
     #region Conversion

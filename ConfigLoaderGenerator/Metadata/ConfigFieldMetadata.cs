@@ -58,6 +58,10 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public CollectionHandling CollectionHandling { get; } = ConfigFieldAttribute.DefaultCollectionHandling;
     /// <summary>
+    /// Collection node key name
+    /// </summary>
+    public IdentifierNameSyntax KeyName { get; } = IdentifierName(ConfigFieldAttribute.DefaultKeyName);
+    /// <summary>
     /// Name value of the node to use to load this field
     /// </summary>
     public IdentifierNameSyntax? NodeName { get; }
