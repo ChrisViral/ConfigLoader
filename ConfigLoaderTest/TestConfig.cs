@@ -58,12 +58,34 @@ public partial class TestConfig
     public SortedList<int, int> intSortedList;
     [ConfigField]
     public KeyValuePair<string, float> stringFloatPair;
+    [ConfigField(CollectionHandling = CollectionHandling.NodeOfKeys, KeyName = "myKey")]
+    public List<string> keyNodeList;
 
     [ConfigField(IsRequired = true, Name = "OtherName", ValueSeparator = ' ', SplitOptions = ExtendedSplitOptions.RemoveEmptyEntries)]
     public Vector3 VectorProperty { get; set; }
 
     public void Test(ConfigNode node)
     {
-        ParseUtils.TryParse("", out KeyValuePair<string, float> pair, ParseUtils.TryParse, ParseUtils.TryParse, ParseOptions.Defaults);
+        for (int i = 0; i < node.CountNodes; i++)
+        {
+            ConfigNode value = node.nodes[i];
+            switch (value.name)
+            {
+                case "keyNodeList":
+                {
+                    if (ParseUtils.TryParse(value, "key", out List<string> _keyNodeList, ParseUtils.TryParse, ParseOptions.Defaults))
+                    {
+                        this.keyNodeList = _keyNodeList;
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        if (this.keyNodeList != null)
+        {
+            node.AddNode("keyNodeList", WriteUtils.Write(this.keyNodeList, "key", WriteUtils.Write, WriteOptions.Defaults));
+        }
     }
 }

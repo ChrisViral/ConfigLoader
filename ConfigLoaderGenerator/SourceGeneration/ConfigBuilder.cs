@@ -531,7 +531,7 @@ public static class ConfigBuilder
         method = method.AddBodyStatements(GenerateNodeGuard());
 
         foreach (ConfigFieldMetadata field in data.ValueFields.Concat(data.NodeFields)
-                                                  .Where(f => f is { IsRequired: true, IsReferenceType: true }))
+                                                  .Where(f => f.IsRequiredReference(true)))
         {
             // throw new MissingRequiredConfigFieldException();
             ArgumentSyntax errorMessage = MakeLiteral("ConfigField marked as missing could not be loaded").AsArgument();

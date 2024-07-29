@@ -403,6 +403,11 @@ public static class LoadBuilder
             return GenerateNodeAssignLoad(value, field, context);
         }
 
+        if (field.CollectionHandling is CollectionHandling.NodeOfKeys)
+        {
+            return GenerateTryParseValueLoad(value, GenerateTryParseKeyNodeCollectionInvocation, field, context);
+        }
+
         // Unknown type
         throw new InvalidOperationException($"Unknown node type to parse ({field.Type.FullName})");
     }
@@ -469,6 +474,24 @@ public static class LoadBuilder
 
         // Add statements and return
         return block;
+    }
+
+    /// <summary>
+    /// Creates a TryParse invocation for node of keys collections
+    /// </summary>
+    /// <param name="tryParse">TryParse member access</param>
+    /// <param name="value">Value to parse</param>
+    /// <param name="outVar">Output variable</param>
+    /// <param name="options">Options argument</param>
+    /// <param name="field">Field to parse into</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The created <c>TryParse</c> invocation</returns>
+    private static InvocationExpressionSyntax GenerateTryParseKeyNodeCollectionInvocation(MemberAccessExpressionSyntax tryParse, ExpressionSyntax value, ArgumentSyntax outVar,
+                                                                                          ArgumentSyntax options, in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        // ParseUtils.TryParse(value, "key", out TCollection result, ParseUtils.TryParse, options);
+        ArgumentSyntax tryParseArgument = tryParse.AsArgument();
+        return tryParse.Invoke(value.AsArgument(), field.KeyName.AsArgument(), outVar, tryParseArgument, options);
     }
     #endregion
 }

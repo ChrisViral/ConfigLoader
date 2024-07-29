@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using ConfigLoader.Attributes;
 using ConfigLoader.Utils;
 using ConfigLoaderGenerator.Extensions;
@@ -78,13 +79,6 @@ public static class SaveBuilder
             return GenerateWriteValueSave(body, name, value, WriteValueSave, field, context);
         }
 
-        if (field.Type.IsArray)
-        {
-            return field.IsMultipleValuesCollection
-                       ? GenerateWriteValueCollectionSave(body, name, value, WriteValueSave, field, context)
-                       : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
-        }
-
         if (field.Type.IsKeyValueType)
         {
             return field.IsMultipleValuesDictionary
@@ -92,11 +86,15 @@ public static class SaveBuilder
                 : GenerateWriteValueSave(body, name, value, WriteKeyValueSave, field, context);
         }
 
-        if (field.Type.IsCollectionType)
+        if (field.Type.IsArray || field.Type.IsCollectionType)
         {
-            return field.IsMultipleValuesCollection
-                       ? GenerateWriteValueCollectionSave(body, name, value, WriteValueSave, field, context)
-                       : GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context);
+            return field.CollectionHandling switch
+            {
+                CollectionHandling.SingleValue    => GenerateWriteValueSave(body, name, value, WriteCollectionSave, field, context),
+                CollectionHandling.MultipleValues => GenerateWriteValueCollectionSave(body, name, value, WriteValueSave, field, context),
+                CollectionHandling.NodeOfKeys     => GenerateAddKeyNodeSave(body, name, value, field, context),
+                _                                 => throw new InvalidEnumArgumentException(nameof(field.CollectionHandling), (int)field.CollectionHandling, typeof(CollectionHandling))
+            };
         }
 
         if (field.Type.IsIConfigNode)
@@ -185,7 +183,7 @@ public static class SaveBuilder
         ExpressionSyntax addValueInvocation = Node.Access(AddValue).Invoke(name.AsArgument(), writeInvocation.AsArgument());
         StatementSyntax writeStatement = addValueInvocation.AsStatement();
 
-        if (field is { IsRequired: false, IsReferenceType: true })
+        if (field.IsRequiredReference(false))
         {
             // if (value != null) { }
             writeStatement = If(value.IsNotNull(), writeStatement);
@@ -286,7 +284,7 @@ public static class SaveBuilder
         }
 
 
-        if (field is { IsRequired: false, IsReferenceType: true })
+        if (field.IsRequiredReference(false))
         {
             // if (value != null) { }
             finalBlock = If(value.IsNotNull(), finalBlock);
@@ -325,7 +323,7 @@ public static class SaveBuilder
         }
 
         // this.value?.Save(node.AddNode("value"));
-        ExpressionSyntax saveNode = field is { IsRequired: false, IsReferenceType: true }
+        ExpressionSyntax saveNode = field.IsRequiredReference(false)
                                         ? value.ConditionalAccess(Save) // this.value?.Save
                                         : value.Access(Save);           // this.value.Save
 
@@ -351,14 +349,46 @@ public static class SaveBuilder
         context.Token.ThrowIfCancellationRequested();
 
         // node.AddNode("name", this.value);
-        ExpressionSyntax addValueInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), value.AsArgument());
-        StatementSyntax addStatement = addValueInvocation.AsStatement();
+        ExpressionSyntax addNodeInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), value.AsArgument());
+        StatementSyntax addNodeStatement = addNodeInvocation.AsStatement();
         if (field is { IsRequired: false })
         {
-            addStatement = If(value.IsNotNull(), addValueInvocation.AsStatement());
+            addNodeStatement = If(value.IsNotNull(), addNodeStatement);
         }
 
-        return body.AddBodyStatements(addStatement);
+        return body.AddBodyStatements(addNodeStatement);
+    }
+
+    /// <summary>
+    /// Generate the field node save code implementation
+    /// </summary>
+    /// <param name="body">Save method declaration</param>
+    /// <param name="name">Name expression</param>
+    /// <param name="value">Value expression</param>
+    /// <param name="field">Field data</param>
+    /// <param name="context">Generation context</param>
+    /// <returns>The edited save method declaration with the field node save code generated</returns>
+    private static MethodDeclarationSyntax GenerateAddKeyNodeSave(MethodDeclarationSyntax body, LiteralExpressionSyntax name, ExpressionSyntax value,
+                                                                  in ConfigFieldMetadata field, in ConfigBuilderContext context)
+    {
+        context.Token.ThrowIfCancellationRequested();
+
+        // WriteOptions.Defaults
+        ArgumentSyntax options = GenerateWriteOptions(field).AsArgument();
+        // WriteUtils.Write
+        MemberAccessExpressionSyntax write = WriteUtils.Access(Write);
+        // WriteUtils.Write(value, "key", WriteUtils.Write, WriteOptions.Defaults)
+        ExpressionSyntax writeInvocation = write.Invoke(value.AsArgument(), field.KeyName.AsArgument(), write.AsArgument(), options);
+
+        // node.AddNode("name", WriteUtils.Write(value, "key", WriteUtils.Write, WriteOptions.Defaults));
+        ExpressionSyntax addNodeInvocation = Node.Access(AddNode).Invoke(name.AsArgument(), writeInvocation.AsArgument());
+        StatementSyntax addNodeStatement = addNodeInvocation.AsStatement();
+        if (field.IsRequiredReference(false))
+        {
+            addNodeStatement = If(value.IsNotNull(), addNodeStatement);
+        }
+
+        return body.AddBodyStatements(addNodeStatement);
     }
     #endregion
 }

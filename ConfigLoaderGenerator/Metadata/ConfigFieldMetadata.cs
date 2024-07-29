@@ -72,10 +72,6 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public TypeInfo Type { get; }
     /// <summary>
-    /// If this field is a reference type
-    /// </summary>
-    public bool IsReferenceType => this.Type.Symbol.IsReferenceType;
-    /// <summary>
     /// If this object must be loaded as a ConfigNode
     /// </summary>
     public bool IsConfigLoadable => this.Type.IsSimpleConfigType || this.CollectionHandling is CollectionHandling.NodeOfKeys;
@@ -84,7 +80,7 @@ public readonly struct ConfigFieldMetadata
     /// </summary>
     public bool IsMultipleValuesCollection => this.Type.IsCollectionType && this.CollectionHandling is CollectionHandling.MultipleValues;
     /// <summary>
-    /// If this field is a collection stored across multiple values
+    /// If this field is a dictionary stored across multiple values
     /// </summary>
     public bool IsMultipleValuesDictionary => this.Type.IsIDictionary && this.CollectionHandling is CollectionHandling.MultipleValues;
     /// <summary>
@@ -95,6 +91,13 @@ public readonly struct ConfigFieldMetadata
     /// Gets a standard collector name for this field
     /// </summary>
     public IdentifierNameSyntax CollectorName => this.FieldName.Postfix("Collector");
+
+    /// <summary>
+    /// Checks if this field is a reference type that is required or not
+    /// </summary>
+    /// <param name="isRequired">Whether the field must be required</param>
+    /// <returns><see langword="true"/> if the field is a reference type that matches the <paramref name="isRequired"/> state, otherwise <see langword="false"/></returns>
+    public bool IsRequiredReference(bool isRequired) => this.IsRequired == isRequired && this.Type.Symbol.IsReferenceType;
 
     /// <summary>
     /// Creates a new Config Object metadata container from the given <paramref name="data"/>
@@ -153,6 +156,10 @@ public readonly struct ConfigFieldMetadata
 
                 case nameof(ConfigFieldAttribute.CollectionHandling):
                     this.CollectionHandling = (CollectionHandling)value.Value;
+                    break;
+
+                case nameof(ConfigFieldAttribute.KeyName):
+                    this.KeyName = MakeLiteral((string)value.Value);
                     break;
 
                 case nameof(ConfigFieldAttribute.NodeNameValue):

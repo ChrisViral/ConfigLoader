@@ -274,6 +274,16 @@ namespace ConfigLoaderTest
                         this.configNode = value;
                         break;
                     }
+
+                    case "keyNodeList":
+                    {
+                        if (ParseUtils.TryParse(value, "myKey", out List<string> _keyNodeList, ParseUtils.TryParse, ParseOptions.Defaults))
+                        {
+                            this.keyNodeList = _keyNodeList;
+                        }
+
+                        break;
+                    }
                 }
             }
 
@@ -381,6 +391,11 @@ namespace ConfigLoaderTest
             if (this.configNode != null)
             {
                 node.AddNode("configNode", this.configNode);
+            }
+
+            if (this.keyNodeList != null)
+            {
+                node.AddNode("keyNodeList", WriteUtils.Write(this.keyNodeList, "myKey", WriteUtils.Write, WriteOptions.Defaults));
             }
         }
 
