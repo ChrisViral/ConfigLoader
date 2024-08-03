@@ -100,7 +100,8 @@ public static partial class ParseUtils
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     private static bool TryParseArrayInternal<T>(string[] splits, ref T[] result, TryParseFunc<T> tryParse, in ParseOptions options)
     {
-        for (int i = 0; i < splits.Length; i++)
+        int length = splits.Length;
+        for (int i = 0; i < length; i++)
         {
             // If parse partially fails, return early
             if (!tryParse(splits[i], out T? parsed, options))
@@ -251,8 +252,10 @@ public static partial class ParseUtils
     /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
     private static bool TryParseCollectionInternal<TCollection, TElement>(string[] splits, ref TCollection result, TryParseFunc<TElement> tryParse, in ParseOptions options) where TCollection : ICollection<TElement>
     {
-        foreach (string element in splits)
+        int length = splits.Length;
+        for (int i = 0; i < length; i++)
         {
+            string element = splits[i];
             // If parse partially fails, return early
             if (!tryParse(element, out TElement? parsed, options))
             {
@@ -317,9 +320,11 @@ public static partial class ParseUtils
 
         // Split values, then create result array
         string[] splits = SplitCollectionInternal(value!, options);
+        int length = splits.Length;
         result = new Queue<T>(splits.Length);
-        foreach (string element in splits)
+        for (int i = 0; i < length; i++)
         {
+            string element = splits[i];
             // If parse partially fails, return early
             if (!tryParse(element, out T? parsed, options))
             {
@@ -353,9 +358,11 @@ public static partial class ParseUtils
 
         // Split values, then create result array
         string[] splits = SplitCollectionInternal(value!, options);
+        int length = splits.Length;
         result = new Stack<T>(splits.Length);
-        foreach (string element in splits)
+        for (int i = 0; i < length; i++)
         {
+            string element = splits[i];
             // If parse partially fails, return early
             if (!tryParse(element, out T? parsed, options))
             {
@@ -562,16 +569,18 @@ public static partial class ParseUtils
     public static bool TryParseDictionaryInternal<TDict, TKey, TValue>(string[] splits, ref TDict result, TryParseFunc<TKey> keyTryParse, TryParseFunc<TValue> valueTryParse, in ParseOptions options)
         where TDict : IDictionary<TKey, TValue>
     {
-        foreach (string element in splits)
+        int length = splits.Length;
+        for (int i = 0; i < length; i++)
         {
+            string element = splits[i];
             // If parse partially fails, return early
-            if (!TryParse(element, out KeyValuePair<TKey, TValue> parsed, keyTryParse, valueTryParse, in options))
+            if (!TryParse(element, out KeyValuePair<TKey, TValue> pair, keyTryParse, valueTryParse, in options))
             {
                 result = default!;
                 return false;
             }
 
-            result.Add(parsed.Key, parsed.Value);
+            result.Add(pair.Key, pair.Value);
         }
 
         return true;

@@ -149,6 +149,41 @@ internal static class SymbolExtensions
     /// Checks if a given type implements an interface method explicitly
     /// </summary>
     /// <param name="type">Type to check</param>
+    /// <param name="methodName">Interface method</param>
+    /// <returns><see langword="true"/> if <paramref name="type"/> implements the specified interface method explicitly, otherwise <see langword="false"/></returns>
+    public static bool IsInterfaceImplementationExplicit<T>(this ITypeSymbol type, string methodName)
+    {
+        return IsInterfaceImplementationExplicit(type, typeof(T), methodName);
+    }
+
+    /// <summary>
+    /// Checks if a given type implements an interface method explicitly
+    /// </summary>
+    /// <param name="type">Type to check</param>
+    /// <param name="interfaceType">Interface type</param>
+    /// <param name="methodName">Interface method</param>
+    /// <returns><see langword="true"/> if <paramref name="type"/> implements the specified interface method explicitly, otherwise <see langword="false"/></returns>
+    public static bool IsInterfaceImplementationExplicit(this ITypeSymbol type, Type interfaceType, string methodName)
+    {
+        return interfaceType.IsInterface && IsInterfaceImplementationExplicit(type, interfaceType.FullName!, methodName);
+    }
+
+    /// <summary>
+    /// Checks if a given type implements an interface method explicitly
+    /// </summary>
+    /// <param name="type">Type to check</param>
+    /// <param name="interfaceSymbol">Interface symbol</param>
+    /// <param name="methodName">Interface method</param>
+    /// <returns><see langword="true"/> if <paramref name="type"/> implements the specified interface method explicitly, otherwise <see langword="false"/></returns>
+    public static bool IsInterfaceImplementationExplicit(this ITypeSymbol type, INamedTypeSymbol interfaceSymbol, string methodName)
+    {
+        return interfaceSymbol.TypeKind is TypeKind.Interface && IsInterfaceImplementationExplicit(type, interfaceSymbol.FullName(), methodName);
+    }
+
+    /// <summary>
+    /// Checks if a given type implements an interface method explicitly
+    /// </summary>
+    /// <param name="type">Type to check</param>
     /// <param name="interfaceName">Interface name</param>
     /// <param name="methodName">Interface method</param>
     /// <returns><see langword="true"/> if <paramref name="type"/> implements the specified interface method explicitly, otherwise <see langword="false"/></returns>

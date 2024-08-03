@@ -28,10 +28,12 @@ public static partial class ParseUtils
 
         // Create array the same size as the node
         int parsedLength = 0;
+        int count = node.CountValues;
         result = new T[node.CountValues];
-        foreach (ConfigNode.Value value in node.values)
+        for (int i = 0; i < count; i++)
         {
             // Only parse key values
+            ConfigNode.Value value = node.values[i];
             if (value.name != keyName) continue;
 
             // Return early if value cannot be parsed
@@ -193,9 +195,11 @@ public static partial class ParseUtils
     private static bool TryParseCollectionInternal<TCollection, TElement>(ConfigNode node, string keyName, ref TCollection result,
                                                                           TryParseFunc<TElement> tryParse, in ParseOptions options) where TCollection : ICollection<TElement>
     {
-        foreach (ConfigNode.Value value in node.values)
+        int count = node.CountValues;
+        for (int i = 0; i < count; i++)
         {
             // Only parse key values
+            ConfigNode.Value value = node.values[i];
             if (value.name != keyName) continue;
 
             // Return early if value cannot be parsed
@@ -319,6 +323,184 @@ public static partial class ParseUtils
 
             // Add parsed element
             result.Push(element!);
+        }
+
+        return true;
+    }
+    #endregion
+
+    #region Dictionaries
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="IDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TDict">Dictionary type</typeparam>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="node">ConfigNode to parse</param>
+    /// <param name="keyName">Key values name</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">Key TryParse function delegate</param>
+    /// <param name="valueTryParse">Value TryParse function delegate</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TDict, TKey, TValue>(ConfigNode? node, string? keyName, out TDict? result, TryParseFunc<TKey> keyTryParse,
+                                                     TryParseFunc<TValue> valueTryParse, in ParseOptions options) where TDict : IDictionary<TKey, TValue>, new()
+    {
+        // Check that the node isn't null and the key name is valid
+        if (node is null || string.IsNullOrEmpty(keyName))
+        {
+            result = default!;
+            return false;
+        }
+
+        // Create collection and parse
+        result = [];
+        return TryParseDictionaryInternal(node, keyName!, ref result, keyTryParse, valueTryParse, options);
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="Dictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="node">ConfigNode to parse</param>
+    /// <param name="keyName">Key values name</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">Key TryParse function delegate</param>
+    /// <param name="valueTryParse">Value TryParse function delegate</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(ConfigNode? node, string? keyName, out Dictionary<TKey, TValue>? result, TryParseFunc<TKey> keyTryParse,
+                                              TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // Check that the node isn't null and the key name is valid
+        if (node is null || string.IsNullOrEmpty(keyName))
+        {
+            result = null;
+            return false;
+        }
+
+        result = new Dictionary<TKey, TValue>(node.CountValues);
+        return TryParseDictionaryInternal(node, keyName!, ref result, keyTryParse, valueTryParse, options);
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="SortedDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="node">ConfigNode to parse</param>
+    /// <param name="keyName">Key values name</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">Key TryParse function delegate</param>
+    /// <param name="valueTryParse">Value TryParse function delegate</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(ConfigNode? node, string? keyName, out SortedDictionary<TKey, TValue>? result, TryParseFunc<TKey> keyTryParse,
+                                              TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // Check that the node isn't null and the key name is valid
+        if (node is null || string.IsNullOrEmpty(keyName))
+        {
+            result = null;
+            return false;
+        }
+
+        result = [];
+        return TryParseDictionaryInternal(node, keyName!, ref result, keyTryParse, valueTryParse, options);
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="SortedList{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="node">ConfigNode to parse</param>
+    /// <param name="keyName">Key values name</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">Key TryParse function delegate</param>
+    /// <param name="valueTryParse">Value TryParse function delegate</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(ConfigNode? node, string? keyName, out SortedList<TKey, TValue>? result, TryParseFunc<TKey> keyTryParse,
+                                              TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // Check that the node isn't null and the key name is valid
+        if (node is null || string.IsNullOrEmpty(keyName))
+        {
+            result = null;
+            return false;
+        }
+
+        result = new SortedList<TKey, TValue>(node.CountValues);
+        return TryParseDictionaryInternal(node, keyName!, ref result, keyTryParse, valueTryParse, options);
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="ReadOnlyDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="node">ConfigNode to parse</param>
+    /// <param name="keyName">Key values name</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">Key TryParse function delegate</param>
+    /// <param name="valueTryParse">Value TryParse function delegate</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    public static bool TryParse<TKey, TValue>(ConfigNode? node, string? keyName, out ReadOnlyDictionary<TKey, TValue>? result, TryParseFunc<TKey> keyTryParse,
+                                              TryParseFunc<TValue> valueTryParse, in ParseOptions options)
+    {
+        // Check that the node isn't null and the key name is valid
+        if (node is null || string.IsNullOrEmpty(keyName))
+        {
+            result = null;
+            return false;
+        }
+
+        Dictionary<TKey, TValue> dict = new(node.CountValues);
+        if (TryParseDictionaryInternal(node, keyName!, ref dict, keyTryParse, valueTryParse, options))
+        {
+            result = new ReadOnlyDictionary<TKey, TValue>(dict);
+            return true;
+        }
+
+        result = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Tries to parse the given value as a <see cref="IDictionary{TKey,TValue}"/>
+    /// </summary>
+    /// <typeparam name="TDict">Dictionary type</typeparam>
+    /// <typeparam name="TKey">Key type</typeparam>
+    /// <typeparam name="TValue">Value type</typeparam>
+    /// <param name="node">ConfigNode to parse</param>
+    /// <param name="keyName">Key values name</param>
+    /// <param name="result">Parse result output parameter</param>
+    /// <param name="keyTryParse">Key TryParse function delegate</param>
+    /// <param name="valueTryParse">Value TryParse function delegate</param>
+    /// <param name="options">Parsing options</param>
+    /// <returns><see langword="true"/> if the parse succeeded, otherwise <see langword="false"/></returns>
+    private static bool TryParseDictionaryInternal<TDict, TKey, TValue>(ConfigNode node, string keyName, ref TDict result, TryParseFunc<TKey> keyTryParse,
+                                                                        TryParseFunc<TValue> valueTryParse, in ParseOptions options) where TDict : IDictionary<TKey, TValue>
+    {
+        int count = node.CountValues;
+        for (int i = 0; i < count; i++)
+        {
+            // Only parse key values
+            ConfigNode.Value value = node.values[i];
+            if (value.name != keyName) continue;
+
+            // Return early if value cannot be parsed
+            if (!TryParse(value.value, out KeyValuePair<TKey, TValue> pair, keyTryParse, valueTryParse, options))
+            {
+                result = default!;
+                return false;
+            }
+
+            // Add parsed element
+            result.Add(pair.Key, pair.Value);
         }
 
         return true;

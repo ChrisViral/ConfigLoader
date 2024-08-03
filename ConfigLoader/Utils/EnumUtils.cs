@@ -49,9 +49,11 @@ public static class EnumUtils
             Dictionary<string, T> nameToValue = new(values.Length, StringComparer.InvariantCulture);
             Dictionary<string, T> nameToValueIgnoreCase = new(values.Length, StringComparer.InvariantCultureIgnoreCase);
 
-            foreach (T value in values)
+            int length = values.Length;
+            for (int i = 0; i < length; i++)
             {
                 // Get name for each value and store
+                T value = values[i];
                 string name = Enum.GetName(typeof(T), value)!;
                 valueToName.Add(value, name);
                 nameToValue.Add(name, value);

@@ -48,7 +48,8 @@ public static partial class WriteUtils
 
         // Append values
         builder.Append(write(value[0], options));
-        for (int i = 1; i < value.Count; i++)
+        int count = value.Count;
+        for (int i = 1; i < count; i++)
         {
             builder.Append(separator).Append(write(value[i], options));
         }

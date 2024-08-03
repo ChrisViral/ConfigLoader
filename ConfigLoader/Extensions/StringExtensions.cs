@@ -89,9 +89,10 @@ public static class StringExtensions
         if (splits.Length is 0 || options.HasNotFlags(ExtendedSplitOptions.TrimEntries)) return splits;
 
         // If we do not need to remove empty entries, just trim everything and return
+        int length = splits.Length;
         if (options.HasNotFlags(ExtendedSplitOptions.RemoveEmptyEntries))
         {
-            for (int i = 0; i < splits.Length; i++)
+            for (int i = 0; i < length; i++)
             {
                 splits[i] = splits[i].Trim();
             }
@@ -100,7 +101,7 @@ public static class StringExtensions
 
         // Keep track of how far into the array we have gone
         int validCount = 0;
-        for (int i = 0; i < splits.Length; i++)
+        for (int i = 0; i < length; i++)
         {
             // If the string is all whitespace, it'll be empty, skip it
             string value = splits[i];
