@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -13,7 +13,7 @@
 
     <Title>ConfigLoader Generator</Title>
     <Description>Source Generator to handle automatic loading of ConfigNodes for KSP</Description>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Product>ConfigLoaderGenerator</Product>
     <Authors>Christophe Savard (stupid_chris)</Authors>
     <Copyright>Copyright © Christophe Savard (stupid_chris) 2024</Copyright>
@@ -31,6 +31,25 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Including these files this way avoids requiring a hard reference to the runtime .dll in the generator -->
+    <Compile Include="..\ConfigLoader\Attributes\ConfigFieldAttribute.cs" Link="Imported\ConfigFieldAttribute.cs" />
+    <Compile Include="..\ConfigLoader\Attributes\ConfigObjectAttribute.cs" Link="Imported\ConfigObjectAttribute.cs" />
+    <Compile Include="..\ConfigLoader\Utils\ParseOptions.cs" Link="Imported\ParseOptions.cs" />
+    <Compile Include="..\ConfigLoader\Utils\WriteOptions.cs" Link="Imported\WriteOptions.cs" />
+    <Compile Include="..\ConfigLoader\Utils\EnumUtils.cs" Link="Imported\EnumUtils.cs" />
+    <Compile Include="..\ConfigLoader\NameExports.cs" Link="Imported\NameExports.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Metadata\" />
+    <Folder Include="SourceGeneration\" />
+    <Folder Include="Utils\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
   </ItemGroup>
@@ -41,8 +60,8 @@
     <None Include="..\README.md" Pack="true" PackagePath="$(PackageReadmeFile)" />
 
     <!-- These are dummy files required for the package to install on .NET Framework 4.7 and 4.8 -->
-    <None Include="_._" Pack="true" PackagePath="lib/net48" />
     <None Include="_._" Pack="true" PackagePath="lib/net47" />
+    <None Include="_._" Pack="true" PackagePath="lib/net48" />
   </ItemGroup>
 
 </Project>
